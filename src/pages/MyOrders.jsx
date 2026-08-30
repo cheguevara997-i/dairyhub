@@ -69,7 +69,7 @@ function MyOrders() {
 
         const response =
           await fetch(
-            `http://localhost:8080/api/orders/customer/${encodeURIComponent(
+            `https://dairyhub-backend.onrender.com/api/orders/customer/${encodeURIComponent(
               user.email
             )}`
           );

@@ -24,7 +24,7 @@ function MySubscriptions() {
     try {
 
       const response = await fetch(
-        `http://localhost:8080/api/subscriptions/customer/${encodeURIComponent(user.email)}`
+        `https://dairyhub-backend.onrender.com/api/subscriptions/customer/${encodeURIComponent(user.email)}`
       );
 
       if (!response.ok) {
@@ -70,7 +70,7 @@ function MySubscriptions() {
       try {
 
         const response = await fetch(
-          `http://localhost:8080/api/subscriptions/${id}/${action}`,
+          `https://dairyhub-backend.onrender.com/api/subscriptions/${id}/${action}`,
           {
             method: "PUT"
           }

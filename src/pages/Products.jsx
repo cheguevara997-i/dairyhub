@@ -42,7 +42,7 @@ function Products() {
       try {
 
         const response = await fetch(
-          "http://localhost:8080/api/products"
+          "https://dairyhub-backend.onrender.com/api/products"
         );
 
         if (!response.ok) {

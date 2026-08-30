@@ -25,13 +25,13 @@ function AdminDashboard() {
           subscriptionsResponse
         ] = await Promise.all([
 
-          fetch("http://localhost:8080/api/products"),
+          fetch("https://dairyhub-backend.onrender.com/api/products"),
 
-          fetch("http://localhost:8080/api/users"),
+          fetch("https://dairyhub-backend.onrender.com/api/users"),
 
-          fetch("http://localhost:8080/api/orders"),
+          fetch("https://dairyhub-backend.onrender.com/api/orders"),
 
-          fetch("http://localhost:8080/api/subscriptions")
+          fetch("https://dairyhub-backend.onrender.com/api/subscriptions")
 
         ]);
 

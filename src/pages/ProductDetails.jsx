@@ -32,7 +32,7 @@ function ProductDetails() {
       try {
 
         const response = await fetch(
-          `http://localhost:8080/api/products/${id}`
+          `https://dairyhub-backend.onrender.com/api/products/${id}`
         );
 
 

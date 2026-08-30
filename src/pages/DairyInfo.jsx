@@ -83,7 +83,7 @@ function DairyInfo() {
 
   useEffect(() => {
 
-    fetch("http://localhost:8080/api/products")
+    fetch("https://dairyhub-backend.onrender.com/api/products")
       .then((response) => {
 
         if (!response.ok) {

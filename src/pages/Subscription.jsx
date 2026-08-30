@@ -63,7 +63,7 @@ function Subscription() {
 
       const response =
         await fetch(
-          "http://localhost:8080/api/subscription-payment/create",
+          "https://dairyhub-backend.onrender.com/api/subscription-payment/create",
           {
             method: "POST",
 
@@ -129,7 +129,7 @@ function Subscription() {
 
       const response =
         await fetch(
-          "http://localhost:8080/api/subscription-payment/verify",
+          "https://dairyhub-backend.onrender.com/api/subscription-payment/verify",
           {
             method: "POST",
 
@@ -225,7 +225,7 @@ function Subscription() {
 
       const response =
         await fetch(
-          "http://localhost:8080/api/subscriptions/paid",
+          "https://dairyhub-backend.onrender.com/api/subscriptions/paid",
           {
             method: "POST",
 

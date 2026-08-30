@@ -15,7 +15,7 @@ function AdminSubscriptions() {
     try {
 
       const response = await fetch(
-        "http://localhost:8080/api/subscriptions"
+        "https://dairyhub-backend.onrender.com/api/subscriptions"
       );
 
       if (!response.ok) {
@@ -72,7 +72,7 @@ function AdminSubscriptions() {
       try {
 
         const response = await fetch(
-          `http://localhost:8080/api/subscriptions/${id}/cancel`,
+          `https://dairyhub-backend.onrender.com/api/subscriptions/${id}/cancel`,
           {
             method: "PUT"
           }

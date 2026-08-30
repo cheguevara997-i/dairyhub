@@ -22,7 +22,7 @@ function ManageProducts() {
     try {
 
       const response = await fetch(
-        "http://localhost:8080/api/products"
+        "https://dairyhub-backend.onrender.com/api/products"
       );
 
       if (!response.ok) {
@@ -81,7 +81,7 @@ function ManageProducts() {
     try {
 
       const response = await fetch(
-        "http://localhost:8080/api/products",
+        "https://dairyhub-backend.onrender.com/api/products",
         {
           method: "POST",
 
@@ -162,7 +162,7 @@ function ManageProducts() {
     try {
 
       const response = await fetch(
-        `http://localhost:8080/api/products/${id}`,
+        `https://dairyhub-backend.onrender.com/api/products/${id}`,
         {
           method: "DELETE",
         }

@@ -17,7 +17,7 @@ function ManageOrders() {
     try {
 
       const response = await fetch(
-        "http://localhost:8080/api/orders"
+        "https://dairyhub-backend.onrender.com/api/orders"
       );
 
 
@@ -145,7 +145,7 @@ function ManageOrders() {
 
 
       const response = await fetch(
-        `http://localhost:8080/api/orders/${id}`,
+        `https://dairyhub-backend.onrender.com/api/orders/${id}`,
         {
           method: "PUT",
 

@@ -309,7 +309,7 @@ function Cart() {
 
       const response =
         await fetch(
-          "http://localhost:8080/api/payment/create-order",
+          "https://dairyhub-backend.onrender.com/api/payment/create-order",
           {
             method: "POST",
 
@@ -353,7 +353,7 @@ function Cart() {
 
       const response =
         await fetch(
-          "http://localhost:8080/api/payment/verify",
+          "https://dairyhub-backend.onrender.com/api/payment/verify",
           {
             method: "POST",
 
@@ -483,7 +483,7 @@ function Cart() {
 
       const response =
         await fetch(
-          "http://localhost:8080/api/orders",
+          "https://dairyhub-backend.onrender.com/api/orders",
           {
             method: "POST",
 

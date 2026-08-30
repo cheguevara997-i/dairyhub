@@ -13,7 +13,7 @@ function ManageUsers() {
     try {
 
       const response = await fetch(
-        "http://localhost:8080/api/users"
+        "https://dairyhub-backend.onrender.com/api/users"
       );
 
       if (!response.ok) {
@@ -64,7 +64,7 @@ function ManageUsers() {
     try {
 
       const response = await fetch(
-        `http://localhost:8080/api/users/${id}`,
+        `https://dairyhub-backend.onrender.com/api/users/${id}`,
         {
           method: "DELETE"
         }
