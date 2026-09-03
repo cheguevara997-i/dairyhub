@@ -9,6 +9,8 @@ function Products() {
 
   const [loading, setLoading] = useState(true);
 
+  const [ratings, setRatings] = useState({});
+
   const [searchParams] = useSearchParams();
 
 
@@ -73,10 +75,104 @@ function Products() {
 
     };
 
-
     fetchProducts();
 
   }, []);
+
+
+  /* =========================================
+     FETCH PRODUCT RATINGS
+  ========================================= */
+
+  useEffect(() => {
+
+    const fetchRatings = async () => {
+
+      if (products.length === 0) {
+        return;
+      }
+
+      try {
+
+        const ratingResults =
+          await Promise.all(
+
+            products.map(async (product) => {
+
+              try {
+
+                const response =
+                  await fetch(
+                    `http://localhost:8080/api/reviews/product/${product.id}/summary`
+                  );
+
+                if (!response.ok) {
+
+                  throw new Error(
+                    `Failed to fetch rating for product ${product.id}`
+                  );
+
+                }
+
+                const data =
+                  await response.json();
+
+                return {
+                  productId: product.id,
+                  average:
+                    Number(data.averageRating) || 0,
+                  count:
+                    Number(data.reviewCount) || 0
+                };
+
+              } catch (error) {
+
+                console.error(
+                  `Error fetching rating for product ${product.id}:`,
+                  error
+                );
+
+                return {
+                  productId: product.id,
+                  average: 0,
+                  count: 0
+                };
+
+              }
+
+            })
+
+          );
+
+
+        const ratingMap = {};
+
+        ratingResults.forEach((item) => {
+
+          ratingMap[item.productId] = {
+            average: item.average,
+            count: item.count
+          };
+
+        });
+
+
+        setRatings(ratingMap);
+
+      } catch (error) {
+
+        console.error(
+          "Error fetching product ratings:",
+          error
+        );
+
+      }
+
+    };
+
+    fetchRatings();
+
+  }, [products]);
 
 
   /* =========================================
@@ -87,9 +183,7 @@ function Products() {
 
     let cart =
       JSON.parse(
-        localStorage.getItem(
-          "dairyhubCart"
-        )
+        localStorage.getItem("dairyhubCart")
       ) || [];
 
 
@@ -101,7 +195,10 @@ function Products() {
 
     if (existingProduct) {
 
-      // Do not allow quantity to exceed stock
+      /*
+        Do not allow quantity
+        to exceed available stock.
+      */
 
       if (
         existingProduct.quantity >=
@@ -207,15 +304,26 @@ function Products() {
     const basePath =
       `/products/${productId}`;
 
+
     /*
       Normal Products page:
-      Products → Product Details → Back to Products
+
+      Products
+         ↓
+      Product Details
+         ↓
+      Back to Products
+
 
       Dashboard:
-      Dashboard → Shop Products → Product Details
-      → Back to Dashboard
 
-      So we pass the source in the URL.
+      Dashboard
+         ↓
+      Shop Products
+         ↓
+      Product Details
+         ↓
+      Back to Dashboard
     */
 
     if (fromDashboard) {
@@ -229,12 +337,18 @@ function Products() {
   };
 
 
+  /* =========================================
+     PAGE
+  ========================================= */
+
   return (
 
     <div className="page">
 
 
-      {/* BACK BUTTON */}
+      {/* =====================================
+          BACK BUTTON
+      ====================================== */}
 
       <BackButton
         to={backPath}
@@ -242,18 +356,23 @@ function Products() {
       />
 
 
-      {/* PAGE TITLE */}
+      {/* =====================================
+          PAGE TITLE
+      ====================================== */}
 
       <h1>
 
         {searchText
           ? `Search Results for "${searchText}"`
-          : "Our Products"}
+          : "Our Products"
+        }
 
       </h1>
 
 
-      {/* LOADING */}
+      {/* =====================================
+          LOADING
+      ====================================== */}
 
       {loading ? (
 
@@ -281,8 +400,7 @@ function Products() {
           {searchText ? (
 
             <p>
-              No products match
-              {" "}
+              No products match{" "}
               "{searchText}".
             </p>
 
@@ -321,81 +439,161 @@ function Products() {
         <div className="product-grid">
 
           {filteredProducts.map(
-            (product) => (
+            (product) => {
 
-              <div
-                className="product-card"
-                key={product.id}
-              >
+              const productRating =
+                ratings[product.id];
 
+              const averageRating =
+                productRating?.average || 0;
 
-                {/* IMAGE */}
-
-                <img
-                  src={product.image}
-                  alt={product.name}
-                />
+              const reviewCount =
+                productRating?.count || 0;
 
 
-                {/* NAME */}
+              return (
 
-                <h3>
-                  {product.name}
-                </h3>
-
-
-                {/* DESCRIPTION */}
-
-                <p>
-                  {product.description}
-                </p>
-
-
-                {/* PRICE */}
-
-                <h2>
-                  ₹{product.price}
-                </h2>
-
-
-                {/* STOCK */}
-
-                <p>
-                  Stock: {product.stock}
-                </p>
-
-
-                {/* VIEW DETAILS */}
-
-                <Link
-                  to={getProductDetailsPath(
-                    product.id
-                  )}
-                >
-                  View Details
-                </Link>
-
-
-                {/* ADD TO CART */}
-
-                <button
-                  onClick={() =>
-                    addToCart(product)
-                  }
-                  disabled={
-                    product.stock <= 0
-                  }
+                <div
+                  className="product-card"
+                  key={product.id}
                 >
 
-                  {product.stock > 0
-                    ? "Add to Cart"
-                    : "Out of Stock"}
 
-                </button>
+                  {/* ===========================
+                      PRODUCT IMAGE
+                  ============================ */}
 
-              </div>
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                  />
 
-            )
+
+                  {/* ===========================
+                      PRODUCT NAME
+                  ============================ */}
+
+                  <h3>
+                    {product.name}
+                  </h3>
+
+
+                  {/* ===========================
+                      PRODUCT RATING
+                  ============================ */}
+
+                  <div className="product-card-rating">
+
+                    {reviewCount > 0 ? (
+
+                      <>
+
+                        <span className="product-rating-stars">
+                          ⭐
+                        </span>
+
+                        <span className="product-rating-average">
+                          {averageRating.toFixed(1)}
+                        </span>
+
+                        <span className="product-rating-count">
+                          ({reviewCount}{" "}
+                          {reviewCount === 1
+                            ? "review"
+                            : "reviews"}
+                          )
+                        </span>
+
+                      </>
+
+                    ) : (
+
+                      <span className="product-no-rating">
+                        ⭐ No reviews yet
+                      </span>
+
+                    )}
+
+                  </div>
+
+
+                  {/* ===========================
+                      PRODUCT DESCRIPTION
+                  ============================ */}
+
+                  <p>
+                    {product.description}
+                  </p>
+
+
+                  {/* ===========================
+                      PRODUCT PRICE
+                  ============================ */}
+
+                  <h2>
+                    ₹{product.price}
+                  </h2>
+
+
+                  {/* ===========================
+                      PRODUCT STOCK
+                  ============================ */}
+
+                  <p>
+                    Stock: {product.stock}
+                  </p>
+
+
+                  {/* =================================
+                      ACTION BUTTONS
+                  ================================== */}
+
+                  <div className="product-card-actions">
+
+
+                    {/* =============================
+                        VIEW DETAILS
+                    ============================== */}
+
+                    <Link
+                      to={getProductDetailsPath(
+                        product.id
+                      )}
+                      className="product-view-btn"
+                    >
+                      View Details
+                    </Link>
+
+
+                    {/* =============================
+                        ADD TO CART
+                    ============================== */}
+
+                    <button
+                      className="product-add-cart-btn"
+                      onClick={() =>
+                        addToCart(product)
+                      }
+                      disabled={
+                        product.stock <= 0
+                      }
+                    >
+
+                      {product.stock > 0
+                        ? "Add to Cart"
+                        : "Out of Stock"
+                      }
+
+                    </button>
+
+
+                  </div>
+
+                </div>
+
+              );
+
+            }
           )}
 
         </div>

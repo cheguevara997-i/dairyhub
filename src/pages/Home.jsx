@@ -1,37 +1,63 @@
 import React from "react";
 import Hero from "../components/Hero";
+import FeaturedProducts from "../components/FeaturedProducts";
 import { Link } from "react-router-dom";
 
+
 function Reveal({ children, className = "", delay = 0 }) {
+
   const [show, setShow] = React.useState(false);
+
   const ref = React.useRef(null);
 
+
   React.useEffect(() => {
+
     const observer = new IntersectionObserver(
+
       ([entry]) => {
+
         setShow(entry.isIntersecting);
+
       },
+
       {
         threshold: 0.15,
       }
+
     );
 
+
     if (ref.current) {
+
       observer.observe(ref.current);
+
     }
 
+
     return () => observer.disconnect();
+
   }, []);
 
+
   return (
+
     <div
       ref={ref}
-      className={`home-reveal ${show ? "home-reveal-show" : ""} ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
+      className={`home-reveal ${
+        show ? "home-reveal-show" : ""
+      } ${className}`}
+      style={{
+        transitionDelay: `${delay}ms`
+      }}
     >
+
       {children}
+
     </div>
+
   );
+
 }
 
 
@@ -40,6 +66,7 @@ function Home() {
   return (
 
     <div className="home-page">
+
 
       {/* =========================================
           HERO
@@ -58,6 +85,7 @@ function Home() {
 
       <section className="categories">
 
+
         <Reveal>
 
           <h2>
@@ -70,8 +98,10 @@ function Home() {
         <Reveal delay={100}>
 
           <p className="categories-subtitle">
+
             Fresh, quality dairy products made for
             everyday goodness.
+
           </p>
 
         </Reveal>
@@ -79,7 +109,10 @@ function Home() {
 
         <div className="category-grid">
 
-          {/* MILK */}
+
+          {/* =====================================
+              MILK
+              ===================================== */}
 
           <Reveal
             className="product-reveal"
@@ -88,35 +121,45 @@ function Home() {
 
             <div className="category-card">
 
+
               <div className="category-icon">
                 🥛
               </div>
+
 
               <h3>
                 Fresh Milk
               </h3>
 
+
               <p>
                 Pure farm fresh milk
               </p>
+
 
               <span>
                 Rich in calcium & protein
               </span>
 
+
               <Link
                 to="/dairy/milk"
                 className="category-click"
               >
+
                 Explore →
+
               </Link>
+
 
             </div>
 
           </Reveal>
 
 
-          {/* CURD */}
+          {/* =====================================
+              CURD
+              ===================================== */}
 
           <Reveal
             className="product-reveal"
@@ -125,35 +168,45 @@ function Home() {
 
             <div className="category-card">
 
+
               <div className="category-icon">
                 🥣
               </div>
+
 
               <h3>
                 Curd
               </h3>
 
+
               <p>
                 Fresh and healthy curd
               </p>
+
 
               <span>
                 Probiotic & naturally refreshing
               </span>
 
+
               <Link
                 to="/dairy/curd"
                 className="category-click"
               >
+
                 Explore →
+
               </Link>
+
 
             </div>
 
           </Reveal>
 
 
-          {/* PANEER */}
+          {/* =====================================
+              PANEER
+              ===================================== */}
 
           <Reveal
             className="product-reveal"
@@ -162,35 +215,45 @@ function Home() {
 
             <div className="category-card">
 
+
               <div className="category-icon">
                 🧀
               </div>
+
 
               <h3>
                 Paneer
               </h3>
 
+
               <p>
                 Soft and fresh paneer
               </p>
+
 
               <span>
                 Protein-rich and perfect for meals
               </span>
 
+
               <Link
                 to="/dairy/paneer"
                 className="category-click"
               >
+
                 Explore →
+
               </Link>
+
 
             </div>
 
           </Reveal>
 
 
-          {/* BUTTER */}
+          {/* =====================================
+              BUTTER
+              ===================================== */}
 
           <Reveal
             className="product-reveal"
@@ -199,35 +262,45 @@ function Home() {
 
             <div className="category-card">
 
+
               <div className="category-icon">
                 🧈
               </div>
+
 
               <h3>
                 Butter
               </h3>
 
+
               <p>
                 Natural dairy butter
               </p>
+
 
               <span>
                 Creamy taste for cooking & breakfast
               </span>
 
+
               <Link
                 to="/dairy/butter"
                 className="category-click"
               >
+
                 Explore →
+
               </Link>
+
 
             </div>
 
           </Reveal>
 
 
-          {/* GHEE */}
+          {/* =====================================
+              GHEE
+              ===================================== */}
 
           <Reveal
             className="product-reveal"
@@ -236,32 +309,41 @@ function Home() {
 
             <div className="category-card">
 
+
               <div className="category-icon">
                 🫙
               </div>
+
 
               <h3>
                 Ghee
               </h3>
 
+
               <p>
                 Pure traditional ghee
               </p>
+
 
               <span>
                 Aromatic and ideal for everyday cooking
               </span>
 
+
               <Link
                 to="/dairy/ghee"
                 className="category-click"
               >
+
                 Explore →
+
               </Link>
+
 
             </div>
 
           </Reveal>
+
 
         </div>
 
@@ -269,10 +351,25 @@ function Home() {
 
 
       {/* =========================================
+          FEATURED PRODUCTS
+          ========================================= */}
+
+      <Reveal
+        className="featured-products-reveal"
+        delay={100}
+      >
+
+        <FeaturedProducts />
+
+      </Reveal>
+
+
+      {/* =========================================
           WHY CHOOSE DAIRYHUB
           ========================================= */}
 
       <section className="why">
+
 
         <Reveal>
 
@@ -285,7 +382,10 @@ function Home() {
 
         <div className="why-grid">
 
-          {/* FARM FRESH */}
+
+          {/* =====================================
+              FARM FRESH
+              ===================================== */}
 
           <Reveal
             className="why-card-reveal"
@@ -298,9 +398,12 @@ function Home() {
                 🐄 Farm Fresh
               </h3>
 
+
               <p>
+
                 Products directly from trusted dairy
                 farms.
+
               </p>
 
             </div>
@@ -308,7 +411,9 @@ function Home() {
           </Reveal>
 
 
-          {/* FAST DELIVERY */}
+          {/* =====================================
+              FAST DELIVERY
+              ===================================== */}
 
           <Reveal
             className="why-card-reveal"
@@ -321,9 +426,12 @@ function Home() {
                 🚚 Fast Delivery
               </h3>
 
+
               <p>
+
                 Fresh dairy products delivered to your
                 doorstep.
+
               </p>
 
             </div>
@@ -331,7 +439,9 @@ function Home() {
           </Reveal>
 
 
-          {/* HEALTHY */}
+          {/* =====================================
+              HEALTHY
+              ===================================== */}
 
           <Reveal
             className="why-card-reveal"
@@ -344,22 +454,28 @@ function Home() {
                 ❤️ Healthy
               </h3>
 
+
               <p>
+
                 Quality dairy products for your family.
+
               </p>
 
             </div>
 
           </Reveal>
 
+
         </div>
 
       </section>
+
 
     </div>
 
   );
 
 }
+
 
 export default Home;

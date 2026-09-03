@@ -10,6 +10,10 @@ function AdminSubscriptions() {
     useState(true);
 
 
+  /* =========================================
+     FETCH ALL SUBSCRIPTIONS
+  ========================================= */
+
   const fetchSubscriptions = async () => {
 
     try {
@@ -19,9 +23,11 @@ function AdminSubscriptions() {
       );
 
       if (!response.ok) {
+
         throw new Error(
           "Failed to fetch subscriptions"
         );
+
       }
 
       const data =
@@ -56,6 +62,82 @@ function AdminSubscriptions() {
   }, []);
 
 
+  /* =========================================
+     DELIVERY TIME FORMAT
+  ========================================= */
+
+  const formatDeliveryTime = (
+    deliveryTime
+  ) => {
+
+    if (!deliveryTime) {
+
+      return "N/A";
+
+    }
+
+    const value =
+      deliveryTime.toLowerCase();
+
+    if (value === "morning") {
+
+      return "🌅 Morning";
+
+    }
+
+    if (value === "evening") {
+
+      return "🌙 Evening";
+
+    }
+
+    if (value === "both") {
+
+      return "🌅 Morning & Evening";
+
+    }
+
+    return deliveryTime;
+
+  };
+
+
+  /* =========================================
+     FORMAT DATE
+  ========================================= */
+
+  const formatDate = (date) => {
+
+    if (!date) {
+
+      return "N/A";
+
+    }
+
+    try {
+
+      return new Date(date).toLocaleDateString(
+        "en-IN",
+        {
+          day: "2-digit",
+          month: "short",
+          year: "numeric"
+        }
+      );
+
+    } catch {
+
+      return date;
+
+    }
+
+  };
+
+
+  /* =========================================
+     CANCEL SUBSCRIPTION
+  ========================================= */
+
   const cancelSubscription =
     async (id) => {
 
@@ -65,24 +147,29 @@ function AdminSubscriptions() {
         );
 
       if (!confirmCancel) {
+
         return;
+
       }
 
 
       try {
 
-        const response = await fetch(
-          `https://dairyhub-backend.onrender.com/api/subscriptions/${id}/cancel`,
-          {
-            method: "PUT"
-          }
-        );
+        const response =
+          await fetch(
+            `https://dairyhub-backend.onrender.com/api/subscriptions/${id}/cancel`,
+            {
+              method: "PUT"
+            }
+          );
 
 
         if (!response.ok) {
+
           throw new Error(
             "Failed to cancel subscription"
           );
+
         }
 
 
@@ -122,14 +209,247 @@ function AdminSubscriptions() {
     };
 
 
+  /* =========================================
+     PAUSE SUBSCRIPTION
+  ========================================= */
+
+  const pauseSubscription =
+    async (id) => {
+
+      const confirmPause =
+        window.confirm(
+          "Are you sure you want to pause this subscription?"
+        );
+
+      if (!confirmPause) {
+
+        return;
+
+      }
+
+
+      try {
+
+        const response =
+          await fetch(
+            `https://dairyhub-backend.onrender.com/api/subscriptions/${id}/pause`,
+            {
+              method: "PUT"
+            }
+          );
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            "Failed to pause subscription"
+          );
+
+        }
+
+
+        const updatedSubscription =
+          await response.json();
+
+
+        setSubscriptions(
+          (previousSubscriptions) =>
+            previousSubscriptions.map(
+              (subscription) =>
+                subscription.id === id
+                  ? updatedSubscription
+                  : subscription
+            )
+        );
+
+
+        alert(
+          "Subscription paused successfully!"
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Pause subscription error:",
+          error
+        );
+
+        alert(
+          "Unable to pause subscription."
+        );
+
+      }
+
+    };
+
+
+  /* =========================================
+     RESUME SUBSCRIPTION
+  ========================================= */
+
+  const resumeSubscription =
+    async (id) => {
+
+      const confirmResume =
+        window.confirm(
+          "Resume this subscription?"
+        );
+
+      if (!confirmResume) {
+
+        return;
+
+      }
+
+
+      try {
+
+        const response =
+          await fetch(
+            `https://dairyhub-backend.onrender.com/api/subscriptions/${id}/resume`,
+            {
+              method: "PUT"
+            }
+          );
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            "Failed to resume subscription"
+          );
+
+        }
+
+
+        const updatedSubscription =
+          await response.json();
+
+
+        setSubscriptions(
+          (previousSubscriptions) =>
+            previousSubscriptions.map(
+              (subscription) =>
+                subscription.id === id
+                  ? updatedSubscription
+                  : subscription
+            )
+        );
+
+
+        alert(
+          "Subscription resumed successfully!"
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Resume subscription error:",
+          error
+        );
+
+        alert(
+          "Unable to resume subscription."
+        );
+
+      }
+
+    };
+
+
+  /* =========================================
+     DELETE SUBSCRIPTION
+  ========================================= */
+
+  const deleteSubscription =
+    async (id) => {
+
+      const confirmDelete =
+        window.confirm(
+          "Are you sure you want to permanently delete this subscription?"
+        );
+
+      if (!confirmDelete) {
+
+        return;
+
+      }
+
+
+      try {
+
+        const response =
+          await fetch(
+            `https://dairyhub-backend.onrender.com/api/subscriptions/${id}`,
+            {
+              method: "DELETE"
+            }
+          );
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            "Failed to delete subscription"
+          );
+
+        }
+
+
+        setSubscriptions(
+          (previousSubscriptions) =>
+            previousSubscriptions.filter(
+              (subscription) =>
+                subscription.id !== id
+            )
+        );
+
+
+        alert(
+          "Subscription deleted successfully!"
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Delete subscription error:",
+          error
+        );
+
+        alert(
+          "Unable to delete subscription."
+        );
+
+      }
+
+    };
+
+
+  /* =========================================
+     PAGE
+  ========================================= */
+
   return (
 
     <div className="admin-subscriptions-page">
 
-        <BackButton
-          to="/admin"
-          text="← Back to Admin Dashboard"
-        />
+
+      {/* =====================================
+          BACK BUTTON
+      ===================================== */}
+
+      <BackButton
+        to="/admin"
+        text="← Back to Admin Dashboard"
+      />
+
+
+      {/* =====================================
+          HEADER
+      ===================================== */}
 
       <div className="admin-subscriptions-header">
 
@@ -163,9 +483,17 @@ function AdminSubscriptions() {
       </div>
 
 
+      {/* =====================================
+          LOADING
+      ===================================== */}
+
       {loading ? (
 
         <div className="admin-subscriptions-empty">
+
+          <div className="admin-empty-icon">
+            ⏳
+          </div>
 
           <h3>
             Loading subscriptions...
@@ -174,6 +502,11 @@ function AdminSubscriptions() {
         </div>
 
       ) : subscriptions.length === 0 ? (
+
+
+        /* =====================================
+           EMPTY STATE
+        ===================================== */
 
         <div className="admin-subscriptions-empty">
 
@@ -193,6 +526,11 @@ function AdminSubscriptions() {
 
       ) : (
 
+
+        /* =====================================
+           SUBSCRIPTIONS
+        ===================================== */
+
         <div className="admin-subscriptions-grid">
 
           {subscriptions.map(
@@ -202,6 +540,11 @@ function AdminSubscriptions() {
                 className="admin-subscription-card"
                 key={subscription.id}
               >
+
+
+                {/* =================================
+                    CARD HEADER
+                ================================= */}
 
                 <div className="admin-subscription-card-header">
 
@@ -221,15 +564,23 @@ function AdminSubscriptions() {
                   <span
                     className={
                       `admin-status-badge ${
-                        subscription.status?.toLowerCase()
+                        subscription.status
+                          ?.toLowerCase()
                       }`
                     }
                   >
-                    {subscription.status}
+
+                    {subscription.status ||
+                      "N/A"}
+
                   </span>
 
                 </div>
 
+
+                {/* =================================
+                    CUSTOMER DETAILS
+                ================================= */}
 
                 <div className="admin-customer-box">
 
@@ -237,19 +588,31 @@ function AdminSubscriptions() {
                     👤
                   </div>
 
+
                   <div>
 
                     <span>
                       Customer
                     </span>
 
+
                     <strong>
                       {subscription.customerName ||
                         "N/A"}
                     </strong>
 
+
                     <small>
-                      {subscription.customerEmail}
+                      ✉️{" "}
+                      {subscription.customerEmail ||
+                        "N/A"}
+                    </small>
+
+
+                    <small>
+                      📞{" "}
+                      {subscription.phone ||
+                        "N/A"}
                     </small>
 
                   </div>
@@ -257,7 +620,103 @@ function AdminSubscriptions() {
                 </div>
 
 
+                {/* =================================
+                    DELIVERY DETAILS
+                ================================= */}
+
+                <div className="admin-address-box">
+
+                  <div className="admin-address-header">
+
+                    <span>
+                      📍
+                    </span>
+
+                    <strong>
+                      Delivery Details
+                    </strong>
+
+                  </div>
+
+
+                  {/* ADDRESS */}
+
+                  <div className="admin-address-main">
+
+                    <small>
+                      Address
+                    </small>
+
+                    <p>
+                      {subscription.address ||
+                        "N/A"}
+                    </p>
+
+                  </div>
+
+
+                  {/* CITY */}
+
+                  <div className="admin-address-location">
+
+                    <div>
+
+                      <small>
+                        City
+                      </small>
+
+                      <strong>
+                        {subscription.city ||
+                          "N/A"}
+                      </strong>
+
+                    </div>
+
+
+                    {/* STATE */}
+
+                    <div>
+
+                      <small>
+                        State
+                      </small>
+
+                      <strong>
+                        {subscription.state ||
+                          "N/A"}
+                      </strong>
+
+                    </div>
+
+
+                    {/* PINCODE */}
+
+                    <div>
+
+                      <small>
+                        Pincode
+                      </small>
+
+                      <strong>
+                        {subscription.pincode ||
+                          "N/A"}
+                      </strong>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+
+                {/* =================================
+                    SUBSCRIPTION DETAILS
+                ================================= */}
+
                 <div className="admin-subscription-details">
+
+
+                  {/* MILK TYPE */}
 
                   <div className="admin-detail-item">
 
@@ -272,13 +731,16 @@ function AdminSubscriptions() {
                       </small>
 
                       <strong>
-                        {subscription.milkType}
+                        {subscription.milkType ||
+                          "N/A"}
                       </strong>
 
                     </div>
 
                   </div>
 
+
+                  {/* QUANTITY */}
 
                   <div className="admin-detail-item">
 
@@ -293,13 +755,16 @@ function AdminSubscriptions() {
                       </small>
 
                       <strong>
-                        {subscription.quantity}
+                        {subscription.quantity ||
+                          "N/A"}
                       </strong>
 
                     </div>
 
                   </div>
 
+
+                  {/* DURATION */}
 
                   <div className="admin-detail-item">
 
@@ -314,13 +779,16 @@ function AdminSubscriptions() {
                       </small>
 
                       <strong>
-                        {subscription.duration}
+                        {subscription.duration ||
+                          "N/A"}
                       </strong>
 
                     </div>
 
                   </div>
 
+
+                  {/* DELIVERY */}
 
                   <div className="admin-detail-item">
 
@@ -335,7 +803,9 @@ function AdminSubscriptions() {
                       </small>
 
                       <strong>
-                        {subscription.deliveryTime}
+                        {formatDeliveryTime(
+                          subscription.deliveryTime
+                        )}
                       </strong>
 
                     </div>
@@ -344,6 +814,32 @@ function AdminSubscriptions() {
 
                 </div>
 
+
+                {/* =================================
+                    PAYMENT DETAILS
+                ================================= */}
+
+                <div className="admin-payment-box">
+
+                  <div>
+
+                    <span>
+                      💳 Payment Status
+                    </span>
+
+                    <strong>
+                      {subscription.paymentStatus ||
+                        "N/A"}
+                    </strong>
+
+                  </div>
+
+                </div>
+
+
+                {/* =================================
+                    DATE DETAILS
+                ================================= */}
 
                 <div className="admin-subscription-dates">
 
@@ -354,8 +850,9 @@ function AdminSubscriptions() {
                     </span>
 
                     <strong>
-                      {subscription.startDate ||
-                        "N/A"}
+                      {formatDate(
+                        subscription.startDate
+                      )}
                     </strong>
 
                   </div>
@@ -368,8 +865,9 @@ function AdminSubscriptions() {
                     </span>
 
                     <strong>
-                      {subscription.nextDeliveryDate ||
-                        "N/A"}
+                      {formatDate(
+                        subscription.nextDeliveryDate
+                      )}
                     </strong>
 
                   </div>
@@ -377,23 +875,96 @@ function AdminSubscriptions() {
                 </div>
 
 
-                {subscription.status !== "CANCELLED" && (
+                {/* =================================
+                    ACTIVE ACTIONS
+                ================================= */}
 
-                  <button
-                    className="admin-cancel-subscription-btn"
-                    onClick={() =>
-                      cancelSubscription(
-                        subscription.id
-                      )
-                    }
-                  >
-                    Cancel Subscription
-                  </button>
+                {subscription.status ===
+                  "ACTIVE" && (
+
+                  <div className="admin-subscription-actions">
+
+
+                    <button
+                      className="admin-pause-subscription-btn"
+                      onClick={() =>
+                        pauseSubscription(
+                          subscription.id
+                        )
+                      }
+                    >
+
+                      ⏸ Pause
+
+                    </button>
+
+
+                    <button
+                      className="admin-cancel-subscription-btn"
+                      onClick={() =>
+                        cancelSubscription(
+                          subscription.id
+                        )
+                      }
+                    >
+
+                      Cancel
+
+                    </button>
+
+                  </div>
 
                 )}
 
 
-                {subscription.status === "CANCELLED" && (
+                {/* =================================
+                    PAUSED ACTIONS
+                ================================= */}
+
+                {subscription.status ===
+                  "PAUSED" && (
+
+                  <div className="admin-subscription-actions">
+
+
+                    <button
+                      className="admin-resume-subscription-btn"
+                      onClick={() =>
+                        resumeSubscription(
+                          subscription.id
+                        )
+                      }
+                    >
+
+                      ▶ Resume
+
+                    </button>
+
+
+                    <button
+                      className="admin-cancel-subscription-btn"
+                      onClick={() =>
+                        cancelSubscription(
+                          subscription.id
+                        )
+                      }
+                    >
+
+                      Cancel
+
+                    </button>
+
+                  </div>
+
+                )}
+
+
+                {/* =================================
+                    CANCELLED
+                ================================= */}
+
+                {subscription.status ===
+                  "CANCELLED" && (
 
                   <div className="admin-cancelled-message">
 
@@ -402,6 +973,25 @@ function AdminSubscriptions() {
                   </div>
 
                 )}
+
+
+                {/* =================================
+                    DELETE
+                ================================= */}
+
+                <button
+                  className="admin-delete-subscription-btn"
+                  onClick={() =>
+                    deleteSubscription(
+                      subscription.id
+                    )
+                  }
+                >
+
+                  🗑 Delete Subscription
+
+                </button>
+
 
               </div>
 

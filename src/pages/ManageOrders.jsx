@@ -1,11 +1,22 @@
 import { useEffect, useState } from "react";
+
 import BackButton from "../components/BackButton";
+
+
+const API_BASE =
+  "https://dairyhub-backend.onrender.com";
+
 
 function ManageOrders() {
 
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] =
+    useState([]);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
+
+  const [deletingOrderId, setDeletingOrderId] =
+    useState(null);
 
 
   // =========================================
@@ -16,9 +27,13 @@ function ManageOrders() {
 
     try {
 
-      const response = await fetch(
-        "https://dairyhub-backend.onrender.com/api/orders"
-      );
+      setLoading(true);
+
+
+      const response =
+        await fetch(
+          `${API_BASE}/api/orders`
+        );
 
 
       if (!response.ok) {
@@ -34,7 +49,11 @@ function ManageOrders() {
         await response.json();
 
 
-      setOrders(data);
+      setOrders(
+        Array.isArray(data)
+          ? data
+          : []
+      );
 
 
     } catch (error) {
@@ -58,6 +77,10 @@ function ManageOrders() {
 
   };
 
+
+  // =========================================
+  // INITIAL LOAD
+  // =========================================
 
   useEffect(() => {
 
@@ -85,13 +108,15 @@ function ManageOrders() {
 
 
       if (!order) {
+
         return;
+
       }
 
 
       /*
-       * Keep ALL existing order information.
-       * Only change the status.
+       * Keep all existing order information.
+       * Only update status.
        */
 
       const updatedOrder = {
@@ -144,27 +169,38 @@ function ManageOrders() {
       };
 
 
-      const response = await fetch(
-        `https://dairyhub-backend.onrender.com/api/orders/${id}`,
-        {
-          method: "PUT",
+      const response =
+        await fetch(
+          `${API_BASE}/api/orders/${id}`,
+          {
 
-          headers: {
-            "Content-Type": "application/json"
-          },
+            method:
+              "PUT",
 
-          body:
-            JSON.stringify(
-              updatedOrder
-            )
+            headers: {
 
-        }
-      );
+              "Content-Type":
+                "application/json"
+
+            },
+
+            body:
+              JSON.stringify(
+                updatedOrder
+              )
+
+          }
+        );
 
 
       if (!response.ok) {
 
+        const errorText =
+          await response.text();
+
+
         throw new Error(
+          errorText ||
           "Failed to update order"
         );
 
@@ -176,9 +212,9 @@ function ManageOrders() {
 
 
       setOrders(
-        (previousOrders) =>
+        previousOrders =>
           previousOrders.map(
-            (currentOrder) =>
+            currentOrder =>
               currentOrder.id === id
                 ? savedOrder
                 : currentOrder
@@ -195,10 +231,147 @@ function ManageOrders() {
 
 
       alert(
+        error.message ||
         "Unable to update order status."
       );
 
     }
+
+  };
+
+
+  // =========================================
+  // DELETE ORDER
+  // =========================================
+
+  const deleteOrder = async (
+    id
+  ) => {
+
+    const order =
+      orders.find(
+        currentOrder =>
+          currentOrder.id === id
+      );
+
+
+    if (!order) {
+
+      return;
+
+    }
+
+
+    // =======================================
+    // CONFIRMATION
+    // =======================================
+
+    const confirmed =
+      window.confirm(
+        `Are you sure you want to permanently delete Order #${id}?\n\nThis order will be removed from the admin panel and the customer's order history.\n\nThis action cannot be undone.`
+      );
+
+
+    if (!confirmed) {
+
+      return;
+
+    }
+
+
+    try {
+
+      setDeletingOrderId(id);
+
+
+      const response =
+        await fetch(
+          `${API_BASE}/api/orders/${id}`,
+          {
+            method:
+              "DELETE"
+          }
+        );
+
+
+      if (!response.ok) {
+
+        const errorText =
+          await response.text();
+
+
+        throw new Error(
+          errorText ||
+          "Failed to delete order"
+        );
+
+      }
+
+
+      /*
+       * Remove the deleted order
+       * from the current admin screen
+       * immediately.
+       */
+
+      setOrders(
+        previousOrders =>
+          previousOrders.filter(
+            currentOrder =>
+              currentOrder.id !== id
+          )
+      );
+
+
+      alert(
+        `Order #${id} deleted successfully.`
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        "Delete order error:",
+        error
+      );
+
+
+      alert(
+        error.message ||
+        "Unable to delete order."
+      );
+
+
+    } finally {
+
+      setDeletingOrderId(null);
+
+    }
+
+  };
+
+
+  // =========================================
+  // FORMAT STATUS
+  // =========================================
+
+  const formatStatus = (
+    status
+  ) => {
+
+    if (!status) {
+
+      return "UNKNOWN";
+
+    }
+
+
+    return status
+      .toString()
+      .replaceAll(
+        "_",
+        " "
+      );
 
   };
 
@@ -212,16 +385,59 @@ function ManageOrders() {
     <div className="admin-page">
 
 
+      {/* =====================================
+          BACK
+      ====================================== */}
+
       <BackButton
         to="/admin"
         text="← Back to Admin Dashboard"
       />
 
 
-      <h1>
-        Manage Orders
-      </h1>
+      {/* =====================================
+          HEADER
+      ====================================== */}
 
+      <div className="manage-orders-header">
+
+        <div>
+
+          <span className="admin-page-label">
+            DAIRYHUB ADMIN
+          </span>
+
+
+          <h1>
+            Manage Orders
+          </h1>
+
+
+          <p>
+            Track, update and manage customer orders.
+          </p>
+
+        </div>
+
+
+        <div className="manage-orders-count">
+
+          <strong>
+            {orders.length}
+          </strong>
+
+          <span>
+            Total Orders
+          </span>
+
+        </div>
+
+      </div>
+
+
+      {/* =====================================
+          LOADING
+      ====================================== */}
 
       {loading ? (
 
@@ -233,17 +449,38 @@ function ManageOrders() {
 
         </div>
 
+
       ) : orders.length === 0 ? (
 
+        /* =====================================
+           EMPTY
+        ====================================== */
+
         <div className="empty-state">
+
+          <div className="empty-state-icon">
+            📦
+          </div>
+
 
           <h3>
             No orders available
           </h3>
 
+
+          <p>
+            Customer orders will appear here
+            when they place an order.
+          </p>
+
         </div>
 
+
       ) : (
+
+        /* =====================================
+           ORDERS
+        ====================================== */
 
         <div className="orders-container">
 
@@ -260,15 +497,52 @@ function ManageOrders() {
                     ORDER HEADER
                 ================================= */}
 
-                <div className="order-header">
+                <div
+                  className="order-header"
+                >
 
-                  <h3>
-                    Order #{order.id}
-                  </h3>
+                  <div>
+
+                    <span className="order-label">
+                      ORDER
+                    </span>
 
 
-                  <span className="order-status">
-                    {order.status}
+                    <h3>
+                      Order #{order.id}
+                    </h3>
+
+
+                    {order.orderDate && (
+
+                      <small>
+                        {new Date(
+                          order.orderDate
+                        ).toLocaleString()}
+                      </small>
+
+                    )}
+
+                  </div>
+
+
+                  <span
+                    className={
+                      `order-status ${
+                        order.status
+                          ?.toLowerCase()
+                          .replaceAll(
+                            "_",
+                            "-"
+                          ) || ""
+                      }`
+                    }
+                  >
+
+                    {formatStatus(
+                      order.status
+                    )}
+
                   </span>
 
                 </div>
@@ -278,7 +552,9 @@ function ManageOrders() {
                     CUSTOMER DETAILS
                 ================================= */}
 
-                <div className="admin-order-section">
+                <div
+                  className="admin-order-section"
+                >
 
                   <h4>
                     👤 Customer Details
@@ -286,26 +562,38 @@ function ManageOrders() {
 
 
                   <p>
+
                     <strong>
                       Name:
                     </strong>{" "}
-                    {order.customerName || "N/A"}
+
+                    {order.customerName ||
+                      "N/A"}
+
                   </p>
 
 
                   <p>
+
                     <strong>
                       Email:
                     </strong>{" "}
-                    {order.customerEmail || "N/A"}
+
+                    {order.customerEmail ||
+                      "N/A"}
+
                   </p>
 
 
                   <p>
+
                     <strong>
                       Phone:
                     </strong>{" "}
-                    {order.phone || "N/A"}
+
+                    {order.phone ||
+                      "N/A"}
+
                   </p>
 
                 </div>
@@ -315,7 +603,9 @@ function ManageOrders() {
                     DELIVERY DETAILS
                 ================================= */}
 
-                <div className="admin-order-section">
+                <div
+                  className="admin-order-section"
+                >
 
                   <h4>
                     📍 Delivery Details
@@ -323,34 +613,50 @@ function ManageOrders() {
 
 
                   <p>
+
                     <strong>
                       Address:
                     </strong>{" "}
-                    {order.address || "N/A"}
+
+                    {order.address ||
+                      "N/A"}
+
                   </p>
 
 
                   <p>
+
                     <strong>
                       City:
                     </strong>{" "}
-                    {order.city || "N/A"}
+
+                    {order.city ||
+                      "N/A"}
+
                   </p>
 
 
                   <p>
+
                     <strong>
                       State:
                     </strong>{" "}
-                    {order.state || "N/A"}
+
+                    {order.state ||
+                      "N/A"}
+
                   </p>
 
 
                   <p>
+
                     <strong>
                       Pincode:
                     </strong>{" "}
-                    {order.pincode || "N/A"}
+
+                    {order.pincode ||
+                      "N/A"}
+
                   </p>
 
                 </div>
@@ -360,7 +666,9 @@ function ManageOrders() {
                     ORDER ITEMS
                 ================================= */}
 
-                <div className="admin-order-section">
+                <div
+                  className="admin-order-section"
+                >
 
                   <h4>
                     🛒 Order Items
@@ -370,13 +678,17 @@ function ManageOrders() {
                   {!order.items ||
                   order.items.length === 0 ? (
 
-                    <p className="no-order-items">
+                    <p
+                      className="no-order-items"
+                    >
                       No item details available.
                     </p>
 
                   ) : (
 
-                    <div className="admin-order-items">
+                    <div
+                      className="admin-order-items"
+                    >
 
                       {order.items.map(
                         (item) => (
@@ -389,19 +701,26 @@ function ManageOrders() {
                             <div>
 
                               <strong>
-                                {item.productName}
+                                {item.productName ||
+                                  "Product"}
                               </strong>
 
+
                               <small>
-                                ₹{item.price} ×{" "}
+
+                                ₹
+                                {item.price}
+                                {" × "}
                                 {item.quantity}
+
                               </small>
 
                             </div>
 
 
                             <strong>
-                              ₹{item.subtotal}
+                              ₹
+                              {item.subtotal}
                             </strong>
 
                           </div>
@@ -420,7 +739,9 @@ function ManageOrders() {
                     PAYMENT DETAILS
                 ================================= */}
 
-                <div className="admin-order-section">
+                <div
+                  className="admin-order-section"
+                >
 
                   <h4>
                     💳 Payment Details
@@ -433,16 +754,21 @@ function ManageOrders() {
                       Payment Status:
                     </strong>{" "}
 
+
                     <span
                       className={
                         order.paymentStatus ===
                         "PAID"
+
                           ? "payment-paid"
+
                           : "payment-pending"
                       }
                     >
+
                       {order.paymentStatus ||
                         "PENDING"}
+
                     </span>
 
                   </p>
@@ -469,7 +795,9 @@ function ManageOrders() {
                     ORDER TOTAL
                 ================================= */}
 
-                <div className="admin-order-total">
+                <div
+                  className="admin-order-total"
+                >
 
                   <span>
                     Total Amount
@@ -477,7 +805,8 @@ function ManageOrders() {
 
 
                   <strong>
-                    ₹{order.totalAmount}
+                    ₹
+                    {order.totalAmount}
                   </strong>
 
                 </div>
@@ -487,11 +816,14 @@ function ManageOrders() {
                     ORDER DATE
                 ================================= */}
 
-                <p className="admin-order-date">
+                <p
+                  className="admin-order-date"
+                >
 
                   <strong>
                     Order Date:
                   </strong>{" "}
+
 
                   {order.orderDate
                     ? new Date(
@@ -506,7 +838,9 @@ function ManageOrders() {
                     UPDATE STATUS
                 ================================= */}
 
-                <div className="admin-order-status-control">
+                <div
+                  className="admin-order-status-control"
+                >
 
                   <label>
                     Update Order Status
@@ -526,23 +860,37 @@ function ManageOrders() {
                     }
                   >
 
-                    <option value="ORDER_PLACED">
+                    <option
+                      value="ORDER_PLACED"
+                    >
                       Order Placed
                     </option>
 
-                    <option value="PROCESSING">
+
+                    <option
+                      value="PROCESSING"
+                    >
                       Processing
                     </option>
 
-                    <option value="OUT_FOR_DELIVERY">
+
+                    <option
+                      value="OUT_FOR_DELIVERY"
+                    >
                       Out for Delivery
                     </option>
 
-                    <option value="DELIVERED">
+
+                    <option
+                      value="DELIVERED"
+                    >
                       Delivered
                     </option>
 
-                    <option value="CANCELLED">
+
+                    <option
+                      value="CANCELLED"
+                    >
                       Cancelled
                     </option>
 
@@ -550,6 +898,41 @@ function ManageOrders() {
 
                 </div>
 
+
+                {/* =================================
+                    DELETE ORDER
+                ================================= */}
+
+                <div
+                  className="admin-order-delete-section"
+                >
+
+                  <button
+                    type="button"
+                    className="admin-delete-order-btn"
+                    onClick={() =>
+                      deleteOrder(
+                        order.id
+                      )
+                    }
+                    disabled={
+                      deletingOrderId ===
+                      order.id
+                    }
+                  >
+
+                    {deletingOrderId ===
+                    order.id
+
+                      ? "Deleting..."
+
+                      : "🗑️ Delete Order"
+
+                    }
+
+                  </button>
+
+                </div>
 
               </div>
 
@@ -565,5 +948,6 @@ function ManageOrders() {
   );
 
 }
+
 
 export default ManageOrders;

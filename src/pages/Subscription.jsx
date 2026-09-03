@@ -8,37 +8,93 @@ function Subscription() {
   const navigate = useNavigate();
 
 
-  const user =
-    JSON.parse(
+  /* =========================================
+     CURRENT USER
+  ========================================= */
+
+  let user = null;
+
+  try {
+
+    user = JSON.parse(
       localStorage.getItem("dairyhubUser")
     );
 
+  } catch (error) {
 
-  const [formData, setFormData] =
-    useState({
+    console.error(
+      "Unable to read logged-in user:",
+      error
+    );
 
-      milkType: "Cow Milk",
+    user = null;
 
-      quantity: "",
+  }
 
-      duration: "Monthly",
 
-      deliveryTime: "Morning"
+  /* =========================================
+     FORM DATA
+  ========================================= */
 
-    });
+  const [formData, setFormData] = useState({
 
+    /* =====================================
+       CUSTOMER DETAILS
+    ===================================== */
+
+    customerName:
+      user?.name || "",
+
+    phone:
+      user?.phone || "",
+
+    address: "",
+
+    city: "",
+
+    state: "",
+
+    pincode: "",
+
+
+    /* =====================================
+       SUBSCRIPTION DETAILS
+    ===================================== */
+
+    milkType:
+      "Cow Milk",
+
+    quantity:
+      "",
+
+    duration:
+      "Monthly",
+
+    deliveryTime:
+      "Morning"
+
+  });
+
+
+  /* =========================================
+     LOADING
+  ========================================= */
 
   const [loading, setLoading] =
     useState(false);
 
 
+  /* =========================================
+     PAYMENT INFORMATION
+  ========================================= */
+
   const [paymentInfo, setPaymentInfo] =
     useState(null);
 
 
-  // =========================================
-  // FORM CHANGE
-  // =========================================
+  /* =========================================
+     FORM CHANGE
+  ========================================= */
 
   const handleChange = (e) => {
 
@@ -54,9 +110,9 @@ function Subscription() {
   };
 
 
-  // =========================================
-  // CREATE RAZORPAY SUBSCRIPTION
-  // =========================================
+  /* =========================================
+     CREATE RAZORPAY SUBSCRIPTION
+  ========================================= */
 
   const createRazorpaySubscription =
     async () => {
@@ -92,7 +148,11 @@ function Subscription() {
 
       if (!response.ok) {
 
+        const errorText =
+          await response.text();
+
         throw new Error(
+          errorText ||
           "Unable to create Razorpay subscription"
         );
 
@@ -118,9 +178,9 @@ function Subscription() {
     };
 
 
-  // =========================================
-  // VERIFY PAYMENT
-  // =========================================
+  /* =========================================
+     VERIFY PAYMENT
+  ========================================= */
 
   const verifyPayment =
     async (
@@ -169,9 +229,9 @@ function Subscription() {
     };
 
 
-  // =========================================
-  // SAVE SUBSCRIPTION IN DAIRYHUB
-  // =========================================
+  /* =========================================
+     SAVE SUBSCRIPTION IN DAIRYHUB
+  ========================================= */
 
   const saveSubscription =
     async (
@@ -181,11 +241,35 @@ function Subscription() {
 
       const subscriptionData = {
 
+        /* =====================================
+           CUSTOMER DETAILS
+        ===================================== */
+
         customerName:
-          user.name,
+          formData.customerName,
 
         customerEmail:
           user.email,
+
+        phone:
+          formData.phone,
+
+        address:
+          formData.address,
+
+        city:
+          formData.city,
+
+        state:
+          formData.state,
+
+        pincode:
+          formData.pincode,
+
+
+        /* =====================================
+           SUBSCRIPTION DETAILS
+        ===================================== */
 
         milkType:
           formData.milkType,
@@ -199,11 +283,21 @@ function Subscription() {
         deliveryTime:
           formData.deliveryTime,
 
+
+        /* =====================================
+           STATUS
+        ===================================== */
+
         status:
           "ACTIVE",
 
         paymentStatus:
           "PAID",
+
+
+        /* =====================================
+           RAZORPAY DETAILS
+        ===================================== */
 
         razorpayPlanId:
           razorpayData.planId,
@@ -221,6 +315,12 @@ function Subscription() {
             .razorpay_signature
 
       };
+
+
+      console.log(
+        "Subscription being sent to Render:",
+        subscriptionData
+      );
 
 
       const response =
@@ -245,7 +345,11 @@ function Subscription() {
 
       if (!response.ok) {
 
+        const errorText =
+          await response.text();
+
         throw new Error(
+          errorText ||
           "Unable to save subscription"
         );
 
@@ -257,15 +361,184 @@ function Subscription() {
     };
 
 
-  // =========================================
-  // SUBSCRIBE & PAY
-  // =========================================
+  /* =========================================
+     VALIDATE FORM
+  ========================================= */
+
+  const validateForm = () => {
+
+
+    /* =====================================
+       NAME
+    ===================================== */
+
+    if (
+      !formData.customerName.trim()
+    ) {
+
+      alert(
+        "Please enter your full name."
+      );
+
+      return false;
+
+    }
+
+
+    /* =====================================
+       PHONE
+    ===================================== */
+
+    if (
+      !formData.phone.trim()
+    ) {
+
+      alert(
+        "Please enter your phone number."
+      );
+
+      return false;
+
+    }
+
+
+    if (
+      !/^[0-9]{10}$/.test(
+        formData.phone.trim()
+      )
+    ) {
+
+      alert(
+        "Please enter a valid 10-digit phone number."
+      );
+
+      return false;
+
+    }
+
+
+    /* =====================================
+       ADDRESS
+    ===================================== */
+
+    if (
+      !formData.address.trim()
+    ) {
+
+      alert(
+        "Please enter your delivery address."
+      );
+
+      return false;
+
+    }
+
+
+    /* =====================================
+       CITY
+    ===================================== */
+
+    if (
+      !formData.city.trim()
+    ) {
+
+      alert(
+        "Please enter your city."
+      );
+
+      return false;
+
+    }
+
+
+    /* =====================================
+       STATE
+    ===================================== */
+
+    if (
+      !formData.state.trim()
+    ) {
+
+      alert(
+        "Please enter your state."
+      );
+
+      return false;
+
+    }
+
+
+    /* =====================================
+       PINCODE
+    ===================================== */
+
+    if (
+      !/^[0-9]{6}$/.test(
+        formData.pincode.trim()
+      )
+    ) {
+
+      alert(
+        "Please enter a valid 6-digit pincode."
+      );
+
+      return false;
+
+    }
+
+
+    /* =====================================
+       QUANTITY
+    ===================================== */
+
+    if (
+      !formData.quantity.trim()
+    ) {
+
+      alert(
+        "Please enter the milk quantity."
+      );
+
+      return false;
+
+    }
+
+
+    /* =====================================
+       DELIVERY TIME
+    ===================================== */
+
+    if (
+      !formData.deliveryTime
+    ) {
+
+      alert(
+        "Please select a delivery time."
+      );
+
+      return false;
+
+    }
+
+
+    return true;
+
+  };
+
+
+  /* =========================================
+     SUBSCRIBE & PAY
+  ========================================= */
 
   const handleSubmit =
     async (e) => {
 
       e.preventDefault();
 
+
+      /* =====================================
+         LOGIN CHECK
+      ===================================== */
 
       if (!user) {
 
@@ -280,18 +553,20 @@ function Subscription() {
       }
 
 
-      if (
-        !formData.quantity.trim()
-      ) {
+      /* =====================================
+         FORM VALIDATION
+      ===================================== */
 
-        alert(
-          "Please enter the milk quantity."
-        );
+      if (!validateForm()) {
 
         return;
 
       }
 
+
+      /* =====================================
+         RAZORPAY CHECK
+      ===================================== */
 
       if (
         typeof window.Razorpay ===
@@ -312,23 +587,23 @@ function Subscription() {
 
       try {
 
-        // =================================
-        // 1. CREATE RAZORPAY SUBSCRIPTION
-        // =================================
+
+        /* =====================================
+           1. CREATE RAZORPAY SUBSCRIPTION
+        ===================================== */
 
         const razorpayData =
           await createRazorpaySubscription();
 
 
-        // Show payment information
         setPaymentInfo(
           razorpayData
         );
 
 
-        // =================================
-        // 2. OPEN RAZORPAY CHECKOUT
-        // =================================
+        /* =====================================
+           2. RAZORPAY OPTIONS
+        ===================================== */
 
         const options = {
 
@@ -345,19 +620,27 @@ function Subscription() {
             `${formData.milkType} ${formData.duration} Subscription`,
 
 
+          /* ===================================
+             CUSTOMER PREFILL
+          =================================== */
+
           prefill: {
 
             name:
-              user.name || "",
+              formData.customerName,
 
             email:
               user.email || "",
 
             contact:
-              user.phone || ""
+              formData.phone || ""
 
           },
 
+
+          /* ===================================
+             RAZORPAY THEME
+          =================================== */
 
           theme: {
 
@@ -367,9 +650,9 @@ function Subscription() {
           },
 
 
-          // =================================
-          // PAYMENT SUCCESS
-          // =================================
+          /* ===================================
+             PAYMENT SUCCESS
+          =================================== */
 
           handler:
             async function(
@@ -378,23 +661,66 @@ function Subscription() {
 
               try {
 
+                console.log(
+                  "Razorpay subscription payment response:",
+                  paymentResponse
+                );
+
+
+                /* ==============================
+                   VERIFY PAYMENT
+                ============================== */
+
                 await verifyPayment(
                   paymentResponse
                 );
 
 
-                await saveSubscription(
-                  paymentResponse,
-                  razorpayData
+                /* ==============================
+                   SAVE SUBSCRIPTION
+                ============================== */
+
+                const savedSubscription =
+                  await saveSubscription(
+                    paymentResponse,
+                    razorpayData
+                  );
+
+
+                console.log(
+                  "Subscription saved:",
+                  savedSubscription
                 );
 
+
+                /* ==============================
+                   SUCCESS MESSAGE
+                ============================== */
 
                 alert(
                   "Subscription payment successful! Your milk subscription is now active."
                 );
 
 
+                /* ==============================
+                   RESET FORM
+                ============================== */
+
                 setFormData({
+
+                  customerName:
+                    user.name || "",
+
+                  phone:
+                    user.phone || "",
+
+                  address: "",
+
+                  city: "",
+
+                  state: "",
+
+                  pincode: "",
 
                   milkType:
                     "Cow Milk",
@@ -411,6 +737,15 @@ function Subscription() {
                 });
 
 
+                setPaymentInfo(
+                  null
+                );
+
+
+                /* ==============================
+                   GO TO MY SUBSCRIPTIONS
+                ============================== */
+
                 navigate(
                   "/my-subscriptions"
                 );
@@ -419,7 +754,7 @@ function Subscription() {
               } catch (error) {
 
                 console.error(
-                  "Subscription verification error:",
+                  "Subscription verification/save error:",
                   error
                 );
 
@@ -437,6 +772,10 @@ function Subscription() {
             },
 
 
+          /* ===================================
+             PAYMENT MODAL CLOSED
+          =================================== */
+
           modal: {
 
             ondismiss:
@@ -451,11 +790,19 @@ function Subscription() {
         };
 
 
+        /* =====================================
+           CREATE RAZORPAY INSTANCE
+        ===================================== */
+
         const razorpay =
           new window.Razorpay(
             options
           );
 
+
+        /* =====================================
+           PAYMENT FAILED
+        ===================================== */
 
         razorpay.on(
           "payment.failed",
@@ -478,6 +825,10 @@ function Subscription() {
           }
         );
 
+
+        /* =====================================
+           OPEN RAZORPAY
+        ===================================== */
 
         razorpay.open();
 
@@ -502,6 +853,10 @@ function Subscription() {
 
     };
 
+
+  /* =========================================
+     PAGE
+  ========================================= */
 
   return (
 
@@ -532,7 +887,7 @@ function Subscription() {
           </h1>
 
           <p>
-            Create your daily milk delivery plan
+            Set up your daily milk delivery
           </p>
 
         </div>
@@ -553,18 +908,278 @@ function Subscription() {
 
         <p className="subscription-description">
 
-          Choose your milk preferences and delivery schedule.
+          Enter your delivery details and choose
+          your milk preferences.
 
         </p>
 
 
         <form
           className="subscription-form"
-          onSubmit={handleSubmit}
+          onSubmit={
+            handleSubmit
+          }
         >
 
 
-          {/* MILK TYPE */}
+          {/* =================================
+              CUSTOMER DETAILS
+          ================================= */}
+
+          <div
+            className="subscription-section-title"
+          >
+
+            👤 Customer Details
+
+          </div>
+
+
+          {/* =================================
+              FULL NAME
+          ================================= */}
+
+          <div className="form-group">
+
+            <label>
+              Full Name *
+            </label>
+
+
+            <input
+              name="customerName"
+              type="text"
+              placeholder="Enter your full name"
+              value={
+                formData.customerName
+              }
+              onChange={
+                handleChange
+              }
+              required
+            />
+
+          </div>
+
+
+          {/* =================================
+              PHONE
+          ================================= */}
+
+          <div className="form-group">
+
+            <label>
+              Phone Number *
+            </label>
+
+
+            <input
+              name="phone"
+              type="tel"
+              inputMode="numeric"
+              maxLength="10"
+              placeholder="10-digit phone number"
+              value={
+                formData.phone
+              }
+              onChange={
+                (e) => {
+
+                  const value =
+                    e.target.value
+                      .replace(
+                        /\D/g,
+                        ""
+                      );
+
+
+                  setFormData({
+
+                    ...formData,
+
+                    phone:
+                      value
+
+                  });
+
+                }
+              }
+              required
+            />
+
+          </div>
+
+
+          {/* =================================
+              EMAIL
+          ================================= */}
+
+          <div className="form-group">
+
+            <label>
+              Email
+            </label>
+
+
+            <input
+              type="email"
+              value={
+                user?.email || ""
+              }
+              readOnly
+              className="readonly-input"
+            />
+
+          </div>
+
+
+          {/* =================================
+              ADDRESS
+          ================================= */}
+
+          <div
+            className="form-group subscription-full-width"
+          >
+
+            <label>
+              Delivery Address *
+            </label>
+
+
+            <textarea
+              name="address"
+              rows="3"
+              placeholder="House / Flat No, Street, Area, Landmark"
+              value={
+                formData.address
+              }
+              onChange={
+                handleChange
+              }
+              required
+            />
+
+          </div>
+
+
+          {/* =================================
+              CITY
+          ================================= */}
+
+          <div className="form-group">
+
+            <label>
+              City *
+            </label>
+
+
+            <input
+              name="city"
+              type="text"
+              placeholder="Enter your city"
+              value={
+                formData.city
+              }
+              onChange={
+                handleChange
+              }
+              required
+            />
+
+          </div>
+
+
+          {/* =================================
+              STATE
+          ================================= */}
+
+          <div className="form-group">
+
+            <label>
+              State *
+            </label>
+
+
+            <input
+              name="state"
+              type="text"
+              placeholder="Enter your state"
+              value={
+                formData.state
+              }
+              onChange={
+                handleChange
+              }
+              required
+            />
+
+          </div>
+
+
+          {/* =================================
+              PINCODE
+          ================================= */}
+
+          <div className="form-group">
+
+            <label>
+              Pincode *
+            </label>
+
+
+            <input
+              name="pincode"
+              type="text"
+              inputMode="numeric"
+              maxLength="6"
+              placeholder="6-digit pincode"
+              value={
+                formData.pincode
+              }
+              onChange={
+                (e) => {
+
+                  const value =
+                    e.target.value
+                      .replace(
+                        /\D/g,
+                        ""
+                      );
+
+
+                  setFormData({
+
+                    ...formData,
+
+                    pincode:
+                      value
+
+                  });
+
+                }
+              }
+              required
+            />
+
+          </div>
+
+
+          {/* =================================
+              SUBSCRIPTION DETAILS
+          ================================= */}
+
+          <div
+            className="subscription-section-title"
+          >
+
+            🥛 Subscription Details
+
+          </div>
+
+
+          {/* =================================
+              MILK TYPE
+          ================================= */}
 
           <div className="form-group">
 
@@ -596,12 +1211,14 @@ function Subscription() {
           </div>
 
 
-          {/* QUANTITY */}
+          {/* =================================
+              QUANTITY
+          ================================= */}
 
           <div className="form-group">
 
             <label>
-              Quantity
+              Quantity *
             </label>
 
 
@@ -612,16 +1229,18 @@ function Subscription() {
               value={
                 formData.quantity
               }
-              required
               onChange={
                 handleChange
               }
+              required
             />
 
           </div>
 
 
-          {/* DURATION */}
+          {/* =================================
+              DURATION
+          ================================= */}
 
           <div className="form-group">
 
@@ -653,7 +1272,9 @@ function Subscription() {
           </div>
 
 
-          {/* DELIVERY */}
+          {/* =================================
+              DELIVERY TIME
+          ================================= */}
 
           <div className="form-group">
 
@@ -680,55 +1301,86 @@ function Subscription() {
                 Evening
               </option>
 
+              <option value="Both">
+                Morning &amp; Evening
+              </option>
+
             </select>
 
           </div>
 
 
           {/* =================================
-              PAYMENT INFORMATION
+              DELIVERY INFORMATION
           ================================= */}
 
           <div
-            className="form-group subscription-payment-info"
-            style={{
-              gridColumn: "1 / -1"
-            }}
+            className="subscription-full-width subscription-delivery-note"
           >
 
-            <label>
-              Payment
-            </label>
+            <span>
+              🚚
+            </span>
 
 
-            <div
-              style={{
-                padding: "15px",
-                background: "#f8f9fa",
-                border: "1px solid #e5e5e5",
-                borderRadius: "8px"
-              }}
-            >
+            <div>
 
               <strong>
-                💳 Razorpay
+                Delivery Schedule
               </strong>
 
 
-              <p
-                style={{
-                  margin: "6px 0 0",
-                  color: "#777",
-                  fontSize: "13px"
-                }}
-              >
-                Secure subscription payment
-                with Razorpay. Your recurring
-                payment authorization is handled
-                securely by Razorpay.
+              <p>
+
+                {formData.deliveryTime ===
+                  "Morning"
+
+                  ? "Your milk will be delivered every morning."
+
+                  : formData.deliveryTime ===
+                    "Evening"
+
+                    ? "Your milk will be delivered every evening."
+
+                    : "Your milk will be delivered every morning and evening."
+                }
+
               </p>
 
             </div>
+
+          </div>
+
+
+          {/* =================================
+              PAYMENT
+          ================================= */}
+
+          <div
+            className="subscription-section-title"
+          >
+
+            💳 Payment
+
+          </div>
+
+
+          <div
+            className="subscription-payment-info"
+          >
+
+            <strong>
+              Secure Razorpay Payment
+            </strong>
+
+
+            <p>
+
+              Your subscription payment
+              authorization is handled securely
+              by Razorpay.
+
+            </p>
 
           </div>
 
@@ -740,14 +1392,7 @@ function Subscription() {
           {paymentInfo && (
 
             <div
-              style={{
-                gridColumn: "1 / -1",
-                padding: "12px",
-                background: "#e8f5e9",
-                borderRadius: "8px",
-                color: "#2e7d32",
-                fontSize: "13px"
-              }}
+              className="subscription-payment-status"
             >
 
               Razorpay subscription created.
@@ -759,7 +1404,7 @@ function Subscription() {
 
 
           {/* =================================
-              SUBSCRIBE BUTTON
+              SUBMIT
           ================================= */}
 
           <button
@@ -770,7 +1415,7 @@ function Subscription() {
 
             {loading
               ? "Opening Payment..."
-              : "Subscribe & Pay"
+              : "Continue to Payment"
             }
 
           </button>

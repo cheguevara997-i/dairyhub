@@ -243,39 +243,7 @@ function Navbar() {
                   onClick={closeMenu}
                 >
                   🛠️ Admin Dashboard
-                </Link>
-
-
-                <Link
-                  to="/admin/products"
-                  onClick={closeMenu}
-                >
-                  🥛 Manage Products
-                </Link>
-
-
-                <Link
-                  to="/admin/orders"
-                  onClick={closeMenu}
-                >
-                  📦 Manage Orders
-                </Link>
-
-
-                <Link
-                  to="/admin/users"
-                  onClick={closeMenu}
-                >
-                  👥 Manage Users
-                </Link>
-
-
-                <Link
-                  to="/admin/subscriptions"
-                  onClick={closeMenu}
-                >
-                  🔄 Manage Subscriptions
-                </Link>
+                </Link>              
 
               </>
 

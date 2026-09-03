@@ -30,17 +30,31 @@ function Cart() {
 
   useEffect(() => {
 
-    const savedCart =
-      JSON.parse(
-        localStorage.getItem("dairyhubCart")
-      ) || [];
+    try {
 
-    setCart(savedCart);
+      const savedCart =
+        JSON.parse(
+          localStorage.getItem("dairyhubCart")
+        ) || [];
 
-    // Select all products by default
-    setSelectedItems(
-      savedCart.map(item => item.id)
-    );
+      setCart(savedCart);
+
+      // Select all products by default
+      setSelectedItems(
+        savedCart.map(item => item.id)
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Error loading cart:",
+        error
+      );
+
+      setCart([]);
+      setSelectedItems([]);
+
+    }
 
   }, []);
 
@@ -49,10 +63,25 @@ function Cart() {
      CURRENT USER
   ========================================= */
 
-  const user =
-    JSON.parse(
-      localStorage.getItem("dairyhubUser")
+  let user = null;
+
+  try {
+
+    user =
+      JSON.parse(
+        localStorage.getItem("dairyhubUser")
+      );
+
+  } catch (error) {
+
+    console.error(
+      "Unable to read logged-in user:",
+      error
     );
+
+    user = null;
+
+  }
 
 
   /* =========================================
@@ -69,10 +98,11 @@ function Cart() {
           return {
             ...item,
 
-            quantity: Math.max(
-              1,
-              item.quantity + value
-            )
+            quantity:
+              Math.max(
+                1,
+                Number(item.quantity || 1) + value
+              )
 
           };
 
@@ -116,7 +146,6 @@ function Cart() {
 
 
     // Also remove from selected items
-
     setSelectedItems(
       previous =>
         previous.filter(
@@ -136,14 +165,15 @@ function Cart() {
     setSelectedItems(
       previous => {
 
-        if (previous.includes(id)) {
+        if (
+          previous.includes(id)
+        ) {
 
           return previous.filter(
             itemId => itemId !== id
           );
 
         }
-
 
         return [
           ...previous,
@@ -201,8 +231,8 @@ function Cart() {
     selectedCartItems.reduce(
       (sum, item) =>
         sum +
-        Number(item.price) *
-        item.quantity,
+        Number(item.price || 0) *
+        Number(item.quantity || 1),
       0
     );
 
@@ -215,8 +245,8 @@ function Cart() {
     cart.reduce(
       (sum, item) =>
         sum +
-        Number(item.price) *
-        item.quantity,
+        Number(item.price || 0) *
+        Number(item.quantity || 1),
       0
     );
 
@@ -229,8 +259,10 @@ function Cart() {
 
     setAddressData({
       ...addressData,
+
       [e.target.name]:
         e.target.value
+
     });
 
   };
@@ -330,7 +362,11 @@ function Cart() {
 
       if (!response.ok) {
 
+        const errorText =
+          await response.text();
+
         throw new Error(
+          errorText ||
           "Unable to create payment order"
         );
 
@@ -436,13 +472,16 @@ function Cart() {
           "PAID",
 
         razorpayOrderId:
-          paymentResponse.razorpay_order_id,
+          paymentResponse
+            .razorpay_order_id,
 
         razorpayPaymentId:
-          paymentResponse.razorpay_payment_id,
+          paymentResponse
+            .razorpay_payment_id,
 
         razorpaySignature:
-          paymentResponse.razorpay_signature,
+          paymentResponse
+            .razorpay_signature,
 
 
         /* =====================================
@@ -460,14 +499,14 @@ function Cart() {
                 item.name,
 
               quantity:
-                item.quantity,
+                Number(item.quantity || 1),
 
               price:
-                Number(item.price),
+                Number(item.price || 0),
 
               subtotal:
-                Number(item.price) *
-                item.quantity
+                Number(item.price || 0) *
+                Number(item.quantity || 1)
 
             })
           )
@@ -476,7 +515,7 @@ function Cart() {
 
 
       console.log(
-        "Order being sent:",
+        "Order being sent to Render:",
         order
       );
 
@@ -501,7 +540,11 @@ function Cart() {
 
       if (!response.ok) {
 
+        const errorText =
+          await response.text();
+
         throw new Error(
+          errorText ||
           "Payment succeeded but order could not be saved"
         );
 
@@ -549,6 +592,40 @@ function Cart() {
       }
 
 
+      /* =====================================
+         VALIDATE DELIVERY DETAILS
+      ===================================== */
+
+      if (
+        !addressData.phone.trim() ||
+        !addressData.address.trim() ||
+        !addressData.city.trim() ||
+        !addressData.state.trim() ||
+        !addressData.pincode.trim()
+      ) {
+
+        alert(
+          "Please fill all delivery details."
+        );
+
+        return;
+
+      }
+
+
+      if (
+        addressData.pincode.length !== 6
+      ) {
+
+        alert(
+          "Please enter a valid 6-digit pincode."
+        );
+
+        return;
+
+      }
+
+
       if (
         typeof window.Razorpay ===
         "undefined"
@@ -568,11 +645,29 @@ function Cart() {
 
       try {
 
-        /* CREATE RAZORPAY ORDER */
+        /* =====================================
+           CREATE RAZORPAY ORDER
+        ===================================== */
 
         const razorpayOrder =
           await createPaymentOrder();
 
+
+        if (
+          !razorpayOrder ||
+          !razorpayOrder.id
+        ) {
+
+          throw new Error(
+            "Invalid Razorpay order response."
+          );
+
+        }
+
+
+        /* =====================================
+           RAZORPAY OPTIONS
+        ===================================== */
 
         const options = {
 
@@ -617,7 +712,9 @@ function Cart() {
           },
 
 
-          /* PAYMENT SUCCESS */
+          /* =====================================
+             PAYMENT SUCCESS
+          ===================================== */
 
           handler:
             async function(
@@ -626,14 +723,24 @@ function Cart() {
 
               try {
 
-                /* VERIFY PAYMENT */
+                console.log(
+                  "Razorpay payment response:",
+                  paymentResponse
+                );
+
+
+                /* =============================
+                   VERIFY PAYMENT
+                ============================= */
 
                 await verifyPayment(
                   paymentResponse
                 );
 
 
-                /* SAVE ONLY SELECTED ITEMS */
+                /* =============================
+                   SAVE ORDER IN DATABASE
+                ============================= */
 
                 const savedOrder =
                   await saveDairyHubOrder(
@@ -641,13 +748,9 @@ function Cart() {
                   );
 
 
-                /*
-                 * Remove only the products
-                 * that were purchased.
-                 *
-                 * Unselected products stay
-                 * in the cart.
-                 */
+                /* =============================
+                   REMOVE ONLY PURCHASED ITEMS
+                ============================= */
 
                 const remainingCart =
                   cart.filter(
@@ -679,10 +782,18 @@ function Cart() {
                 );
 
 
+                /* =============================
+                   SUCCESS MESSAGE
+                ============================= */
+
                 alert(
                   `Payment successful!\nOrder ID: ${savedOrder.id}`
                 );
 
+
+                /* =============================
+                   GO TO MY ORDERS
+                ============================= */
 
                 navigate("/orders");
 
@@ -710,7 +821,9 @@ function Cart() {
             },
 
 
-          /* PAYMENT WINDOW CLOSED */
+          /* =====================================
+             PAYMENT WINDOW CLOSED
+          ===================================== */
 
           modal: {
 
@@ -728,7 +841,9 @@ function Cart() {
         };
 
 
-        /* OPEN RAZORPAY */
+        /* =====================================
+           OPEN RAZORPAY
+        ===================================== */
 
         const razorpay =
           new window.Razorpay(
@@ -736,7 +851,9 @@ function Cart() {
           );
 
 
-        /* PAYMENT FAILED */
+        /* =====================================
+           PAYMENT FAILED
+        ===================================== */
 
         razorpay.on(
           "payment.failed",
@@ -774,6 +891,7 @@ function Cart() {
 
 
         alert(
+          error.message ||
           "Unable to start payment. Please try again."
         );
 
@@ -854,6 +972,7 @@ function Cart() {
           <input
             type="checkbox"
             checked={
+              cart.length > 0 &&
               selectedItems.length ===
               cart.length
             }
@@ -949,6 +1068,7 @@ function Cart() {
               <div className="cart-quantity">
 
                 <button
+                  type="button"
                   onClick={() =>
                     updateQuantity(
                       item.id,
@@ -966,6 +1086,7 @@ function Cart() {
 
 
                 <button
+                  type="button"
                   onClick={() =>
                     updateQuantity(
                       item.id,
@@ -978,6 +1099,7 @@ function Cart() {
 
 
                 <button
+                  type="button"
                   className="remove-cart-btn"
                   onClick={() =>
                     removeItem(
@@ -994,8 +1116,8 @@ function Cart() {
               <p className="cart-item-subtotal">
 
                 Subtotal: ₹
-                {Number(item.price) *
-                  item.quantity}
+                {Number(item.price || 0) *
+                  Number(item.quantity || 1)}
 
               </p>
 
@@ -1085,16 +1207,19 @@ function Cart() {
 
 
         <button
+          type="button"
           className="btn checkout-open-btn"
           onClick={openCheckout}
           disabled={
             selectedItems.length === 0
           }
         >
+
           {selectedItems.length === 0
             ? "Select Products"
             : "Proceed to Checkout"
           }
+
         </button>
 
       </div>
@@ -1192,8 +1317,8 @@ function Cart() {
 
                     <strong>
                       ₹
-                      {Number(item.price) *
-                        item.quantity}
+                      {Number(item.price || 0) *
+                        Number(item.quantity || 1)}
                     </strong>
 
                   </div>
@@ -1381,10 +1506,12 @@ function Cart() {
                 placingOrder
               }
             >
+
               {placingOrder
                 ? "Opening Payment..."
                 : `Pay ₹${selectedTotal}`
               }
+
             </button>
 
           </div>
