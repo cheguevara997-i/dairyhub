@@ -59,6 +59,20 @@ body {
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.25);
 }
 
+.dairy-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.dairy-logo-image {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  border-radius: 50%;
+  display: block;
+}
+
 
 /* =========================================
    HAMBURGER BUTTON
@@ -4994,6 +5008,118 @@ body {
 
   .customer-order-summary strong {
     text-align: left;
+  }
+
+}
+
+/* =========================================
+   DAIRYHUB SCROLL REVEAL
+   ========================================= */
+
+.home-reveal {
+  opacity: 0;
+  transform: translateY(70px);
+
+  transition:
+    opacity 0.8s ease,
+    transform 0.8s ease;
+
+  will-change: opacity, transform;
+}
+
+
+.home-reveal-show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+/* =========================================
+   HERO ENTRY
+   ========================================= */
+
+.hero-reveal {
+  transform: translateY(30px);
+}
+
+
+/* =========================================
+   PRODUCT CARD REVEAL
+   ========================================= */
+
+.product-reveal {
+  width: 100%;
+}
+
+
+.product-reveal .category-card {
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+
+.product-reveal .category-card:hover {
+  transform: translateY(-8px);
+
+  box-shadow:
+    0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+
+/* =========================================
+   WHY CARD REVEAL
+   ========================================= */
+
+.why-card-reveal {
+  width: 100%;
+}
+
+
+.why-card-reveal > div {
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+
+.why-card-reveal > div:hover {
+  transform: translateY(-6px);
+
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.12);
+}
+
+
+/* =========================================
+   MOBILE
+   ========================================= */
+
+@media (max-width: 768px) {
+
+  .home-reveal {
+    transform: translateY(40px);
+
+    transition-duration: 0.7s;
+  }
+
+  .home-reveal-show {
+    transform: translateY(0);
+  }
+
+}
+
+
+/* =========================================
+   REDUCE MOTION
+   ========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .home-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 
 }

@@ -105,7 +105,11 @@ function Navbar() {
         className="dairy-logo"
         onClick={closeMenu}
       >
-        🥛 DairyHub
+        <img
+          src="/images/dairy.jpg"
+          alt="DairyHub Logo"
+          className="dairy-logo-image"
+        />
       </Link>
 
 
