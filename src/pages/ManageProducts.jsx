@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
+
 import BackButton from "../components/BackButton";
 
+
+// =========================================
+// API URL
+// =========================================
+//
+// Both localhost and Vercel use the same
+// Render backend.
+//
 
 const API_URL =
   "https://dairyhub-backend.onrender.com/api/products";
@@ -8,27 +17,69 @@ const API_URL =
 
 function ManageProducts() {
 
-  const [products, setProducts] = useState([]);
+  // =========================================
+  // PRODUCTS
+  // =========================================
+
+  const [products, setProducts] =
+    useState([]);
 
 
-  const [formData, setFormData] = useState({
+  // =========================================
+  // FORM DATA
+  // =========================================
 
-    name: "",
-    category: "Milk",
-    price: "",
-    size: "",
-    stock: "",
-    description: "",
-    image: ""
+  const [formData, setFormData] =
+    useState({
 
-  });
+      name: "",
 
+      category: "Milk",
+
+      price: "",
+
+      size: "",
+
+      stock: "",
+
+      available: true,
+
+      description: "",
+
+      image: ""
+
+    });
+
+
+  // =========================================
+  // FORM LOADING
+  // =========================================
 
   const [loading, setLoading] =
     useState(false);
 
 
+  // =========================================
+  // PRODUCT LOADING
+  // =========================================
+
+  const [fetchingProducts, setFetchingProducts] =
+    useState(true);
+
+
+  // =========================================
+  // EDITING PRODUCT
+  // =========================================
+
   const [editingProduct, setEditingProduct] =
+    useState(null);
+
+
+  // =========================================
+  // AVAILABILITY PROCESSING
+  // =========================================
+
+  const [processingAvailabilityId, setProcessingAvailabilityId] =
     useState(null);
 
 
@@ -36,44 +87,61 @@ function ManageProducts() {
   // FETCH PRODUCTS
   // =========================================
 
-  const fetchProducts = async () => {
+  const fetchProducts =
+    async () => {
 
-    try {
+      try {
 
-      const response =
-        await fetch(API_URL);
+        setFetchingProducts(true);
 
 
-      if (!response.ok) {
+        const response =
+          await fetch(
+            API_URL
+          );
 
-        throw new Error(
-          "Failed to fetch products"
+
+        if (!response.ok) {
+
+          throw new Error(
+            "Failed to fetch products."
+          );
+
+        }
+
+
+        const data =
+          await response.json();
+
+
+        setProducts(
+          Array.isArray(data)
+            ? data
+            : []
         );
+
+
+      } catch (error) {
+
+        console.error(
+          "Error fetching products:",
+          error
+        );
+
+
+        alert(
+          error.message ||
+          "Unable to load products."
+        );
+
+
+      } finally {
+
+        setFetchingProducts(false);
 
       }
 
-
-      const data =
-        await response.json();
-
-
-      setProducts(
-        Array.isArray(data)
-          ? data
-          : []
-      );
-
-
-    } catch (error) {
-
-      console.error(
-        "Error fetching products:",
-        error
-      );
-
-    }
-
-  };
+    };
 
 
   // =========================================
@@ -91,216 +159,303 @@ function ManageProducts() {
   // HANDLE INPUT CHANGE
   // =========================================
 
-  const handleChange = (e) => {
+  const handleChange =
+    (e) => {
 
-    const {
-      name,
-      value
-    } = e.target;
+      const {
+        name,
+        value,
+        type,
+        checked
+      } = e.target;
 
 
-    /*
-     * Price and stock cannot be negative.
-     */
-
-    if (
-      name === "price" ||
-      name === "stock"
-    ) {
+      // =======================================
+      // PRICE / STOCK VALIDATION
+      // =======================================
 
       if (
-        value !== "" &&
-        Number(value) < 0
+        name === "price" ||
+        name === "stock"
       ) {
+
+        if (
+          value !== "" &&
+          Number(value) < 0
+        ) {
+
+          return;
+
+        }
+
+      }
+
+
+      // =======================================
+      // AVAILABILITY CHECKBOX
+      // =======================================
+
+      if (
+        type === "checkbox"
+      ) {
+
+        setFormData({
+
+          ...formData,
+
+          [name]:
+            checked
+
+        });
+
 
         return;
 
       }
 
-    }
 
+      // =======================================
+      // NORMAL INPUT
+      // =======================================
 
-    setFormData({
+      setFormData({
 
-      ...formData,
+        ...formData,
 
-      [name]:
-        value
+        [name]:
+          value
 
-    });
+      });
 
-  };
+    };
 
 
   // =========================================
   // RESET FORM
   // =========================================
 
-  const resetForm = () => {
+  const resetForm =
+    () => {
 
-    setFormData({
+      setFormData({
 
-      name: "",
-      category: "Milk",
-      price: "",
-      size: "",
-      stock: "",
-      description: "",
-      image: ""
+        name: "",
 
-    });
+        category: "Milk",
+
+        price: "",
+
+        size: "",
+
+        stock: "",
+
+        available: true,
+
+        description: "",
+
+        image: ""
+
+      });
 
 
-    setEditingProduct(null);
+      setEditingProduct(
+        null
+      );
 
-  };
+    };
 
 
   // =========================================
   // VALIDATE FORM
   // =========================================
 
-  const validateForm = () => {
+  const validateForm =
+    () => {
 
-    if (
-      !formData.name.trim()
-    ) {
-
-      alert(
-        "Please enter a product name."
-      );
-
-      return false;
-
-    }
-
-
-    if (
-      !formData.size.trim()
-    ) {
-
-      alert(
-        "Please enter the product size / quantity."
-      );
-
-      return false;
-
-    }
-
-
-    const price =
-      Number(
-        formData.price
-      );
-
-
-    if (
-      formData.price === "" ||
-      Number.isNaN(price) ||
-      price < 0
-    ) {
-
-      alert(
-        "Price must be 0 or greater."
-      );
-
-      return false;
-
-    }
-
-
-    const stock =
-      Number(
-        formData.stock
-      );
-
-
-    if (
-      formData.stock === "" ||
-      Number.isNaN(stock) ||
-      stock < 0
-    ) {
-
-      alert(
-        "Available Stock must be 0 or greater."
-      );
-
-      return false;
-
-    }
-
-
-    if (
-      !Number.isInteger(stock)
-    ) {
-
-      alert(
-        "Available Stock must be a whole number."
-      );
-
-      return false;
-
-    }
-
-
-    /*
-     * Image can be:
-     *
-     * /images/milk.jpg
-     *
-     * OR
-     *
-     * https://example.com/milk.jpg
-     */
-
-    const imageValue =
-      formData.image.trim();
-
-
-    if (imageValue) {
-
-      const isLocalPath =
-        imageValue.startsWith("/");
-
-
-      let isValidUrl =
-        false;
-
-
-      try {
-
-        new URL(
-          imageValue
-        );
-
-        isValidUrl = true;
-
-      } catch {
-
-        isValidUrl = false;
-
-      }
-
+      // =====================================
+      // NAME
+      // =====================================
 
       if (
-        !isLocalPath &&
-        !isValidUrl
+        !formData.name.trim()
       ) {
 
         alert(
-          "Please enter a valid image path or URL."
+          "Please enter a product name."
         );
+
 
         return false;
 
       }
 
-    }
+
+      // =====================================
+      // SIZE
+      // =====================================
+
+      if (
+        !formData.size.trim()
+      ) {
+
+        alert(
+          "Please enter the product size / quantity."
+        );
 
 
-    return true;
+        return false;
 
-  };
+      }
+
+
+      // =====================================
+      // PRICE
+      // =====================================
+
+      const price =
+        Number(
+          formData.price
+        );
+
+
+      if (
+
+        formData.price === "" ||
+
+        Number.isNaN(
+          price
+        ) ||
+
+        price < 0
+
+      ) {
+
+        alert(
+          "Price must be 0 or greater."
+        );
+
+
+        return false;
+
+      }
+
+
+      // =====================================
+      // STOCK
+      // =====================================
+
+      const stock =
+        Number(
+          formData.stock
+        );
+
+
+      if (
+
+        formData.stock === "" ||
+
+        Number.isNaN(
+          stock
+        ) ||
+
+        stock < 0
+
+      ) {
+
+        alert(
+          "Available Stock must be 0 or greater."
+        );
+
+
+        return false;
+
+      }
+
+
+      // =====================================
+      // WHOLE NUMBER STOCK
+      // =====================================
+
+      if (
+        !Number.isInteger(
+          stock
+        )
+      ) {
+
+        alert(
+          "Available Stock must be a whole number."
+        );
+
+
+        return false;
+
+      }
+
+
+      // =====================================
+      // IMAGE
+      // =====================================
+
+      const imageValue =
+        formData.image.trim();
+
+
+      if (
+        imageValue
+      ) {
+
+        const isLocalPath =
+          imageValue.startsWith(
+            "/"
+          );
+
+
+        let isValidUrl =
+          false;
+
+
+        try {
+
+          new URL(
+            imageValue
+          );
+
+
+          isValidUrl =
+            true;
+
+
+        } catch {
+
+          isValidUrl =
+            false;
+
+        }
+
+
+        if (
+
+          !isLocalPath &&
+
+          !isValidUrl
+
+        ) {
+
+          alert(
+            "Please enter a valid image path or URL."
+          );
+
+
+          return false;
+
+        }
+
+      }
+
+
+      return true;
+
+    };
 
 
   // =========================================
@@ -322,7 +477,9 @@ function ManageProducts() {
       }
 
 
-      setLoading(true);
+      setLoading(
+        true
+      );
 
 
       const productData = {
@@ -346,6 +503,11 @@ function ManageProducts() {
             formData.stock
           ),
 
+        available:
+          Boolean(
+            formData.available
+          ),
+
         description:
           formData.description.trim(),
 
@@ -361,7 +523,7 @@ function ManageProducts() {
 
 
         // ===================================
-        // UPDATE EXISTING PRODUCT
+        // UPDATE
         // ===================================
 
         if (
@@ -395,7 +557,7 @@ function ManageProducts() {
 
 
         // ===================================
-        // ADD NEW PRODUCT
+        // ADD
         // ===================================
 
         else {
@@ -427,10 +589,12 @@ function ManageProducts() {
 
 
         // ===================================
-        // CHECK RESPONSE
+        // RESPONSE CHECK
         // ===================================
 
-        if (!response.ok) {
+        if (
+          !response.ok
+        ) {
 
           const errorMessage =
             await response.text();
@@ -449,7 +613,7 @@ function ManageProducts() {
 
 
         // ===================================
-        // UPDATE LOCAL UI
+        // UPDATE LOCAL STATE
         // ===================================
 
         if (
@@ -460,10 +624,14 @@ function ManageProducts() {
             previousProducts =>
               previousProducts.map(
                 product =>
+
                   product.id ===
                   savedProduct.id
+
                     ? savedProduct
+
                     : product
+
               )
           );
 
@@ -472,12 +640,16 @@ function ManageProducts() {
             "Product updated successfully!"
           );
 
+
         } else {
 
           setProducts(
             previousProducts => [
+
               ...previousProducts,
+
               savedProduct
+
             ]
           );
 
@@ -508,7 +680,9 @@ function ManageProducts() {
 
       } finally {
 
-        setLoading(false);
+        setLoading(
+          false
+        );
 
       }
 
@@ -519,57 +693,246 @@ function ManageProducts() {
   // EDIT PRODUCT
   // =========================================
 
-  const editProduct = (
-    product
-  ) => {
+  const editProduct =
+    (product) => {
 
-    setEditingProduct(
-      product
-    );
-
-
-    setFormData({
-
-      name:
-        product.name ||
-        "",
-
-      category:
-        product.category ||
-        "Milk",
-
-      price:
-        product.price ??
-        "",
-
-      size:
-        product.size ||
-        "",
-
-      stock:
-        product.stock ??
-        "",
-
-      description:
-        product.description ||
-        "",
-
-      image:
-        product.image ||
-        ""
-
-    });
+      setEditingProduct(
+        product
+      );
 
 
-    window.scrollTo({
+      setFormData({
 
-      top: 0,
+        name:
+          product.name ||
+          "",
 
-      behavior: "smooth"
+        category:
+          product.category ||
+          "Milk",
 
-    });
+        price:
+          product.price ??
+          "",
 
-  };
+        size:
+          product.size ||
+          "",
+
+        stock:
+          product.stock ??
+          "",
+
+        available:
+          product.available !== false,
+
+        description:
+          product.description ||
+          "",
+
+        image:
+          product.image ||
+          ""
+
+      });
+
+
+      window.scrollTo({
+
+        top: 0,
+
+        behavior:
+          "smooth"
+
+      });
+
+    };
+
+
+  // =========================================
+  // CHANGE PRODUCT AVAILABILITY
+  // =========================================
+
+  const toggleAvailability =
+    async (product) => {
+
+      const currentAvailability =
+        product.available !== false;
+
+
+      const newAvailability =
+        !currentAvailability;
+
+
+      const actionText =
+        newAvailability
+          ? "make this product available"
+          : "mark this product as out of stock";
+
+
+      const confirmed =
+        window.confirm(
+
+          `Are you sure you want to ${actionText}?\n\n` +
+
+          `${product.name}` +
+
+          `${
+            product.size
+              ? ` (${product.size})`
+              : ""
+          }`
+
+        );
+
+
+      if (
+        !confirmed
+      ) {
+
+        return;
+
+      }
+
+
+      try {
+
+        setProcessingAvailabilityId(
+          product.id
+        );
+
+
+        const response =
+          await fetch(
+            `${API_URL}/${product.id}/availability`,
+            {
+
+              method:
+                "PUT",
+
+              headers: {
+
+                "Content-Type":
+                  "application/json"
+
+              },
+
+              body:
+                JSON.stringify({
+
+                  available:
+                    newAvailability
+
+                })
+
+            }
+          );
+
+
+        const responseText =
+          await response.text();
+
+
+        if (
+          !response.ok
+        ) {
+
+          throw new Error(
+            responseText ||
+            "Unable to update product availability."
+          );
+
+        }
+
+
+        const updatedProduct =
+          JSON.parse(
+            responseText
+          );
+
+
+        // ===================================
+        // UPDATE PRODUCTS
+        // ===================================
+
+        setProducts(
+          previousProducts =>
+            previousProducts.map(
+              item =>
+
+                item.id ===
+                updatedProduct.id
+
+                  ? updatedProduct
+
+                  : item
+
+            )
+        );
+
+
+        // ===================================
+        // UPDATE EDIT FORM
+        // ===================================
+
+        if (
+          editingProduct?.id ===
+          updatedProduct.id
+        ) {
+
+          setEditingProduct(
+            updatedProduct
+          );
+
+
+          setFormData(
+            previousForm => ({
+
+              ...previousForm,
+
+              available:
+                updatedProduct.available !== false
+
+            })
+          );
+
+        }
+
+
+        alert(
+
+          newAvailability
+
+            ? `${product.name} is now available.`
+
+            : `${product.name} is now out of stock.`
+
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Availability update error:",
+          error
+        );
+
+
+        alert(
+          error.message ||
+          "Unable to update product availability."
+        );
+
+
+      } finally {
+
+        setProcessingAvailabilityId(
+          null
+        );
+
+      }
+
+    };
 
 
   // =========================================
@@ -610,7 +973,9 @@ function ManageProducts() {
           );
 
 
-        if (!response.ok) {
+        if (
+          !response.ok
+        ) {
 
           const errorMessage =
             await response.text();
@@ -618,7 +983,7 @@ function ManageProducts() {
 
           throw new Error(
             errorMessage ||
-            "Failed to delete product"
+            "Failed to delete product."
           );
 
         }
@@ -628,15 +993,15 @@ function ManageProducts() {
           previousProducts =>
             previousProducts.filter(
               product =>
-                product.id !== id
+                product.id !==
+                id
             )
         );
 
 
-        /*
-         * If the deleted product was currently
-         * being edited, reset the form.
-         */
+        // ===================================
+        // RESET EDIT FORM
+        // ===================================
 
         if (
           editingProduct?.id ===
@@ -717,7 +1082,6 @@ function ManageProducts() {
           }
         >
 
-
           {/* PRODUCT NAME */}
 
           <input
@@ -750,21 +1114,17 @@ function ManageProducts() {
               Milk
             </option>
 
-
             <option value="Curd">
               Curd
             </option>
-
 
             <option value="Paneer">
               Paneer
             </option>
 
-
             <option value="Butter">
               Butter
             </option>
-
 
             <option value="Ghee">
               Ghee
@@ -791,7 +1151,7 @@ function ManageProducts() {
           />
 
 
-          {/* AVAILABLE STOCK */}
+          {/* STOCK */}
 
           <input
             type="number"
@@ -809,12 +1169,12 @@ function ManageProducts() {
           />
 
 
-          {/* PRODUCT SIZE */}
+          {/* SIZE */}
 
           <input
             type="text"
             name="size"
-            placeholder="Product Size / Quantity (e.g. 1 L, 500 ml, 250 ml, 1 kg, 500 g)"
+            placeholder="Product Size / Quantity (e.g. 1 L, 500 ml, 1 kg, 500 g)"
             value={
               formData.size
             }
@@ -823,6 +1183,45 @@ function ManageProducts() {
             }
             required
           />
+
+
+          {/* =================================
+              AVAILABILITY
+          ================================== */}
+
+          <div
+            className="product-availability-control"
+          >
+
+            <label>
+
+              <input
+                type="checkbox"
+                name="available"
+                checked={
+                  formData.available
+                }
+                onChange={
+                  handleChange
+                }
+              />
+
+
+              <span>
+
+                {formData.available
+
+                  ? "Available for Purchase"
+
+                  : "Out of Stock"
+
+                }
+
+              </span>
+
+            </label>
+
+          </div>
 
 
           {/* IMAGE */}
@@ -891,6 +1290,9 @@ function ManageProducts() {
                 onClick={
                   resetForm
                 }
+                disabled={
+                  loading
+                }
               >
                 Cancel Edit
               </button>
@@ -917,7 +1319,14 @@ function ManageProducts() {
         </h2>
 
 
-        {products.length === 0 ? (
+        {fetchingProducts ? (
+
+          <p>
+            Loading products...
+          </p>
+
+        ) : products.length ===
+          0 ? (
 
           <p>
             No products available.
@@ -930,115 +1339,203 @@ function ManageProducts() {
           >
 
             {products.map(
-              product => (
+              product => {
 
-                <div
-                  className="product-card"
-                  key={
-                    product.id
-                  }
-                >
+                const isAvailable =
+                  product.available !== false;
 
 
-                  {/* IMAGE */}
-
-                  {product.image && (
-
-                    <img
-                      src={
-                        product.image
-                      }
-                      alt={
-                        product.name
-                      }
-                    />
-
-                  )}
+                const isProcessingAvailability =
+                  processingAvailabilityId ===
+                  product.id;
 
 
-                  {/* NAME */}
-
-                  <h3>
-                    {product.name}
-                  </h3>
-
-
-                  {/* CATEGORY */}
-
-                  <p>
-                    Category:{" "}
-                    {product.category}
-                  </p>
-
-
-                  {/* SIZE */}
-
-                  <p>
-                    Size:{" "}
-                    {product.size ||
-                      "Not specified"}
-                  </p>
-
-
-                  {/* PRICE */}
-
-                  <p>
-                    Price: ₹
-                    {product.price}
-                  </p>
-
-
-                  {/* STOCK */}
-
-                  <p>
-                    Stock:{" "}
-                    {product.stock}
-                  </p>
-
-
-                  {/* DESCRIPTION */}
-
-                  <p>
-                    {product.description}
-                  </p>
-
-
-                  {/* ACTION BUTTONS */}
+                return (
 
                   <div
-                    className="product-actions"
+                    className="product-card"
+                    key={
+                      product.id
+                    }
                   >
 
-                    <button
-                      type="button"
-                      className="edit-product-btn"
-                      onClick={() =>
-                        editProduct(
-                          product
-                        )
-                      }
-                    >
-                      ✏️ Edit
-                    </button>
+                    {/* IMAGE */}
+
+                    {product.image && (
+
+                      <img
+                        src={
+                          product.image
+                        }
+                        alt={
+                          product.name
+                        }
+                      />
+
+                    )}
 
 
-                    <button
-                      type="button"
-                      className="delete-btn"
-                      onClick={() =>
-                        deleteProduct(
-                          product.id
-                        )
-                      }
+                    {/* NAME */}
+
+                    <h3>
+                      {product.name}
+                    </h3>
+
+
+                    {/* CATEGORY */}
+
+                    <p>
+                      Category:{" "}
+                      {product.category}
+                    </p>
+
+
+                    {/* SIZE */}
+
+                    <p>
+                      Size:{" "}
+                      {product.size ||
+                        "Not specified"}
+                    </p>
+
+
+                    {/* PRICE */}
+
+                    <p>
+                      Price: ₹
+                      {product.price}
+                    </p>
+
+
+                    {/* STOCK */}
+
+                    <p>
+                      Stock:{" "}
+                      {product.stock}
+                    </p>
+
+
+                    {/* =================================
+                        AVAILABILITY STATUS
+                    ================================== */}
+
+                    <p>
+
+                      Status:{" "}
+
+                      {isAvailable ? (
+
+                        <span
+                          className="product-available-status"
+                        >
+                          ✅ Available
+                        </span>
+
+                      ) : (
+
+                        <span
+                          className="product-unavailable-status"
+                        >
+                          🔴 Out of Stock
+                        </span>
+
+                      )}
+
+                    </p>
+
+
+                    {/* DESCRIPTION */}
+
+                    <p>
+                      {product.description}
+                    </p>
+
+
+                    {/* =================================
+                        ACTIONS
+                    ================================== */}
+
+                    <div
+                      className="product-actions"
                     >
-                      🗑 Delete
-                    </button>
+
+                      {/* EDIT */}
+
+                      <button
+                        type="button"
+                        className="edit-product-btn"
+                        onClick={() =>
+                          editProduct(
+                            product
+                          )
+                        }
+                      >
+                        ✏️ Edit
+                      </button>
+
+
+                      {/* AVAILABILITY */}
+
+                      <button
+                        type="button"
+                        className={
+
+                          isAvailable
+
+                            ? "product-unavailable-btn"
+
+                            : "product-available-btn"
+
+                        }
+                        onClick={() =>
+                          toggleAvailability(
+                            product
+                          )
+                        }
+                        disabled={
+                          isProcessingAvailability
+                        }
+                      >
+
+                        {isProcessingAvailability
+
+                          ? "Updating..."
+
+                          : isAvailable
+
+                            ? "🔴 Mark Out of Stock"
+
+                            : "✅ Mark Available"
+
+                        }
+
+                      </button>
+
+
+                      {/* DELETE */}
+
+                      <button
+                        type="button"
+                        className="delete-btn"
+                        onClick={() =>
+                          deleteProduct(
+                            product.id
+                          )
+                        }
+                        disabled={
+                          isProcessingAvailability
+                        }
+                      >
+                        🗑 Delete
+                      </button>
+
+                    </div>
 
                   </div>
 
-                </div>
+                );
 
-              )
+              }
             )}
 
           </div>
@@ -1052,5 +1549,6 @@ function ManageProducts() {
   );
 
 }
+
 
 export default ManageProducts;

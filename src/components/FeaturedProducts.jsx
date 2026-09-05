@@ -2,20 +2,47 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 
+// =========================================
+// API BASE URL
+// =========================================
+//
+// Both localhost and Vercel use the same
+// Render backend.
+//
+
 const API_BASE =
   "https://dairyhub-backend.onrender.com";
 
 
 function FeaturedProducts() {
 
+  // =========================================
+  // PRODUCT GROUPS
+  // =========================================
+
   const [products, setProducts] =
     React.useState([]);
+
+
+  // =========================================
+  // RATINGS
+  // =========================================
 
   const [ratings, setRatings] =
     React.useState({});
 
+
+  // =========================================
+  // SELECTED VARIANTS
+  // =========================================
+
   const [selectedVariants, setSelectedVariants] =
     React.useState({});
+
+
+  // =========================================
+  // LOADING
+  // =========================================
 
   const [loading, setLoading] =
     React.useState(true);
@@ -25,9 +52,12 @@ function FeaturedProducts() {
   // GROUP PRODUCTS BY NAME + CATEGORY
   // =========================================
 
-  const groupProducts = (productList) => {
+  const groupProducts = (
+    productList
+  ) => {
 
-    const groups = new Map();
+    const groups =
+      new Map();
 
 
     productList.forEach(
@@ -53,17 +83,24 @@ function FeaturedProducts() {
           `${name}__${category}`;
 
 
-        if (!groups.has(key)) {
+        if (
+          !groups.has(key)
+        ) {
 
           groups.set(
             key,
             {
+
               key,
+
               name:
                 product.name,
+
               category:
                 product.category,
+
               variants: []
+
             }
           );
 
@@ -73,7 +110,9 @@ function FeaturedProducts() {
         groups
           .get(key)
           .variants
-          .push(product);
+          .push(
+            product
+          );
 
       }
     );
@@ -92,73 +131,86 @@ function FeaturedProducts() {
 
   React.useEffect(() => {
 
-    const fetchProducts = async () => {
+    const fetchProducts =
+      async () => {
 
-      try {
+        try {
 
-        const response =
-          await fetch(
-            `${API_BASE}/api/products`
+          const response =
+            await fetch(
+              `${API_BASE}/api/products`
+            );
+
+
+          if (
+            !response.ok
+          ) {
+
+            throw new Error(
+              "Failed to fetch products."
+            );
+
+          }
+
+
+          const data =
+            await response.json();
+
+
+          const productList =
+            Array.isArray(data)
+              ? data
+              : [];
+
+
+          const groups =
+            groupProducts(
+              productList
+            );
+
+
+          /*
+           * Show only the first 6 UNIQUE
+           * product groups.
+           *
+           * Example:
+           *
+           * Milk 500 ml
+           * Milk 1 L
+           * Milk 2 L
+           *
+           * = ONE featured card.
+           */
+
+          const featuredGroups =
+            groups.slice(
+              0,
+              6
+            );
+
+
+          setProducts(
+            featuredGroups
           );
 
 
-        if (!response.ok) {
+        } catch (error) {
 
-          throw new Error(
-            "Failed to fetch products"
+          console.error(
+            "Error fetching featured products:",
+            error
+          );
+
+
+        } finally {
+
+          setLoading(
+            false
           );
 
         }
 
-
-        const data =
-          await response.json();
-
-
-        const productList =
-          Array.isArray(data)
-            ? data
-            : [];
-
-
-        const groups =
-          groupProducts(
-            productList
-          );
-
-
-        /*
-         * Show only the first 6
-         * UNIQUE products.
-         */
-
-        const featuredGroups =
-          groups.slice(
-            0,
-            6
-          );
-
-
-        setProducts(
-          featuredGroups
-        );
-
-
-      } catch (error) {
-
-        console.error(
-          "Error fetching featured products:",
-          error
-        );
-
-
-      } finally {
-
-        setLoading(false);
-
-      }
-
-    };
+      };
 
 
     fetchProducts();
@@ -172,135 +224,140 @@ function FeaturedProducts() {
 
   React.useEffect(() => {
 
-    const fetchRatings = async () => {
+    const fetchRatings =
+      async () => {
 
-      if (
-        products.length === 0
-      ) {
+        if (
+          products.length === 0
+        ) {
 
-        return;
+          return;
 
-      }
-
-
-      try {
-
-        const variants =
-          products.flatMap(
-            group =>
-              group.variants
-          );
+        }
 
 
-        const results =
-          await Promise.all(
+        try {
 
-            variants.map(
-              async (product) => {
+          const variants =
+            products.flatMap(
+              group =>
+                group.variants
+            );
 
-                try {
 
-                  const response =
-                    await fetch(
-                      `${API_BASE}/api/reviews/product/${product.id}/summary`
+          const results =
+            await Promise.all(
+
+              variants.map(
+                async (product) => {
+
+                  try {
+
+                    const response =
+                      await fetch(
+                        `${API_BASE}/api/reviews/product/${product.id}/summary`
+                      );
+
+
+                    if (
+                      !response.ok
+                    ) {
+
+                      throw new Error(
+                        `Failed to fetch rating for product ${product.id}`
+                      );
+
+                    }
+
+
+                    const data =
+                      await response.json();
+
+
+                    return {
+
+                      productId:
+                        product.id,
+
+                      average:
+                        Number(
+                          data.averageRating
+                        ) || 0,
+
+                      count:
+                        Number(
+                          data.reviewCount
+                        ) || 0
+
+                    };
+
+                  } catch (error) {
+
+                    console.error(
+                      `Error fetching rating for product ${product.id}:`,
+                      error
                     );
 
 
-                  if (!response.ok) {
+                    return {
 
-                    throw new Error(
-                      `Failed to fetch rating for product ${product.id}`
-                    );
+                      productId:
+                        product.id,
+
+                      average:
+                        0,
+
+                      count:
+                        0
+
+                    };
 
                   }
 
-
-                  const data =
-                    await response.json();
-
-
-                  return {
-
-                    productId:
-                      product.id,
-
-                    average:
-                      Number(
-                        data.averageRating
-                      ) || 0,
-
-                    count:
-                      Number(
-                        data.reviewCount
-                      ) || 0
-
-                  };
-
-
-                } catch (error) {
-
-                  console.error(
-                    `Error fetching rating for product ${product.id}:`,
-                    error
-                  );
-
-
-                  return {
-
-                    productId:
-                      product.id,
-
-                    average: 0,
-
-                    count: 0
-
-                  };
-
                 }
 
-              }
-            )
+              )
 
+            );
+
+
+          const ratingMap = {};
+
+
+          results.forEach(
+            (item) => {
+
+              ratingMap[
+                item.productId
+              ] = {
+
+                average:
+                  item.average,
+
+                count:
+                  item.count
+
+              };
+
+            }
           );
 
 
-        const ratingMap = {};
+          setRatings(
+            ratingMap
+          );
 
 
-        results.forEach(
-          (item) => {
+        } catch (error) {
 
-            ratingMap[
-              item.productId
-            ] = {
+          console.error(
+            "Error fetching featured product ratings:",
+            error
+          );
 
-              average:
-                item.average,
+        }
 
-              count:
-                item.count
-
-            };
-
-          }
-        );
-
-
-        setRatings(
-          ratingMap
-        );
-
-
-      } catch (error) {
-
-        console.error(
-          "Error fetching featured product ratings:",
-          error
-        );
-
-      }
-
-    };
+      };
 
 
     fetchRatings();
@@ -312,224 +369,325 @@ function FeaturedProducts() {
   // GET SELECTED VARIANT
   // =========================================
 
-  const getSelectedVariant = (
-    group
-  ) => {
+  const getSelectedVariant =
+    (group) => {
 
-    const selectedId =
-      selectedVariants[
-        group.key
-      ];
-
-
-    if (
-      selectedId
-    ) {
-
-      const selected =
-        group.variants.find(
-          variant =>
-            variant.id ===
-            selectedId
-        );
+      const selectedId =
+        selectedVariants[
+          group.key
+        ];
 
 
-      if (selected) {
+      if (
+        selectedId
+      ) {
 
-        return selected;
+        const selected =
+          group.variants.find(
+            variant =>
+
+              String(
+                variant.id
+              ) ===
+
+              String(
+                selectedId
+              )
+
+          );
+
+
+        if (
+          selected
+        ) {
+
+          return selected;
+
+        }
 
       }
 
-    }
 
+      return group.variants[0];
 
-    return group.variants[0];
-
-  };
+    };
 
 
   // =========================================
-  // CHANGE SIZE
+  // CHECK PRODUCT AVAILABILITY
   // =========================================
 
-  const handleVariantChange = (
-    groupKey,
-    variantId
-  ) => {
+  const isProductAvailable =
+    (product) => {
 
-    setSelectedVariants(
-      previous => ({
+      if (
+        !product
+      ) {
 
-        ...previous,
+        return false;
 
-        [groupKey]:
-          Number(
-            variantId
-          )
+      }
 
-      })
-    );
 
-  };
+      return (
+
+        Number(
+          product.stock
+        ) > 0
+
+        &&
+
+        product.available !== false
+
+      );
+
+    };
+
+
+  // =========================================
+  // CHANGE SIZE / VARIANT
+  // =========================================
+
+  const handleVariantChange =
+    (
+      groupKey,
+      variantId
+    ) => {
+
+      setSelectedVariants(
+        previous => ({
+
+          ...previous,
+
+          [groupKey]:
+            Number(
+              variantId
+            )
+
+        })
+      );
+
+    };
 
 
   // =========================================
   // AGGREGATED RATING
   // =========================================
 
-  const getGroupRating = (
-    group
-  ) => {
+  const getGroupRating =
+    (group) => {
 
-    let totalReviews = 0;
+      let totalReviews =
+        0;
 
-    let weightedTotal = 0;
-
-
-    group.variants.forEach(
-      variant => {
-
-        const rating =
-          ratings[
-            variant.id
-          ];
+      let weightedTotal =
+        0;
 
 
-        if (!rating) {
+      group.variants.forEach(
+        (variant) => {
 
-          return;
+          const rating =
+            ratings[
+              variant.id
+            ];
+
+
+          if (
+            !rating
+          ) {
+
+            return;
+
+          }
+
+
+          const count =
+            Number(
+              rating.count
+            ) || 0;
+
+
+          const average =
+            Number(
+              rating.average
+            ) || 0;
+
+
+          totalReviews +=
+            count;
+
+
+          weightedTotal +=
+            average *
+            count;
 
         }
+      );
 
 
-        const count =
-          Number(
-            rating.count
-          ) || 0;
+      if (
+        totalReviews ===
+        0
+      ) {
 
+        return {
 
-        const average =
-          Number(
-            rating.average
-          ) || 0;
+          average:
+            0,
 
+          count:
+            0
 
-        totalReviews +=
-          count;
-
-
-        weightedTotal +=
-          average *
-          count;
+        };
 
       }
-    );
 
-
-    if (
-      totalReviews === 0
-    ) {
 
       return {
 
-        average: 0,
+        average:
+          weightedTotal /
+          totalReviews,
 
-        count: 0
+        count:
+          totalReviews
 
       };
 
-    }
-
-
-    return {
-
-      average:
-        weightedTotal /
-        totalReviews,
-
-      count:
-        totalReviews
-
     };
-
-  };
 
 
   // =========================================
   // ADD TO CART
   // =========================================
 
-  const addToCart = (
-    product
-  ) => {
+  const addToCart =
+    (product) => {
 
-    let cart =
-      JSON.parse(
-        localStorage.getItem(
-          "dairyhubCart"
-        )
-      ) || [];
-
-
-    const existingProduct =
-      cart.find(
-        item =>
-          item.id ===
-          product.id
-      );
-
-
-    if (existingProduct) {
+      // ---------------------------------------
+      // AVAILABILITY CHECK
+      // ---------------------------------------
 
       if (
-        existingProduct.quantity >=
-        product.stock
+        !isProductAvailable(
+          product
+        )
       ) {
 
         alert(
-          "You cannot add more than the available stock."
+          "This product is currently out of stock."
         );
+
 
         return;
 
       }
 
 
-      existingProduct.quantity += 1;
+      // ---------------------------------------
+      // GET CART
+      // ---------------------------------------
 
-    } else {
-
-      cart.push({
-
-        ...product,
-
-        quantity: 1
-
-      });
-
-    }
+      let cart =
+        JSON.parse(
+          localStorage.getItem(
+            "dairyhubCart"
+          )
+        ) || [];
 
 
-    localStorage.setItem(
-      "dairyhubCart",
-      JSON.stringify(
-        cart
-      )
-    );
+      // ---------------------------------------
+      // FIND EXISTING PRODUCT
+      // ---------------------------------------
+
+      const existingProduct =
+        cart.find(
+          item =>
+            item.id ===
+            product.id
+        );
 
 
-    alert(
-      `${product.name} (${product.size || "Size not specified"}) added to cart!`
-    );
+      // ---------------------------------------
+      // EXISTING PRODUCT
+      // ---------------------------------------
 
-  };
+      if (
+        existingProduct
+      ) {
+
+        if (
+          existingProduct.quantity >=
+          product.stock
+        ) {
+
+          alert(
+            "You cannot add more than the available stock."
+          );
+
+
+          return;
+
+        }
+
+
+        existingProduct.quantity +=
+          1;
+
+
+      } else {
+
+        // -------------------------------------
+        // NEW CART ITEM
+        // -------------------------------------
+
+        cart.push({
+
+          ...product,
+
+          quantity:
+            1
+
+        });
+
+      }
+
+
+      // ---------------------------------------
+      // SAVE CART
+      // ---------------------------------------
+
+      localStorage.setItem(
+        "dairyhubCart",
+        JSON.stringify(
+          cart
+        )
+      );
+
+
+      alert(
+
+        `${product.name}` +
+
+        `${
+          product.size
+            ? ` (${product.size})`
+            : ""
+        } added to cart!`
+
+      );
+
+    };
 
 
   // =========================================
   // LOADING
   // =========================================
 
-  if (loading) {
+  if (
+    loading
+  ) {
 
     return (
 
@@ -544,6 +702,7 @@ function FeaturedProducts() {
           <h2>
             Featured Products
           </h2>
+
 
           <p>
             Fresh dairy products you’ll love.
@@ -574,7 +733,8 @@ function FeaturedProducts() {
   // =========================================
 
   if (
-    products.length === 0
+    products.length ===
+    0
   ) {
 
     return null;
@@ -656,6 +816,12 @@ function FeaturedProducts() {
               groupRating.count;
 
 
+            const selectedAvailable =
+              isProductAvailable(
+                selectedProduct
+              );
+
+
             return (
 
               <div
@@ -665,7 +831,9 @@ function FeaturedProducts() {
                 }
               >
 
-                {/* IMAGE */}
+                {/* =========================
+                    IMAGE
+                ========================== */}
 
                 <div
                   className="featured-product-image-wrapper"
@@ -684,18 +852,24 @@ function FeaturedProducts() {
                 </div>
 
 
-                {/* CONTENT */}
+                {/* =========================
+                    CONTENT
+                ========================== */}
 
                 <div
                   className="featured-product-content"
                 >
+
+                  {/* PRODUCT NAME */}
 
                   <h3>
                     {group.name}
                   </h3>
 
 
-                  {/* RATING */}
+                  {/* =========================
+                      RATING
+                  ========================== */}
 
                   <div
                     className="featured-product-rating"
@@ -726,9 +900,12 @@ function FeaturedProducts() {
                         >
                           (
                           {reviewCount}{" "}
-                          {reviewCount === 1
-                            ? "review"
-                            : "reviews"}
+                          {
+                            reviewCount ===
+                            1
+                              ? "review"
+                              : "reviews"
+                          }
                           )
                         </span>
 
@@ -747,16 +924,24 @@ function FeaturedProducts() {
                   </div>
 
 
-                  {/* DESCRIPTION */}
+                  {/* =========================
+                      DESCRIPTION
+                  ========================== */}
 
                   <p
                     className="featured-product-description"
                   >
-                    {selectedProduct.description}
+
+                    {
+                      selectedProduct.description
+                    }
+
                   </p>
 
 
-                  {/* SIZE */}
+                  {/* =========================
+                      SIZE / QUANTITY
+                  ========================== */}
 
                   <div
                     className="featured-product-size"
@@ -771,11 +956,12 @@ function FeaturedProducts() {
                       value={
                         selectedProduct.id
                       }
-                      onChange={(e) =>
-                        handleVariantChange(
-                          group.key,
-                          e.target.value
-                        )
+                      onChange={
+                        (e) =>
+                          handleVariantChange(
+                            group.key,
+                            e.target.value
+                          )
                       }
                     >
 
@@ -790,8 +976,12 @@ function FeaturedProducts() {
                               variant.id
                             }
                           >
-                            {variant.size ||
-                              "Size not specified"}
+
+                            {
+                              variant.size ||
+                              "Size not specified"
+                            }
+
                           </option>
 
                         )
@@ -802,24 +992,34 @@ function FeaturedProducts() {
                   </div>
 
 
-                  {/* PRICE */}
+                  {/* =========================
+                      PRICE
+                  ========================== */}
 
                   <div
                     className="featured-product-price"
                   >
+
                     ₹
-                    {selectedProduct.price}
+                    {
+                      selectedProduct.price
+                    }
+
                   </div>
 
 
-                  {/* STOCK */}
+                  {/* =========================
+                      STOCK / AVAILABILITY
+                  ========================== */}
 
-                  {selectedProduct.stock > 0 ? (
+                  {selectedAvailable ? (
 
                     <span
                       className="featured-product-stock"
                     >
+
                       In Stock
+
                     </span>
 
                   ) : (
@@ -827,25 +1027,35 @@ function FeaturedProducts() {
                     <span
                       className="featured-product-out-stock"
                     >
+
                       Out of Stock
+
                     </span>
 
                   )}
 
 
-                  {/* ACTIONS */}
+                  {/* =========================
+                      ACTIONS
+                  ========================== */}
 
                   <div
                     className="featured-product-actions"
                   >
 
+                    {/* VIEW DETAILS */}
+
                     <Link
-                      to={`/products/${selectedProduct.id}`}
+                      to={
+                        `/products/${selectedProduct.id}`
+                      }
                       className="featured-view-btn"
                     >
                       View Details
                     </Link>
 
+
+                    {/* ADD TO CART */}
 
                     <button
                       className="featured-cart-btn"
@@ -855,14 +1065,16 @@ function FeaturedProducts() {
                         )
                       }
                       disabled={
-                        selectedProduct.stock <=
-                        0
+                        !selectedAvailable
                       }
                     >
 
-                      {selectedProduct.stock > 0
+                      {selectedAvailable
+
                         ? "Add to Cart"
+
                         : "Out of Stock"
+
                       }
 
                     </button>

@@ -83,6 +83,20 @@ function MyOrders() {
 
 
   // =========================================
+  // ORDER EXPERIENCE FEEDBACK
+  // =========================================
+
+  const [experienceRating, setExperienceRating] =
+    useState(0);
+
+  const [experienceFeedback, setExperienceFeedback] =
+    useState("");
+
+  const [experienceSubmitting, setExperienceSubmitting] =
+    useState(false);
+
+
+  // =========================================
   // CURRENT USER
   // =========================================
 
@@ -707,13 +721,79 @@ function MyOrders() {
 
 
   // =========================================
+  // OPEN ORDER EXPERIENCE POPUP
+  // =========================================
+
+  const openExperiencePopup = (
+    order
+  ) => {
+
+    if (!order?.id) {
+
+      return;
+
+    }
+
+
+    const status =
+      normalizeStatus(
+        order.status
+      );
+
+
+    if (
+      status !== "CANCELLED"
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      order.experienceRating != null
+    ) {
+
+      alert(
+        "You have already submitted feedback for this order."
+      );
+
+      return;
+
+    }
+
+
+    setExperienceRating(0);
+
+    setExperienceFeedback("");
+
+    setEditingReview(null);
+
+
+    setReviewPopup({
+
+      order,
+
+      mode:
+        "CANCELLED_EXPERIENCE",
+
+      review:
+        null
+
+    });
+
+  };
+
+
+  // =========================================
   // CLOSE POPUP
   // =========================================
 
   const closeReviewPopup = () => {
 
     if (reviewSubmitting ||
-        updatingReview) {
+        updatingReview ||
+        experienceSubmitting) {
 
       return;
 
@@ -734,6 +814,10 @@ function MyOrders() {
     setEditRating(0);
 
     setEditComment("");
+
+    setExperienceRating(0);
+
+    setExperienceFeedback("");
 
   };
 
@@ -954,6 +1038,210 @@ function MyOrders() {
       } finally {
 
         setReviewSubmitting(
+          false
+        );
+
+      }
+
+    };
+
+
+  // =========================================
+  // SUBMIT ORDER EXPERIENCE FEEDBACK
+  // =========================================
+
+  const submitExperienceFeedback =
+    async () => {
+
+      const currentUser =
+        getCurrentUser();
+
+
+      if (!currentUser) {
+
+        alert(
+          "Please login."
+        );
+
+        return;
+
+      }
+
+
+      if (!reviewPopup?.order?.id) {
+
+        return;
+
+      }
+
+
+      if (
+        experienceRating === 0
+      ) {
+
+        alert(
+          "Please select a rating."
+        );
+
+        return;
+
+      }
+
+
+      if (
+        !experienceFeedback.trim()
+      ) {
+
+        alert(
+          "Please write your feedback."
+        );
+
+        return;
+
+      }
+
+
+      try {
+
+        setExperienceSubmitting(
+          true
+        );
+
+
+        const response =
+          await fetch(
+            `${API_BASE}/api/orders/${reviewPopup.order.id}/experience-feedback`,
+            {
+
+              method:
+                "POST",
+
+              headers: {
+
+                "Content-Type":
+                  "application/json"
+
+              },
+
+              body:
+                JSON.stringify({
+
+                  customerEmail:
+                    currentUser.email,
+
+                  rating:
+                    experienceRating,
+
+                  feedback:
+                    experienceFeedback.trim()
+
+                })
+
+            }
+          );
+
+
+        const responseText =
+          await response.text();
+
+
+        if (
+          !response.ok
+        ) {
+
+          throw new Error(
+            responseText ||
+            "Unable to submit order feedback."
+          );
+
+        }
+
+
+        let updatedOrder =
+          null;
+
+
+        if (
+          responseText
+        ) {
+
+          try {
+
+            updatedOrder =
+              JSON.parse(
+                responseText
+              );
+
+          } catch {
+
+            updatedOrder =
+              null;
+
+          }
+
+        }
+
+
+        setOrders(
+          previousOrders =>
+            previousOrders.map(
+              order =>
+                order.id ===
+                reviewPopup.order.id
+                  ? updatedOrder || {
+
+                      ...order,
+
+                      experienceRating:
+                        experienceRating,
+
+                      experienceFeedback:
+                        experienceFeedback.trim()
+
+                    }
+
+                  : order
+            )
+        );
+
+
+        alert(
+          "Thank you! Your order experience feedback was submitted successfully."
+        );
+
+
+        setReviewPopup(
+          null
+        );
+
+
+        setExperienceRating(
+          0
+        );
+
+
+        setExperienceFeedback(
+          ""
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Order experience feedback error:",
+          error
+        );
+
+
+        alert(
+          error.message ||
+          "Something went wrong while submitting your feedback."
+        );
+
+
+      } finally {
+
+        setExperienceSubmitting(
           false
         );
 
@@ -2185,6 +2473,73 @@ function MyOrders() {
                   </div>
 
 
+                  {/* =================================
+                      CANCELLED ORDER EXPERIENCE FEEDBACK
+                  ================================== */}
+
+                  {isCancelled && (
+
+                    <div
+                      className="my-orders-review-actions cancelled-experience-section"
+                    >
+
+                      {order.experienceRating != null ? (
+
+                        <div
+                          className="order-review-completed"
+                        >
+
+                          <div>
+
+                            <strong>
+                              ✓ Feedback submitted
+                            </strong>
+
+
+                            <div
+                              className="order-review-mini-stars"
+                            >
+
+                              {renderStars(
+                                order.experienceRating
+                              )}
+
+                            </div>
+
+
+                            {order.experienceFeedback && (
+
+                              <p>
+                                {order.experienceFeedback}
+                              </p>
+
+                            )}
+
+                          </div>
+
+                        </div>
+
+                      ) : (
+
+                        <button
+                          type="button"
+                          className="rate-review-btn large"
+                          onClick={() =>
+                            openExperiencePopup(
+                              order
+                            )
+                          }
+                        >
+                          ⭐ Rate Order Experience
+                        </button>
+
+                      )}
+
+                    </div>
+
+                  )}
+
+
                   {/* DELIVERY DETAILS */}
 
                   <div
@@ -2380,7 +2735,10 @@ function MyOrders() {
                   {reviewPopup.mode ===
                   "EXISTING"
                     ? "Your Review"
-                    : "Rate & Review"}
+                    : reviewPopup.mode ===
+                      "CANCELLED_EXPERIENCE"
+                      ? "Rate Order Experience"
+                      : "Rate & Review"}
                 </h2>
 
               </div>
@@ -2413,23 +2771,30 @@ function MyOrders() {
               <div
                 className="my-orders-review-product-icon"
               >
-                🥛
+                {reviewPopup.mode ===
+                "CANCELLED_EXPERIENCE"
+                  ? "⚠️"
+                  : "🥛"}
               </div>
 
 
               <div>
 
                 <strong>
-                  {
-                    reviewPopup.item
-                      ?.productName ||
-                    "Product"
-                  }
+                  {reviewPopup.mode ===
+                  "CANCELLED_EXPERIENCE"
+                    ? `Order #${reviewPopup.order?.id || ""}`
+                    : reviewPopup.item
+                        ?.productName ||
+                      "Product"}
                 </strong>
 
 
                 <span>
-                  Delivered
+                  {reviewPopup.mode ===
+                  "CANCELLED_EXPERIENCE"
+                    ? "Order Cancelled"
+                    : "Delivered"}
                 </span>
 
               </div>
@@ -2512,6 +2877,112 @@ function MyOrders() {
 
               </div>
 
+
+            ) : reviewPopup.mode ===
+              "CANCELLED_EXPERIENCE" ? (
+
+              /* =================================
+                 CANCELLED ORDER EXPERIENCE FORM
+              ================================== */
+
+              <div
+                className="my-orders-review-form"
+              >
+
+                <h3>
+                  How was your order experience?
+                </h3>
+
+
+                <p>
+                  Tell us what happened with this
+                  cancelled order. Your feedback helps
+                  DairyHub improve its service.
+                </p>
+
+
+                <div
+                  className="my-orders-rating-selector"
+                >
+
+                  <span>
+                    Your Rating
+                  </span>
+
+
+                  {renderStars(
+                    experienceRating,
+                    true,
+                    experienceRating,
+                    setExperienceRating
+                  )}
+
+                </div>
+
+
+                <textarea
+                  className="my-orders-review-textarea"
+                  placeholder="Tell us why the cancellation affected your experience..."
+                  value={
+                    experienceFeedback
+                  }
+                  onChange={event =>
+                    setExperienceFeedback(
+                      event.target.value
+                    )
+                  }
+                  maxLength={1000}
+                  disabled={
+                    experienceSubmitting
+                  }
+                />
+
+
+                <div
+                  className="my-orders-review-count"
+                >
+                  {experienceFeedback.length}/1000
+                </div>
+
+
+                <div
+                  className="my-orders-modal-actions"
+                >
+
+                  <button
+                    type="button"
+                    className="submit-review-btn"
+                    onClick={
+                      submitExperienceFeedback
+                    }
+                    disabled={
+                      experienceSubmitting
+                    }
+                  >
+
+                    {experienceSubmitting
+                      ? "Submitting..."
+                      : "Submit Feedback"}
+
+                  </button>
+
+
+                  <button
+                    type="button"
+                    className="my-orders-not-now-btn"
+                    onClick={
+                      closeReviewPopup
+                    }
+                    disabled={
+                      experienceSubmitting
+                    }
+                  >
+                    Not Now
+                  </button>
+
+                </div>
+
+              </div>
 
             ) : (
 

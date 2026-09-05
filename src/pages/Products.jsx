@@ -4,23 +4,55 @@ import { Link, useSearchParams } from "react-router-dom";
 import BackButton from "../components/BackButton";
 
 
+// =========================================
+// API BASE URL
+// =========================================
+//
+// Both localhost and Vercel use the same
+// Render backend.
+//
+
 const API_BASE =
   "https://dairyhub-backend.onrender.com";
 
 
 function Products() {
 
+  // =========================================
+  // PRODUCTS
+  // =========================================
+
   const [products, setProducts] =
     useState([]);
+
+
+  // =========================================
+  // LOADING
+  // =========================================
 
   const [loading, setLoading] =
     useState(true);
 
+
+  // =========================================
+  // RATINGS
+  // =========================================
+
   const [ratings, setRatings] =
     useState({});
 
+
+  // =========================================
+  // SELECTED VARIANTS
+  // =========================================
+
   const [selectedVariants, setSelectedVariants] =
     useState({});
+
+
+  // =========================================
+  // URL PARAMETERS
+  // =========================================
 
   const [searchParams] =
     useSearchParams();
@@ -50,75 +82,76 @@ function Products() {
   // GROUP PRODUCTS
   // =========================================
 
-  const groupProducts = (
-    productList
-  ) => {
+  const groupProducts =
+    (productList) => {
 
-    const groups =
-      new Map();
-
-
-    productList.forEach(
-      product => {
-
-        const name =
-          String(
-            product.name || ""
-          )
-            .trim()
-            .toLowerCase();
+      const groups =
+        new Map();
 
 
-        const category =
-          String(
-            product.category || ""
-          )
-            .trim()
-            .toLowerCase();
+      productList.forEach(
+        product => {
+
+          const name =
+            String(
+              product.name || ""
+            )
+              .trim()
+              .toLowerCase();
 
 
-        const key =
-          `${name}__${category}`;
+          const category =
+            String(
+              product.category || ""
+            )
+              .trim()
+              .toLowerCase();
 
 
-        if (
-          !groups.has(key)
-        ) {
+          const key =
+            `${name}__${category}`;
 
-          groups.set(
-            key,
-            {
 
+          if (
+            !groups.has(key)
+          ) {
+
+            groups.set(
               key,
+              {
 
-              name:
-                product.name,
+                key,
 
-              category:
-                product.category,
+                name:
+                  product.name,
 
-              variants: []
+                category:
+                  product.category,
 
-            }
-          );
+                variants: []
+
+              }
+            );
+
+          }
+
+
+          groups
+            .get(key)
+            .variants
+            .push(
+              product
+            );
 
         }
+      );
 
 
-        groups
-          .get(key)
-          .variants
-          .push(product);
+      return Array.from(
+        groups.values()
+      );
 
-      }
-    );
-
-
-    return Array.from(
-      groups.values()
-    );
-
-  };
+    };
 
 
   // =========================================
@@ -138,10 +171,12 @@ function Products() {
             );
 
 
-          if (!response.ok) {
+          if (
+            !response.ok
+          ) {
 
             throw new Error(
-              "Failed to fetch products"
+              "Failed to fetch products."
             );
 
           }
@@ -174,7 +209,9 @@ function Products() {
 
         } finally {
 
-          setLoading(false);
+          setLoading(
+            false
+          );
 
         }
 
@@ -196,7 +233,8 @@ function Products() {
       async () => {
 
         if (
-          products.length === 0
+          products.length ===
+          0
         ) {
 
           return;
@@ -227,7 +265,9 @@ function Products() {
                       );
 
 
-                    if (!response.ok) {
+                    if (
+                      !response.ok
+                    ) {
 
                       throw new Error(
                         `Failed to fetch rating for product ${product.id}`
@@ -271,15 +311,18 @@ function Products() {
                       productId:
                         product.id,
 
-                      average: 0,
+                      average:
+                        0,
 
-                      count: 0
+                      count:
+                        0
 
                     };
 
                   }
 
                 }
+
               )
 
             );
@@ -333,222 +376,308 @@ function Products() {
   // GET SELECTED VARIANT
   // =========================================
 
-  const getSelectedVariant = (
-    group
-  ) => {
+  const getSelectedVariant =
+    (group) => {
 
-    const selectedId =
-      selectedVariants[
-        group.key
-      ];
-
-
-    if (
-      selectedId
-    ) {
-
-      const selected =
-        group.variants.find(
-          variant =>
-            variant.id ===
-            selectedId
-        );
+      const selectedId =
+        selectedVariants[
+          group.key
+        ];
 
 
-      if (selected) {
+      if (
+        selectedId
+      ) {
 
-        return selected;
+        const selected =
+          group.variants.find(
+            variant =>
+              String(
+                variant.id
+              ) ===
+              String(
+                selectedId
+              )
+          );
+
+
+        if (
+          selected
+        ) {
+
+          return selected;
+
+        }
 
       }
 
-    }
+
+      return group.variants[0];
+
+    };
 
 
-    return group.variants[0];
+  // =========================================
+  // CHECK PRODUCT AVAILABILITY
+  // =========================================
 
-  };
+  const isProductAvailable =
+    (product) => {
+
+      if (
+        !product
+      ) {
+
+        return false;
+
+      }
+
+
+      return (
+        Number(
+          product.stock
+        ) > 0
+        &&
+        product.available !== false
+      );
+
+    };
 
 
   // =========================================
   // CHANGE SIZE
   // =========================================
 
-  const handleVariantChange = (
-    groupKey,
-    variantId
-  ) => {
+  const handleVariantChange =
+    (
+      groupKey,
+      variantId
+    ) => {
 
-    setSelectedVariants(
-      previous => ({
+      setSelectedVariants(
+        previous => ({
 
-        ...previous,
+          ...previous,
 
-        [groupKey]:
-          Number(
-            variantId
-          )
+          [groupKey]:
+            Number(
+              variantId
+            )
 
-      })
-    );
+        })
+      );
 
-  };
+    };
 
 
   // =========================================
   // GROUP RATING
   // =========================================
 
-  const getGroupRating = (
-    group
-  ) => {
+  const getGroupRating =
+    (group) => {
 
-    let totalReviews =
-      0;
+      let totalReviews =
+        0;
 
-    let weightedTotal =
-      0;
-
-
-    group.variants.forEach(
-      variant => {
-
-        const rating =
-          ratings[
-            variant.id
-          ];
+      let weightedTotal =
+        0;
 
 
-        if (!rating) {
+      group.variants.forEach(
+        variant => {
 
-          return;
+          const rating =
+            ratings[
+              variant.id
+            ];
+
+
+          if (
+            !rating
+          ) {
+
+            return;
+
+          }
+
+
+          const count =
+            Number(
+              rating.count
+            ) || 0;
+
+
+          const average =
+            Number(
+              rating.average
+            ) || 0;
+
+
+          totalReviews +=
+            count;
+
+
+          weightedTotal +=
+            average *
+            count;
 
         }
+      );
 
 
-        const count =
-          Number(
-            rating.count
-          ) || 0;
+      if (
+        totalReviews ===
+        0
+      ) {
 
+        return {
 
-        const average =
-          Number(
-            rating.average
-          ) || 0;
+          average:
+            0,
 
+          count:
+            0
 
-        totalReviews +=
-          count;
-
-
-        weightedTotal +=
-          average *
-          count;
+        };
 
       }
-    );
 
-
-    if (
-      totalReviews === 0
-    ) {
 
       return {
 
-        average: 0,
+        average:
+          weightedTotal /
+          totalReviews,
 
-        count: 0
+        count:
+          totalReviews
 
       };
 
-    }
-
-
-    return {
-
-      average:
-        weightedTotal /
-        totalReviews,
-
-      count:
-        totalReviews
-
     };
-
-  };
 
 
   // =========================================
   // ADD TO CART
   // =========================================
 
-  const addToCart = (
-    product
-  ) => {
+  const addToCart =
+    (product) => {
 
-    let cart =
-      JSON.parse(
-        localStorage.getItem(
-          "dairyhubCart"
-        )
-      ) || [];
-
-
-    const existingProduct =
-      cart.find(
-        item =>
-          item.id ===
-          product.id
-      );
-
-
-    if (
-      existingProduct
-    ) {
+      // ---------------------------------------
+      // AVAILABILITY CHECK
+      // ---------------------------------------
 
       if (
-        existingProduct.quantity >=
-        product.stock
+        !isProductAvailable(
+          product
+        )
       ) {
 
         alert(
-          "You cannot add more than the available stock."
+          "This product is currently out of stock."
         );
+
 
         return;
 
       }
 
 
-      existingProduct.quantity +=
-        1;
+      // ---------------------------------------
+      // GET CART
+      // ---------------------------------------
 
-    } else {
-
-      cart.push({
-
-        ...product,
-
-        quantity: 1
-
-      });
-
-    }
+      let cart =
+        JSON.parse(
+          localStorage.getItem(
+            "dairyhubCart"
+          )
+        ) || [];
 
 
-    localStorage.setItem(
-      "dairyhubCart",
-      JSON.stringify(
-        cart
-      )
-    );
+      // ---------------------------------------
+      // FIND EXISTING PRODUCT
+      // ---------------------------------------
+
+      const existingProduct =
+        cart.find(
+          item =>
+            item.id ===
+            product.id
+        );
 
 
-    alert(
-      `${product.name} (${product.size || "Size not specified"}) added to cart!`
-    );
+      // ---------------------------------------
+      // EXISTING PRODUCT
+      // ---------------------------------------
 
-  };
+      if (
+        existingProduct
+      ) {
+
+        if (
+          existingProduct.quantity >=
+          product.stock
+        ) {
+
+          alert(
+            "You cannot add more than the available stock."
+          );
+
+
+          return;
+
+        }
+
+
+        existingProduct.quantity +=
+          1;
+
+      } else {
+
+        // -------------------------------------
+        // NEW PRODUCT
+        // -------------------------------------
+
+        cart.push({
+
+          ...product,
+
+          quantity:
+            1
+
+        });
+
+      }
+
+
+      // ---------------------------------------
+      // SAVE CART
+      // ---------------------------------------
+
+      localStorage.setItem(
+        "dairyhubCart",
+        JSON.stringify(
+          cart
+        )
+      );
+
+
+      alert(
+
+        `${product.name}` +
+
+        `${
+          product.size
+            ? ` (${product.size})`
+            : ""
+        } added to cart!`
+
+      );
+
+    };
 
 
   // =========================================
@@ -573,22 +702,26 @@ function Products() {
 
             const name =
               product.name
-                ?.toLowerCase() || "";
+                ?.toLowerCase() ||
+              "";
 
 
             const category =
               product.category
-                ?.toLowerCase() || "";
+                ?.toLowerCase() ||
+              "";
 
 
             const description =
               product.description
-                ?.toLowerCase() || "";
+                ?.toLowerCase() ||
+              "";
 
 
             const size =
               product.size
-                ?.toLowerCase() || "";
+                ?.toLowerCase() ||
+              "";
 
 
             return (
@@ -663,15 +796,23 @@ function Products() {
   // LOADING
   // =========================================
 
-  if (loading) {
+  if (
+    loading
+  ) {
 
     return (
 
-      <div className="page">
+      <div
+        className="page"
+      >
 
         <BackButton
-          to={backPath}
-          text={backText}
+          to={
+            backPath
+          }
+          text={
+            backText
+          }
         />
 
 
@@ -708,22 +849,34 @@ function Products() {
     >
 
       <BackButton
-        to={backPath}
-        text={backText}
+        to={
+          backPath
+        }
+        text={
+          backText
+        }
       />
 
 
       <h1>
 
         {searchText
+
           ? `Search Results for "${searchText}"`
+
           : "Our Products"
+
         }
 
       </h1>
 
 
-      {filteredProducts.length === 0 ? (
+      {/* =====================================
+          NO PRODUCTS
+      ====================================== */}
+
+      {filteredProducts.length ===
+      0 ? (
 
         <div
           className="empty-state"
@@ -737,8 +890,11 @@ function Products() {
           {searchText ? (
 
             <p>
+
               No products match{" "}
+
               "{searchText}".
+
             </p>
 
           ) : (
@@ -769,6 +925,10 @@ function Products() {
 
       ) : (
 
+        /* ===================================
+           PRODUCT GRID
+        ==================================== */
+
         <div
           className="product-grid"
         >
@@ -796,6 +956,12 @@ function Products() {
                 groupRating.count;
 
 
+              const selectedAvailable =
+                isProductAvailable(
+                  selectedProduct
+                );
+
+
               return (
 
                 <div
@@ -805,7 +971,9 @@ function Products() {
                   }
                 >
 
-                  {/* IMAGE */}
+                  {/* =========================
+                      IMAGE
+                  ========================== */}
 
                   <img
                     src={
@@ -817,14 +985,18 @@ function Products() {
                   />
 
 
-                  {/* NAME */}
+                  {/* =========================
+                      NAME
+                  ========================== */}
 
                   <h3>
                     {group.name}
                   </h3>
 
 
-                  {/* RATING */}
+                  {/* =========================
+                      RATING
+                  ========================== */}
 
                   <div
                     className="product-card-rating"
@@ -855,9 +1027,12 @@ function Products() {
                         >
                           (
                           {reviewCount}{" "}
-                          {reviewCount === 1
-                            ? "review"
-                            : "reviews"}
+                          {
+                            reviewCount ===
+                            1
+                              ? "review"
+                              : "reviews"
+                          }
                           )
                         </span>
 
@@ -876,14 +1051,20 @@ function Products() {
                   </div>
 
 
-                  {/* DESCRIPTION */}
+                  {/* =========================
+                      DESCRIPTION
+                  ========================== */}
 
                   <p>
-                    {selectedProduct.description}
+                    {
+                      selectedProduct.description
+                    }
                   </p>
 
 
-                  {/* SIZE */}
+                  {/* =========================
+                      SIZE / QUANTITY
+                  ========================== */}
 
                   <div
                     className="product-size-selector"
@@ -898,11 +1079,12 @@ function Products() {
                       value={
                         selectedProduct.id
                       }
-                      onChange={(e) =>
-                        handleVariantChange(
-                          group.key,
-                          e.target.value
-                        )
+                      onChange={
+                        (e) =>
+                          handleVariantChange(
+                            group.key,
+                            e.target.value
+                          )
                       }
                     >
 
@@ -917,8 +1099,10 @@ function Products() {
                               variant.id
                             }
                           >
+
                             {variant.size ||
                               "Size not specified"}
+
                           </option>
 
                         )
@@ -929,32 +1113,57 @@ function Products() {
                   </div>
 
 
-                  {/* PRICE */}
+                  {/* =========================
+                      PRICE
+                  ========================== */}
 
                   <h2>
+
                     ₹
-                    {selectedProduct.price}
+                    {
+                      selectedProduct.price
+                    }
+
                   </h2>
 
 
-                  {/* STOCK */}
+                  {/* =========================
+                      STOCK / AVAILABILITY
+                  ========================== */}
 
                   <p>
-                    {selectedProduct.stock > 0
 
-                      ? `Stock: ${selectedProduct.stock}`
+                    {selectedAvailable ? (
 
-                      : "Out of Stock"
+                      <>
+                        Stock:{" "}
+                        {
+                          selectedProduct.stock
+                        }
+                      </>
 
-                    }
+                    ) : (
+
+                      <span
+                        className="product-out-of-stock"
+                      >
+                        Out of Stock
+                      </span>
+
+                    )}
+
                   </p>
 
 
-                  {/* ACTIONS */}
+                  {/* =========================
+                      ACTIONS
+                  ========================== */}
 
                   <div
                     className="product-card-actions"
                   >
+
+                    {/* VIEW DETAILS */}
 
                     <Link
                       to={
@@ -968,6 +1177,8 @@ function Products() {
                     </Link>
 
 
+                    {/* ADD TO CART */}
+
                     <button
                       className="product-add-cart-btn"
                       onClick={() =>
@@ -976,14 +1187,16 @@ function Products() {
                         )
                       }
                       disabled={
-                        selectedProduct.stock <=
-                        0
+                        !selectedAvailable
                       }
                     >
 
-                      {selectedProduct.stock > 0
+                      {selectedAvailable
+
                         ? "Add to Cart"
+
                         : "Out of Stock"
+
                       }
 
                     </button>

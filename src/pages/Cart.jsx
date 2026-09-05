@@ -4,44 +4,83 @@ import { useNavigate } from "react-router-dom";
 import BackButton from "../components/BackButton";
 
 
+// =========================================
+// API BASE URL
+// =========================================
+//
+// Both localhost and Vercel use the same
+// Render backend.
+//
+
 const API_BASE =
   "https://dairyhub-backend.onrender.com";
 
 
 function Cart() {
 
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
+
+  // =========================================
+  // CART
+  // =========================================
 
   const [cart, setCart] =
     useState([]);
 
 
+  // =========================================
+  // SELECTED ITEMS
+  // =========================================
+
   const [selectedItems, setSelectedItems] =
     useState([]);
 
+
+  // =========================================
+  // CHECKOUT
+  // =========================================
 
   const [showCheckout, setShowCheckout] =
     useState(false);
 
 
+  // =========================================
+  // ORDER PROCESSING
+  // =========================================
+
   const [placingOrder, setPlacingOrder] =
     useState(false);
 
 
+  // =========================================
+  // CHECKING CART AVAILABILITY
+  // =========================================
+
+  const [checkingAvailability, setCheckingAvailability] =
+    useState(false);
+
+
+  // =========================================
+  // DELIVERY DETAILS
+  // =========================================
+
   const [addressData, setAddressData] =
     useState({
+
       phone: "",
       address: "",
       city: "",
       state: "",
       pincode: ""
+
     });
 
 
-  /* =========================================
-     LOAD CART
-  ========================================= */
+  // =========================================
+  // LOAD CART
+  // =========================================
 
   useEffect(() => {
 
@@ -56,7 +95,9 @@ function Cart() {
 
 
       const safeCart =
-        Array.isArray(savedCart)
+        Array.isArray(
+          savedCart
+        )
           ? savedCart
           : [];
 
@@ -69,13 +110,14 @@ function Cart() {
       /*
        * Select all cart items by default.
        *
-       * Each product size/variant has its own
-       * product ID, so variants remain separate.
+       * Each product variant has its own
+       * database product ID.
        */
 
       setSelectedItems(
         safeCart.map(
-          item => item.id
+          item =>
+            item.id
         )
       );
 
@@ -97,11 +139,12 @@ function Cart() {
   }, []);
 
 
-  /* =========================================
-     CURRENT USER
-  ========================================= */
+  // =========================================
+  // CURRENT USER
+  // =========================================
 
-  let user = null;
+  let user =
+    null;
 
 
   try {
@@ -122,27 +165,66 @@ function Cart() {
     );
 
 
-    user = null;
+    user =
+      null;
 
   }
 
 
-  /* =========================================
-     UPDATE CART QUANTITY
-  ========================================= */
+  // =========================================
+  // CHECK PRODUCT AVAILABILITY
+  // =========================================
 
-  const updateQuantity = (
-    id,
-    value
-  ) => {
+  const isProductAvailable =
+    (product) => {
 
-    const updatedCart =
-      cart.map(
-        item => {
+      if (
+        !product
+      ) {
 
-          if (
-            item.id === id
-          ) {
+        return false;
+
+      }
+
+
+      return (
+
+        Number(
+          product.stock
+        ) > 0
+
+        &&
+
+        product.available !== false
+
+      );
+
+    };
+
+
+  // =========================================
+  // UPDATE CART QUANTITY
+  // =========================================
+
+  const updateQuantity =
+    (
+      id,
+      value
+    ) => {
+
+      const updatedCart =
+        cart.map(
+          item => {
+
+            if (
+              item.id !==
+              id
+            ) {
+
+              return item;
+
+            }
+
 
             const currentQuantity =
               Number(
@@ -150,30 +232,71 @@ function Cart() {
               );
 
 
-            /*
-             * Minimum quantity = 1
-             */
-
-            const newQuantity =
-              Math.max(
-                1,
-                currentQuantity + value
-              );
-
-
-            /*
-             * Do not allow quantity to exceed
-             * the selected product variant stock.
-             */
-
             const availableStock =
               Number(
                 item.stock
               );
 
 
+            // ---------------------------------
+            // PRODUCT MANUALLY DISABLED
+            // ---------------------------------
+
             if (
-              availableStock >= 0 &&
+              item.available === false
+              &&
+              value > 0
+            ) {
+
+              alert(
+                "This product is currently out of stock."
+              );
+
+
+              return item;
+
+            }
+
+
+            // ---------------------------------
+            // STOCK = 0
+            // ---------------------------------
+
+            if (
+              availableStock <= 0
+              &&
+              value > 0
+            ) {
+
+              alert(
+                "This product is currently out of stock."
+              );
+
+
+              return item;
+
+            }
+
+
+            // ---------------------------------
+            // NEW QUANTITY
+            // ---------------------------------
+
+            const newQuantity =
+              Math.max(
+                1,
+                currentQuantity +
+                  value
+              );
+
+
+            // ---------------------------------
+            // STOCK LIMIT
+            // ---------------------------------
+
+            if (
+              availableStock > 0
+              &&
               newQuantity >
                 availableStock
             ) {
@@ -198,142 +321,136 @@ function Cart() {
             };
 
           }
+        );
 
 
-          return item;
-
-        }
+      setCart(
+        updatedCart
       );
 
 
-    setCart(
-      updatedCart
-    );
-
-
-    localStorage.setItem(
-      "dairyhubCart",
-      JSON.stringify(
-        updatedCart
-      )
-    );
-
-  };
-
-
-  /* =========================================
-     REMOVE CART ITEM
-  ========================================= */
-
-  const removeItem = (
-    id
-  ) => {
-
-    const updatedCart =
-      cart.filter(
-        item =>
-          item.id !== id
-      );
-
-
-    setCart(
-      updatedCart
-    );
-
-
-    localStorage.setItem(
-      "dairyhubCart",
-      JSON.stringify(
-        updatedCart
-      )
-    );
-
-
-    /*
-     * Remove this specific product variant
-     * from selected items.
-     */
-
-    setSelectedItems(
-      previous =>
-        previous.filter(
-          itemId =>
-            itemId !== id
+      localStorage.setItem(
+        "dairyhubCart",
+        JSON.stringify(
+          updatedCart
         )
-    );
+      );
 
-  };
+    };
 
 
-  /* =========================================
-     SELECT / UNSELECT ITEM
-  ========================================= */
+  // =========================================
+  // REMOVE CART ITEM
+  // =========================================
 
-  const toggleItemSelection = (
-    id
-  ) => {
+  const removeItem =
+    (id) => {
 
-    setSelectedItems(
-      previous => {
-
-        if (
-          previous.includes(
+      const updatedCart =
+        cart.filter(
+          item =>
+            item.id !==
             id
-          )
-        ) {
-
-          return previous.filter(
-            itemId =>
-              itemId !== id
-          );
-
-        }
+        );
 
 
-        return [
-
-          ...previous,
-
-          id
-
-        ];
-
-      }
-    );
-
-  };
+      setCart(
+        updatedCart
+      );
 
 
-  /* =========================================
-     SELECT ALL / UNSELECT ALL
-  ========================================= */
+      localStorage.setItem(
+        "dairyhubCart",
+        JSON.stringify(
+          updatedCart
+        )
+      );
 
-  const toggleSelectAll = () => {
-
-    if (
-      selectedItems.length ===
-      cart.length
-    ) {
-
-      setSelectedItems([]);
-
-    } else {
 
       setSelectedItems(
-        cart.map(
-          item =>
-            item.id
-        )
+        previous =>
+          previous.filter(
+            itemId =>
+              itemId !==
+              id
+          )
       );
 
-    }
-
-  };
+    };
 
 
-  /* =========================================
-     SELECTED CART ITEMS
-  ========================================= */
+  // =========================================
+  // SELECT / UNSELECT ITEM
+  // =========================================
+
+  const toggleItemSelection =
+    (id) => {
+
+      setSelectedItems(
+        previous => {
+
+          if (
+            previous.includes(
+              id
+            )
+          ) {
+
+            return previous.filter(
+              itemId =>
+                itemId !==
+                id
+            );
+
+          }
+
+
+          return [
+
+            ...previous,
+
+            id
+
+          ];
+
+        }
+      );
+
+    };
+
+
+  // =========================================
+  // SELECT ALL / UNSELECT ALL
+  // =========================================
+
+  const toggleSelectAll =
+    () => {
+
+      if (
+        selectedItems.length ===
+        cart.length
+      ) {
+
+        setSelectedItems(
+          []
+        );
+
+      } else {
+
+        setSelectedItems(
+          cart.map(
+            item =>
+              item.id
+          )
+        );
+
+      }
+
+    };
+
+
+  // =========================================
+  // SELECTED CART ITEMS
+  // =========================================
 
   const selectedCartItems =
     cart.filter(
@@ -344,9 +461,9 @@ function Cart() {
     );
 
 
-  /* =========================================
-     SELECTED TOTAL
-  ========================================= */
+  // =========================================
+  // SELECTED TOTAL
+  // =========================================
 
   const selectedTotal =
     selectedCartItems.reduce(
@@ -354,20 +471,24 @@ function Cart() {
         sum,
         item
       ) =>
+
         sum +
+
         Number(
           item.price || 0
         ) *
+
         Number(
           item.quantity || 1
         ),
+
       0
     );
 
 
-  /* =========================================
-     FULL CART TOTAL
-  ========================================= */
+  // =========================================
+  // FULL CART TOTAL
+  // =========================================
 
   const cartTotal =
     cart.reduce(
@@ -375,114 +496,628 @@ function Cart() {
         sum,
         item
       ) =>
+
         sum +
+
         Number(
           item.price || 0
         ) *
+
         Number(
           item.quantity || 1
         ),
+
       0
     );
 
 
-  /* =========================================
-     ADDRESS CHANGE
-  ========================================= */
+  // =========================================
+  // ADDRESS CHANGE
+  // =========================================
 
-  const handleAddressChange = (
-    e
-  ) => {
+  const handleAddressChange =
+    (e) => {
 
-    setAddressData({
+      setAddressData({
 
-      ...addressData,
+        ...addressData,
 
-      [e.target.name]:
-        e.target.value
+        [e.target.name]:
+          e.target.value
 
-    });
+      });
 
-  };
+    };
 
 
-  /* =========================================
-     OPEN CHECKOUT
-  ========================================= */
+  // =========================================
+  // VERIFY SELECTED ITEMS BEFORE CHECKOUT
+  // =========================================
 
-  const openCheckout = () => {
+  const validateSelectedProducts =
+    async () => {
 
-    if (!user) {
+      try {
 
-      alert(
-        "Please login before placing an order."
+        setCheckingAvailability(
+          true
+        );
+
+
+        // -------------------------------------
+        // FETCH LATEST PRODUCTS
+        // -------------------------------------
+
+        const response =
+          await fetch(
+            `${API_BASE}/api/products`
+          );
+
+
+        if (
+          !response.ok
+        ) {
+
+          throw new Error(
+            "Unable to verify product availability."
+          );
+
+        }
+
+
+        const data =
+          await response.json();
+
+
+        const latestProducts =
+          Array.isArray(
+            data
+          )
+            ? data
+            : [];
+
+
+        // -------------------------------------
+        // CHECK EACH SELECTED ITEM
+        // -------------------------------------
+
+        const unavailableItems =
+          [];
+
+
+        const quantityExceededItems =
+          [];
+
+
+        selectedCartItems.forEach(
+          cartItem => {
+
+            const latestProduct =
+              latestProducts.find(
+                product =>
+                  String(
+                    product.id
+                  ) ===
+                  String(
+                    cartItem.id
+                  )
+              );
+
+
+            // -------------------------------
+            // PRODUCT NO LONGER EXISTS
+            // -------------------------------
+
+            if (
+              !latestProduct
+            ) {
+
+              unavailableItems.push(
+                cartItem
+              );
+
+
+              return;
+
+            }
+
+
+            // -------------------------------
+            // PRODUCT UNAVAILABLE
+            // -------------------------------
+
+            if (
+              !isProductAvailable(
+                latestProduct
+              )
+            ) {
+
+              unavailableItems.push({
+
+                ...cartItem,
+
+                latestProduct
+
+              });
+
+
+              return;
+
+            }
+
+
+            // -------------------------------
+            // QUANTITY EXCEEDS CURRENT STOCK
+            // -------------------------------
+
+            if (
+              Number(
+                cartItem.quantity || 1
+              ) >
+              Number(
+                latestProduct.stock || 0
+              )
+            ) {
+
+              quantityExceededItems.push({
+
+                ...cartItem,
+
+                latestProduct
+
+              });
+
+            }
+
+          }
+        );
+
+
+        // -------------------------------------
+        // HANDLE UNAVAILABLE PRODUCTS
+        // -------------------------------------
+
+        if (
+          unavailableItems.length > 0
+        ) {
+
+          let message =
+            "Some selected products are no longer available:\n\n";
+
+
+          unavailableItems.forEach(
+            item => {
+
+              message +=
+                `• ${item.name}`;
+
+
+              if (
+                item.size
+              ) {
+
+                message +=
+                  ` (${item.size})`;
+
+              }
+
+
+              message +=
+                "\n";
+
+            }
+          );
+
+
+          message +=
+            "\nPlease remove them from your cart before checkout.";
+
+
+          alert(
+            message
+          );
+
+
+          // -------------------------------
+          // UPDATE CART WITH LATEST DATA
+          // -------------------------------
+
+          const unavailableIds =
+            unavailableItems.map(
+              item =>
+                item.id
+            );
+
+
+          const refreshedCart =
+            cart.map(
+              item => {
+
+                const latestProduct =
+                  latestProducts.find(
+                    product =>
+                      String(
+                        product.id
+                      ) ===
+                      String(
+                        item.id
+                      )
+                  );
+
+
+                if (
+                  latestProduct
+                ) {
+
+                  return {
+
+                    ...item,
+
+                    stock:
+                      latestProduct.stock,
+
+                    available:
+                      latestProduct.available
+
+                  };
+
+                }
+
+
+                return item;
+
+              }
+            );
+
+
+          setCart(
+            refreshedCart
+          );
+
+
+          localStorage.setItem(
+            "dairyhubCart",
+            JSON.stringify(
+              refreshedCart
+            )
+          );
+
+
+          setSelectedItems(
+            previous =>
+              previous.filter(
+                itemId =>
+                  !unavailableIds.includes(
+                    itemId
+                  )
+              )
+          );
+
+
+          return false;
+
+        }
+
+
+        // -------------------------------------
+        // HANDLE STOCK REDUCTION
+        // -------------------------------------
+
+        if (
+          quantityExceededItems.length > 0
+        ) {
+
+          let message =
+            "The available stock has changed for:\n\n";
+
+
+          quantityExceededItems.forEach(
+            item => {
+
+              message +=
+                `• ${item.name}`;
+
+
+              if (
+                item.size
+              ) {
+
+                message +=
+                  ` (${item.size})`;
+
+              }
+
+
+              message +=
+                ` — Available: ${item.latestProduct.stock}\n`;
+
+            }
+          );
+
+
+          message +=
+            "\nPlease reduce the quantity before checkout.";
+
+
+          alert(
+            message
+          );
+
+
+          // -------------------------------
+          // UPDATE CART STOCK VALUES
+          // -------------------------------
+
+          const refreshedCart =
+            cart.map(
+              item => {
+
+                const latestProduct =
+                  latestProducts.find(
+                    product =>
+                      String(
+                        product.id
+                      ) ===
+                      String(
+                        item.id
+                      )
+                  );
+
+
+                if (
+                  latestProduct
+                ) {
+
+                  return {
+
+                    ...item,
+
+                    stock:
+                      latestProduct.stock,
+
+                    available:
+                      latestProduct.available
+
+                  };
+
+                }
+
+
+                return item;
+
+              }
+            );
+
+
+          setCart(
+            refreshedCart
+          );
+
+
+          localStorage.setItem(
+            "dairyhubCart",
+            JSON.stringify(
+              refreshedCart
+            )
+          );
+
+
+          return false;
+
+        }
+
+
+        // -------------------------------------
+        // REFRESH CART PRODUCT DATA
+        // -------------------------------------
+
+        const refreshedCart =
+          cart.map(
+            item => {
+
+              const latestProduct =
+                latestProducts.find(
+                  product =>
+                    String(
+                      product.id
+                    ) ===
+                    String(
+                      item.id
+                    )
+                );
+
+
+              if (
+                latestProduct
+              ) {
+
+                return {
+
+                  ...item,
+
+                  name:
+                    latestProduct.name,
+
+                  price:
+                    latestProduct.price,
+
+                  size:
+                    latestProduct.size,
+
+                  stock:
+                    latestProduct.stock,
+
+                  available:
+                    latestProduct.available,
+
+                  image:
+                    latestProduct.image,
+
+                  description:
+                    latestProduct.description
+
+                };
+
+              }
+
+
+              return item;
+
+            }
+          );
+
+
+        setCart(
+          refreshedCart
+        );
+
+
+        localStorage.setItem(
+          "dairyhubCart",
+          JSON.stringify(
+            refreshedCart
+          )
+        );
+
+
+        return true;
+
+
+      } catch (error) {
+
+        console.error(
+          "Product availability check error:",
+          error
+        );
+
+
+        alert(
+          error.message ||
+          "Unable to verify product availability."
+        );
+
+
+        return false;
+
+
+      } finally {
+
+        setCheckingAvailability(
+          false
+        );
+
+      }
+
+    };
+
+
+  // =========================================
+  // OPEN CHECKOUT
+  // =========================================
+
+  const openCheckout =
+    async () => {
+
+      if (
+        !user
+      ) {
+
+        alert(
+          "Please login before placing an order."
+        );
+
+
+        navigate(
+          "/login"
+        );
+
+
+        return;
+
+      }
+
+
+      if (
+        cart.length ===
+        0
+      ) {
+
+        alert(
+          "Your cart is empty."
+        );
+
+
+        return;
+
+      }
+
+
+      if (
+        selectedCartItems.length ===
+        0
+      ) {
+
+        alert(
+          "Please select at least one product to continue."
+        );
+
+
+        return;
+
+      }
+
+
+      // =====================================
+      // LATEST AVAILABILITY CHECK
+      // =====================================
+
+      const valid =
+        await validateSelectedProducts();
+
+
+      if (
+        !valid
+      ) {
+
+        return;
+
+      }
+
+
+      // =====================================
+      // OPEN CHECKOUT
+      // =====================================
+
+      setAddressData({
+
+        phone:
+          user.phone || "",
+
+        address:
+          "",
+
+        city:
+          "",
+
+        state:
+          "",
+
+        pincode:
+          ""
+
+      });
+
+
+      setShowCheckout(
+        true
       );
 
-
-      navigate(
-        "/login"
-      );
+    };
 
 
-      return;
-
-    }
-
-
-    if (
-      cart.length === 0
-    ) {
-
-      alert(
-        "Your cart is empty."
-      );
-
-
-      return;
-
-    }
-
-
-    if (
-      selectedCartItems.length === 0
-    ) {
-
-      alert(
-        "Please select at least one product to continue."
-      );
-
-
-      return;
-
-    }
-
-
-    setAddressData({
-
-      phone:
-        user.phone || "",
-
-      address: "",
-
-      city: "",
-
-      state: "",
-
-      pincode: ""
-
-    });
-
-
-    setShowCheckout(
-      true
-    );
-
-  };
-
-
-  /* =========================================
-     CREATE RAZORPAY ORDER
-  ========================================= */
+  // =========================================
+  // CREATE RAZORPAY ORDER
+  // =========================================
 
   const createPaymentOrder =
     async () => {
@@ -514,7 +1149,9 @@ function Cart() {
         );
 
 
-      if (!response.ok) {
+      if (
+        !response.ok
+      ) {
 
         const errorText =
           await response.text();
@@ -533,9 +1170,9 @@ function Cart() {
     };
 
 
-  /* =========================================
-     VERIFY PAYMENT
-  ========================================= */
+  // =========================================
+  // VERIFY PAYMENT
+  // =========================================
 
   const verifyPayment =
     async (
@@ -588,9 +1225,9 @@ function Cart() {
     };
 
 
-  /* =========================================
-     SAVE DAIRYHUB ORDER
-     ========================================= */
+  // =========================================
+  // SAVE DAIRYHUB ORDER
+  // =========================================
 
   const saveDairyHubOrder =
     async (
@@ -642,78 +1279,40 @@ function Cart() {
             .razorpay_signature,
 
 
-        /* =====================================
-           SELECTED ORDER ITEMS
-        ====================================== */
+        // ===================================
+        // SELECTED ORDER ITEMS
+        // ===================================
 
         items:
           selectedCartItems.map(
             item => ({
 
-              /*
-               * Database product variant ID.
-               *
-               * Different sizes have different
-               * product IDs.
-               */
-
               productId:
                 item.id,
-
-
-              /*
-               * Product name.
-               */
 
               productName:
                 item.name,
 
-
-              /*
-               * Selected size / quantity per unit.
-               *
-               * Examples:
-               * 180 ml
-               * 500 ml
-               * 1 L
-               * 100 g
-               * 500 g
-               * 1 kg
-               */
-
               size:
                 item.size ||
                 null,
-
-
-              /*
-               * Number of units purchased.
-               */
 
               quantity:
                 Number(
                   item.quantity || 1
                 ),
 
-
-              /*
-               * Price for ONE selected unit.
-               */
-
               price:
                 Number(
                   item.price || 0
                 ),
 
-
-              /*
-               * Price × number of units.
-               */
-
               subtotal:
+
                 Number(
                   item.price || 0
                 ) *
+
                 Number(
                   item.quantity || 1
                 )
@@ -754,7 +1353,9 @@ function Cart() {
         );
 
 
-      if (!response.ok) {
+      if (
+        !response.ok
+      ) {
 
         const errorText =
           await response.text();
@@ -773,9 +1374,9 @@ function Cart() {
     };
 
 
-  /* =========================================
-     PLACE ORDER / PAYMENT
-  ========================================= */
+  // =========================================
+  // PLACE ORDER / PAYMENT
+  // =========================================
 
   const placeOrder =
     async (e) => {
@@ -783,7 +1384,9 @@ function Cart() {
       e.preventDefault();
 
 
-      if (!user) {
+      if (
+        !user
+      ) {
 
         alert(
           "Please login before placing an order."
@@ -801,7 +1404,8 @@ function Cart() {
 
 
       if (
-        selectedCartItems.length === 0
+        selectedCartItems.length ===
+        0
       ) {
 
         alert(
@@ -814,9 +1418,26 @@ function Cart() {
       }
 
 
-      /* =====================================
-         VALIDATE DELIVERY DETAILS
-      ====================================== */
+      // =====================================
+      // VERIFY AVAILABILITY AGAIN
+      // =====================================
+
+      const stillAvailable =
+        await validateSelectedProducts();
+
+
+      if (
+        !stillAvailable
+      ) {
+
+        return;
+
+      }
+
+
+      // =====================================
+      // DELIVERY VALIDATION
+      // =====================================
 
       if (
         !addressData.phone.trim() ||
@@ -837,7 +1458,8 @@ function Cart() {
 
 
       if (
-        addressData.pincode.length !== 6
+        addressData.pincode.length !==
+        6
       ) {
 
         alert(
@@ -872,9 +1494,9 @@ function Cart() {
 
       try {
 
-        /* =====================================
-           CREATE RAZORPAY ORDER
-        ===================================== */
+        // ===================================
+        // CREATE RAZORPAY ORDER
+        // ===================================
 
         const razorpayOrder =
           await createPaymentOrder();
@@ -892,9 +1514,9 @@ function Cart() {
         }
 
 
-        /* =====================================
-           RAZORPAY OPTIONS
-        ===================================== */
+        // ===================================
+        // RAZORPAY OPTIONS
+        // ===================================
 
         const options = {
 
@@ -920,13 +1542,16 @@ function Cart() {
           prefill: {
 
             name:
-              user.name || "",
+              user.name ||
+              "",
 
             email:
-              user.email || "",
+              user.email ||
+              "",
 
             contact:
-              addressData.phone || ""
+              addressData.phone ||
+              ""
 
           },
 
@@ -939,9 +1564,9 @@ function Cart() {
           },
 
 
-          /* =====================================
-             PAYMENT SUCCESS
-          ===================================== */
+          // =================================
+          // PAYMENT SUCCESS
+          // =================================
 
           handler:
             async function(
@@ -956,18 +1581,18 @@ function Cart() {
                 );
 
 
-                /* =============================
-                   VERIFY PAYMENT
-                ============================= */
+                // =============================
+                // VERIFY PAYMENT
+                // =============================
 
                 await verifyPayment(
                   paymentResponse
                 );
 
 
-                /* =============================
-                   SAVE ORDER
-                ============================= */
+                // =============================
+                // SAVE ORDER
+                // =============================
 
                 const savedOrder =
                   await saveDairyHubOrder(
@@ -975,9 +1600,9 @@ function Cart() {
                   );
 
 
-                /* =============================
-                   REMOVE ONLY PURCHASED ITEMS
-                ============================= */
+                // =============================
+                // REMOVE PURCHASED ITEMS
+                // =============================
 
                 const remainingCart =
                   cart.filter(
@@ -1001,7 +1626,9 @@ function Cart() {
                 );
 
 
-                setSelectedItems([]);
+                setSelectedItems(
+                  []
+                );
 
 
                 setShowCheckout(
@@ -1009,18 +1636,14 @@ function Cart() {
                 );
 
 
-                /* =============================
-                   SUCCESS
-                ============================= */
+                // =============================
+                // SUCCESS
+                // =============================
 
                 alert(
                   `Payment successful!\nOrder ID: ${savedOrder.id}`
                 );
 
-
-                /* =============================
-                   MY ORDERS
-                ============================= */
 
                 navigate(
                   "/orders"
@@ -1050,9 +1673,9 @@ function Cart() {
             },
 
 
-          /* =====================================
-             PAYMENT WINDOW CLOSED
-          ===================================== */
+          // =================================
+          // PAYMENT WINDOW CLOSED
+          // =================================
 
           modal: {
 
@@ -1070,9 +1693,9 @@ function Cart() {
         };
 
 
-        /* =====================================
-           OPEN RAZORPAY
-        ===================================== */
+        // ===================================
+        // OPEN RAZORPAY
+        // ===================================
 
         const razorpay =
           new window.Razorpay(
@@ -1080,9 +1703,9 @@ function Cart() {
           );
 
 
-        /* =====================================
-           PAYMENT FAILED
-        ===================================== */
+        // ===================================
+        // PAYMENT FAILED
+        // ===================================
 
         razorpay.on(
           "payment.failed",
@@ -1136,17 +1759,20 @@ function Cart() {
     };
 
 
-  /* =========================================
-     EMPTY CART
-  ========================================= */
+  // =========================================
+  // EMPTY CART
+  // =========================================
 
   if (
-    cart.length === 0
+    cart.length ===
+    0
   ) {
 
     return (
 
-      <div className="page">
+      <div
+        className="page"
+      >
 
         <BackButton
           to="/products"
@@ -1159,7 +1785,9 @@ function Cart() {
         </h1>
 
 
-        <div className="empty-state">
+        <div
+          className="empty-state"
+        >
 
           <h3>
             Your cart is empty
@@ -1180,9 +1808,15 @@ function Cart() {
   }
 
 
+  // =========================================
+  // MAIN PAGE
+  // =========================================
+
   return (
 
-    <div className="page">
+    <div
+      className="page"
+    >
 
       <BackButton
         to="/products"
@@ -1208,9 +1842,12 @@ function Cart() {
           <input
             type="checkbox"
             checked={
+
               cart.length > 0 &&
+
               selectedItems.length ===
               cart.length
+
             }
             onChange={
               toggleSelectAll
@@ -1237,7 +1874,6 @@ function Cart() {
             : ""}
 
           {" "}
-
           selected
 
         </span>
@@ -1254,199 +1890,221 @@ function Cart() {
       >
 
         {cart.map(
-          item => (
+          item => {
 
-            <div
-              className={
-                `cart-item ${
-                  selectedItems.includes(
-                    item.id
-                  )
-                    ? "cart-item-selected"
-                    : ""
-                }`
-              }
-              key={
-                item.id
-              }
-            >
+            const itemAvailable =
+              isProductAvailable(
+                item
+              );
 
 
-              {/* CHECKBOX */}
+            return (
 
               <div
-                className="cart-select-box"
-              >
-
-                <input
-                  type="checkbox"
-                  checked={
+                className={
+                  `cart-item ${
                     selectedItems.includes(
                       item.id
                     )
+                      ? "cart-item-selected"
+                      : ""
+                  }`
+                }
+                key={
+                  item.id
+                }
+              >
+
+                {/* CHECKBOX */}
+
+                <div
+                  className="cart-select-box"
+                >
+
+                  <input
+                    type="checkbox"
+                    checked={
+                      selectedItems.includes(
+                        item.id
+                      )
+                    }
+                    onChange={() =>
+                      toggleItemSelection(
+                        item.id
+                      )
+                    }
+                  />
+
+                </div>
+
+
+                {/* IMAGE */}
+
+                <img
+                  src={
+                    item.image
                   }
-                  onChange={() =>
-                    toggleItemSelection(
-                      item.id
-                    )
+                  alt={
+                    item.name
                   }
                 />
 
-              </div>
+
+                {/* DETAILS */}
+
+                <div
+                  className="cart-item-details"
+                >
+
+                  <h3>
+                    {item.name}
+                  </h3>
 
 
-              {/* IMAGE */}
+                  {/* SIZE */}
 
-              <img
-                src={
-                  item.image
-                }
-                alt={
-                  item.name
-                }
-              />
+                  {item.size && (
 
+                    <p>
+                      Size:{" "}
+                      {item.size}
+                    </p>
 
-              {/* DETAILS */}
-
-              <div
-                className="cart-item-details"
-              >
-
-                {/* PRODUCT NAME */}
-
-                <h3>
-                  {item.name}
-                </h3>
+                  )}
 
 
-                {/* =================================
-                    PRODUCT SIZE
-                ================================== */}
-
-                {item.size && (
+                  {/* PRICE */}
 
                   <p>
-                    Size:{" "}
-                    {item.size}
+                    ₹
+                    {item.price}
                   </p>
 
-                )}
 
-
-                {/* PRICE */}
-
-                <p>
-                  ₹
-                  {item.price}
-                </p>
-
-
-                {/* AVAILABLE STOCK */}
-
-                {typeof item.stock !==
-                  "undefined" && (
+                  {/* STOCK */}
 
                   <p>
                     Available Stock:{" "}
                     {item.stock}
                   </p>
 
-                )}
+
+                  {/* AVAILABILITY */}
+
+                  {itemAvailable ? (
+
+                    <p>
+                      ✅ Available
+                    </p>
+
+                  ) : (
+
+                    <p
+                      className="cart-item-unavailable"
+                    >
+                      🔴 Out of Stock
+                    </p>
+
+                  )}
 
 
-                {/* CART QUANTITY */}
+                  {/* QUANTITY */}
 
-                <div
-                  className="cart-quantity"
-                >
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateQuantity(
-                        item.id,
-                        -1
-                      )
-                    }
-                    disabled={
-                      Number(
-                        item.quantity || 1
-                      ) <= 1
-                    }
+                  <div
+                    className="cart-quantity"
                   >
-                    -
-                  </button>
 
-
-                  <span>
-                    {item.quantity}
-                  </span>
-
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateQuantity(
-                        item.id,
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateQuantity(
+                          item.id,
+                          -1
+                        )
+                      }
+                      disabled={
+                        Number(
+                          item.quantity || 1
+                        ) <=
                         1
-                      )
-                    }
-                    disabled={
+                      }
+                    >
+                      -
+                    </button>
+
+
+                    <span>
+                      {item.quantity}
+                    </span>
+
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateQuantity(
+                          item.id,
+                          1
+                        )
+                      }
+                      disabled={
+
+                        !itemAvailable ||
+
+                        Number(
+                          item.quantity || 1
+                        ) >=
+                        Number(
+                          item.stock || 0
+                        )
+
+                      }
+                    >
+                      +
+                    </button>
+
+
+                    <button
+                      type="button"
+                      className="remove-cart-btn"
+                      onClick={() =>
+                        removeItem(
+                          item.id
+                        )
+                      }
+                    >
+                      Remove
+                    </button>
+
+                  </div>
+
+
+                  {/* SUBTOTAL */}
+
+                  <p
+                    className="cart-item-subtotal"
+                  >
+
+                    Subtotal: ₹
+
+                    {
                       Number(
-                        item.stock
-                      ) > 0 &&
+                        item.price || 0
+                      ) *
+
                       Number(
                         item.quantity || 1
-                      ) >=
-                      Number(
-                        item.stock
                       )
                     }
-                  >
-                    +
-                  </button>
 
-
-                  <button
-                    type="button"
-                    className="remove-cart-btn"
-                    onClick={() =>
-                      removeItem(
-                        item.id
-                      )
-                    }
-                  >
-                    Remove
-                  </button>
+                  </p>
 
                 </div>
 
-
-                {/* SUBTOTAL */}
-
-                <p
-                  className="cart-item-subtotal"
-                >
-
-                  Subtotal: ₹
-
-                  {
-                    Number(
-                      item.price || 0
-                    ) *
-                    Number(
-                      item.quantity || 1
-                    )
-                  }
-
-                </p>
-
               </div>
 
-            </div>
+            );
 
-          )
+          }
         )}
 
       </div>
@@ -1475,7 +2133,8 @@ function Cart() {
 
 
           <strong>
-            ₹{cartTotal}
+            ₹
+            {cartTotal}
           </strong>
 
         </div>
@@ -1507,7 +2166,8 @@ function Cart() {
 
 
           <strong>
-            ₹{selectedTotal}
+            ₹
+            {selectedTotal}
           </strong>
 
         </div>
@@ -1539,7 +2199,8 @@ function Cart() {
 
 
           <strong>
-            ₹{selectedTotal}
+            ₹
+            {selectedTotal}
           </strong>
 
         </div>
@@ -1552,15 +2213,25 @@ function Cart() {
             openCheckout
           }
           disabled={
-            selectedItems.length === 0
+
+            selectedItems.length ===
+            0 ||
+
+            checkingAvailability
+
           }
         >
 
-          {selectedItems.length === 0
+          {checkingAvailability
 
-            ? "Select Products"
+            ? "Checking Availability..."
 
-            : "Proceed to Checkout"
+            : selectedItems.length ===
+              0
+
+              ? "Select Products"
+
+              : "Proceed to Checkout"
 
           }
 
@@ -1578,7 +2249,6 @@ function Cart() {
         <div
           className="checkout-container"
         >
-
 
           {/* CUSTOMER DETAILS */}
 
@@ -1703,6 +2373,7 @@ function Cart() {
                         Number(
                           item.price || 0
                         ) *
+
                         Number(
                           item.quantity || 1
                         )
@@ -1881,7 +2552,8 @@ function Cart() {
 
 
               <strong>
-                ₹{selectedTotal}
+                ₹
+                {selectedTotal}
               </strong>
 
             </div>
@@ -1918,7 +2590,11 @@ function Cart() {
                 placeOrder
               }
               disabled={
-                placingOrder
+
+                placingOrder ||
+
+                checkingAvailability
+
               }
             >
 
@@ -1926,7 +2602,11 @@ function Cart() {
 
                 ? "Opening Payment..."
 
-                : `Pay ₹${selectedTotal}`
+                : checkingAvailability
+
+                  ? "Checking Availability..."
+
+                  : `Pay ₹${selectedTotal}`
 
               }
 

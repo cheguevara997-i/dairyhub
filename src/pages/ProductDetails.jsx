@@ -13,15 +13,21 @@ import {
 import BackButton from "../components/BackButton";
 
 
+// =========================================
+// API BASE URL
+// =========================================
+
 const API_BASE =
   "https://dairyhub-backend.onrender.com";
 
 
 function ProductDetails() {
 
-  const { id } = useParams();
+  const { id } =
+    useParams();
 
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
   const [searchParams] =
     useSearchParams();
@@ -69,13 +75,11 @@ function ProductDetails() {
 
   const [ratingBreakdown, setRatingBreakdown] =
     useState({
-
       5: 0,
       4: 0,
       3: 0,
       2: 0,
       1: 0
-
     });
 
 
@@ -140,7 +144,7 @@ function ProductDetails() {
 
 
   // =========================================
-  // WHERE USER CAME FROM
+  // NAVIGATION SOURCE
   // =========================================
 
   const fromFooter =
@@ -156,20 +160,38 @@ function ProductDetails() {
 
 
   // =========================================
-  // CURRENT USER
+  // GET CURRENT USER
   // =========================================
 
   const getCurrentUser = () => {
 
     try {
 
-      return JSON.parse(
+      const savedUser =
         localStorage.getItem(
           "dairyhubUser"
-        )
+        );
+
+
+      if (!savedUser) {
+
+        return null;
+
+      }
+
+
+      return JSON.parse(
+        savedUser
       );
 
-    } catch {
+
+    } catch (error) {
+
+      console.error(
+        "Unable to read current user:",
+        error
+      );
+
 
       return null;
 
@@ -179,7 +201,72 @@ function ProductDetails() {
 
 
   // =========================================
-  // FETCH PRODUCT + PRODUCT VARIANTS
+  // GET AUTH TOKEN
+  // =========================================
+
+  const getAuthToken = () => {
+
+    const user =
+      getCurrentUser();
+
+
+    return user?.token || null;
+
+  };
+
+
+  // =========================================
+  // REVIEW AUTH HEADERS
+  // =========================================
+
+  const getReviewAuthHeaders = () => {
+
+    const token =
+      getAuthToken();
+
+
+    return {
+
+      "Content-Type":
+        "application/json",
+
+      ...(token
+        ? {
+            Authorization:
+              `Bearer ${token}`
+          }
+        : {})
+
+    };
+
+  };
+
+
+  // =========================================
+  // HANDLE AUTH FAILURE
+  // =========================================
+
+  const handleReviewAuthFailure = () => {
+
+    localStorage.removeItem(
+      "dairyhubUser"
+    );
+
+
+    alert(
+      "Your login session is invalid or expired. Please login again."
+    );
+
+
+    navigate(
+      "/login"
+    );
+
+  };
+
+
+  // =========================================
+  // FETCH PRODUCT + VARIANTS
   // =========================================
 
   useEffect(() => {
@@ -189,22 +276,18 @@ function ProductDetails() {
 
         try {
 
-          /*
-           * Fetch all products because products
-           * with different sizes are stored as
-           * separate database records.
-           */
-
           const response =
             await fetch(
               `${API_BASE}/api/products`
             );
 
 
-          if (!response.ok) {
+          if (
+            !response.ok
+          ) {
 
             throw new Error(
-              "Unable to fetch products"
+              "Unable to fetch products."
             );
 
           }
@@ -220,10 +303,6 @@ function ProductDetails() {
               : [];
 
 
-          // ===================================
-          // FIND CURRENT PRODUCT
-          // ===================================
-
           const currentProduct =
             allProducts.find(
               item =>
@@ -234,23 +313,20 @@ function ProductDetails() {
             );
 
 
-          if (!currentProduct) {
+          if (
+            !currentProduct
+          ) {
 
             throw new Error(
-              "Product not found"
+              "Product not found."
             );
 
           }
 
 
-          // ===================================
-          // IDENTIFY PRODUCT GROUP
-          // ===================================
-
           const currentName =
             String(
-              currentProduct.name ||
-              ""
+              currentProduct.name || ""
             )
               .trim()
               .toLowerCase();
@@ -258,16 +334,11 @@ function ProductDetails() {
 
           const currentCategory =
             String(
-              currentProduct.category ||
-              ""
+              currentProduct.category || ""
             )
               .trim()
               .toLowerCase();
 
-
-          // ===================================
-          // FIND ALL SIZE VARIANTS
-          // ===================================
 
           const variants =
             allProducts.filter(
@@ -275,8 +346,7 @@ function ProductDetails() {
 
                 const itemName =
                   String(
-                    item.name ||
-                    ""
+                    item.name || ""
                   )
                     .trim()
                     .toLowerCase();
@@ -284,18 +354,20 @@ function ProductDetails() {
 
                 const itemCategory =
                   String(
-                    item.category ||
-                    ""
+                    item.category || ""
                   )
                     .trim()
                     .toLowerCase();
 
 
                 return (
+
                   itemName ===
-                    currentName &&
+                  currentName &&
+
                   itemCategory ===
-                    currentCategory
+                  currentCategory
+
                 );
 
               }
@@ -353,10 +425,12 @@ function ProductDetails() {
           );
 
 
-        if (!response.ok) {
+        if (
+          !response.ok
+        ) {
 
           throw new Error(
-            "Unable to fetch reviews"
+            "Unable to fetch reviews."
           );
 
         }
@@ -376,10 +450,6 @@ function ProductDetails() {
           safeReviews
         );
 
-
-        // ===================================
-        // RATING BREAKDOWN
-        // ===================================
 
         const breakdown = {
 
@@ -462,10 +532,12 @@ function ProductDetails() {
           );
 
 
-        if (!response.ok) {
+        if (
+          !response.ok
+        ) {
 
           throw new Error(
-            "Unable to fetch rating summary"
+            "Unable to fetch rating summary."
           );
 
         }
@@ -507,7 +579,7 @@ function ProductDetails() {
 
 
   // =========================================
-  // FETCH ELIGIBILITY
+  // FETCH REVIEW ELIGIBILITY
   // =========================================
 
   const fetchEligibility =
@@ -521,20 +593,26 @@ function ProductDetails() {
       // NOT LOGGED IN
       // =====================================
 
-      if (!user) {
+      if (
+        !user
+      ) {
 
         setEligibility({
 
-          canReview: false,
+          canReview:
+            false,
 
           reason:
             "LOGIN_REQUIRED",
 
-          purchased: false,
+          purchased:
+            false,
 
-          delivered: false
+          delivered:
+            false
 
         });
+
 
         return;
 
@@ -547,7 +625,7 @@ function ProductDetails() {
 
       if (
         String(
-          user.role
+          user.role || ""
         )
           .trim()
           .toUpperCase() ===
@@ -556,16 +634,50 @@ function ProductDetails() {
 
         setEligibility({
 
-          canReview: false,
+          canReview:
+            false,
 
           reason:
             "ADMIN",
 
-          purchased: false,
+          purchased:
+            false,
 
-          delivered: false
+          delivered:
+            false
 
         });
+
+
+        return;
+
+      }
+
+
+      // =====================================
+      // TOKEN REQUIRED
+      // =====================================
+
+      if (
+        !getAuthToken()
+      ) {
+
+        setEligibility({
+
+          canReview:
+            false,
+
+          reason:
+            "LOGIN_REQUIRED",
+
+          purchased:
+            false,
+
+          delivered:
+            false
+
+        });
+
 
         return;
 
@@ -574,18 +686,56 @@ function ProductDetails() {
 
       try {
 
+        /*
+         * IMPORTANT:
+         *
+         * Your current backend controller still
+         * expects userEmail.
+         *
+         * We send the logged-in email here so the
+         * current backend works correctly.
+         */
+
         const response =
           await fetch(
             `${API_BASE}/api/reviews/product/${id}/eligibility?userEmail=${encodeURIComponent(
               user.email
-            )}`
+            )}`,
+            {
+
+              method:
+                "GET",
+
+              headers:
+                getReviewAuthHeaders()
+
+            }
           );
 
 
-        if (!response.ok) {
+        if (
+          response.status === 401 ||
+          response.status === 403
+        ) {
+
+          handleReviewAuthFailure();
+
+          return;
+
+        }
+
+
+        if (
+          !response.ok
+        ) {
+
+          const errorText =
+            await response.text();
+
 
           throw new Error(
-            "Unable to check review eligibility"
+            errorText ||
+            "Unable to check review eligibility."
           );
 
         }
@@ -610,14 +760,17 @@ function ProductDetails() {
 
         setEligibility({
 
-          canReview: true,
+          canReview:
+            false,
 
           reason:
-            "GENERAL_REVIEW",
+            "ERROR",
 
-          purchased: false,
+          purchased:
+            false,
 
-          delivered: false
+          delivered:
+            false
 
         });
 
@@ -635,7 +788,9 @@ function ProductDetails() {
     const loadReviewData =
       async () => {
 
-        setReviewLoading(true);
+        setReviewLoading(
+          true
+        );
 
 
         await Promise.all([
@@ -649,7 +804,9 @@ function ProductDetails() {
         ]);
 
 
-        setReviewLoading(false);
+        setReviewLoading(
+          false
+        );
 
       };
 
@@ -673,8 +830,9 @@ function ProductDetails() {
 
   const myReview =
     currentUser &&
+
     String(
-      currentUser.role
+      currentUser.role || ""
     )
       .trim()
       .toUpperCase() !==
@@ -682,12 +840,15 @@ function ProductDetails() {
 
       ? reviews.find(
           review =>
+
             review.userEmail
               ?.trim()
               .toLowerCase() ===
+
             currentUser.email
               ?.trim()
               .toLowerCase()
+
         )
 
       : null;
@@ -695,7 +856,6 @@ function ProductDetails() {
 
   // =========================================
   // AUTO OPEN REVIEW SECTION
-  // ONLY WHEN ?review=1
   // =========================================
 
   useEffect(() => {
@@ -714,10 +874,6 @@ function ProductDetails() {
     const timer =
       setTimeout(() => {
 
-        // -----------------------------------
-        // EXISTING REVIEW
-        // -----------------------------------
-
         if (
           myReview &&
           reviewSectionRef.current
@@ -733,16 +889,14 @@ function ProductDetails() {
 
           });
 
+
           return;
 
         }
 
 
-        // -----------------------------------
-        // NEW REVIEW
-        // -----------------------------------
-
         if (
+          eligibility?.canReview &&
           writeReviewRef.current
         ) {
 
@@ -756,14 +910,11 @@ function ProductDetails() {
 
           });
 
+
           return;
 
         }
 
-
-        // -----------------------------------
-        // FALLBACK
-        // -----------------------------------
 
         if (
           reviewSectionRef.current
@@ -797,13 +948,15 @@ function ProductDetails() {
 
     reviewLoading,
 
-    myReview
+    myReview,
+
+    eligibility
 
   ]);
 
 
   // =========================================
-  // CHANGE PRODUCT SIZE / VARIANT
+  // CHANGE PRODUCT VARIANT
   // =========================================
 
   const changeProductVariant =
@@ -813,28 +966,51 @@ function ProductDetails() {
         event.target.value;
 
 
-      /*
-       * Preserve the current navigation source.
-       */
-
-      let query = "";
+      let query =
+        "";
 
 
-      if (fromFooter) {
+      if (
+        fromFooter
+      ) {
 
         query =
           "?from=footer";
-
-      } else if (shouldOpenReview) {
-
-        query =
-          "?review=1";
 
       }
 
 
       navigate(
         `/products/${selectedId}${query}`
+      );
+
+    };
+
+
+  // =========================================
+  // CHECK PRODUCT AVAILABILITY
+  // =========================================
+
+  const isProductAvailable =
+    (currentProduct) => {
+
+      if (
+        !currentProduct
+      ) {
+
+        return false;
+
+      }
+
+
+      return (
+
+        Number(
+          currentProduct.stock
+        ) > 0 &&
+
+        currentProduct.available !== false
+
       );
 
     };
@@ -851,7 +1027,9 @@ function ProductDetails() {
         getCurrentUser();
 
 
-      if (!user) {
+      if (
+        !user
+      ) {
 
         alert(
           "Please login before adding products to cart."
@@ -868,6 +1046,22 @@ function ProductDetails() {
       }
 
 
+      if (
+        !isProductAvailable(
+          product
+        )
+      ) {
+
+        alert(
+          "This product is currently out of stock."
+        );
+
+
+        return;
+
+      }
+
+
       let cart =
         JSON.parse(
           localStorage.getItem(
@@ -875,19 +1069,6 @@ function ProductDetails() {
           )
         ) || [];
 
-
-      /*
-       * Product ID includes the selected
-       * size/variant ID.
-       *
-       * Therefore:
-       *
-       * Paneer 200 g
-       * and
-       * Paneer 500 g
-       *
-       * remain separate cart items.
-       */
 
       const existingProduct =
         cart.find(
@@ -919,6 +1100,7 @@ function ProductDetails() {
         existingProduct.quantity +=
           1;
 
+
       } else {
 
         cart.push({
@@ -943,7 +1125,9 @@ function ProductDetails() {
 
       alert(
 
-        `${product.name}${
+        `${product.name}` +
+
+        `${
           product.size
             ? ` (${product.size})`
             : ""
@@ -965,7 +1149,9 @@ function ProductDetails() {
         getCurrentUser();
 
 
-      if (!user) {
+      if (
+        !user
+      ) {
 
         alert(
           "Please login to write a review."
@@ -984,7 +1170,7 @@ function ProductDetails() {
 
       if (
         String(
-          user.role
+          user.role || ""
         )
           .trim()
           .toUpperCase() ===
@@ -1001,7 +1187,56 @@ function ProductDetails() {
       }
 
 
-      if (myReview) {
+      if (
+        !getAuthToken()
+      ) {
+
+        handleReviewAuthFailure();
+
+        return;
+
+      }
+
+
+      if (
+        !eligibility?.canReview
+      ) {
+
+        if (
+          eligibility?.reason ===
+          "PURCHASE_REQUIRED"
+        ) {
+
+          alert(
+            "You can review this product only after purchasing it."
+          );
+
+        } else if (
+          eligibility?.reason ===
+          "DELIVERY_REQUIRED"
+        ) {
+
+          alert(
+            "You can review this product after your order has been delivered."
+          );
+
+        } else {
+
+          alert(
+            "You are not currently eligible to review this product."
+          );
+
+        }
+
+
+        return;
+
+      }
+
+
+      if (
+        myReview
+      ) {
 
         alert(
           "You have already reviewed this product. You can edit your existing review."
@@ -1056,12 +1291,8 @@ function ProductDetails() {
               method:
                 "POST",
 
-              headers: {
-
-                "Content-Type":
-                  "application/json"
-
-              },
+              headers:
+                getReviewAuthHeaders(),
 
               body:
                 JSON.stringify({
@@ -1071,6 +1302,11 @@ function ProductDetails() {
 
                   productName:
                     product.name,
+
+                  /*
+                   * Current backend controller
+                   * still requires userEmail.
+                   */
 
                   userEmail:
                     user.email,
@@ -1090,7 +1326,21 @@ function ProductDetails() {
           );
 
 
-        if (!response.ok) {
+        if (
+          response.status === 401 ||
+          response.status === 403
+        ) {
+
+          handleReviewAuthFailure();
+
+          return;
+
+        }
+
+
+        if (
+          !response.ok
+        ) {
 
           const errorMessage =
             await response.text();
@@ -1122,9 +1372,14 @@ function ProductDetails() {
         );
 
 
-        setRating(0);
+        setRating(
+          0
+        );
 
-        setComment("");
+
+        setComment(
+          ""
+        );
 
 
         await fetchReviews();
@@ -1148,6 +1403,7 @@ function ProductDetails() {
 
 
         alert(
+          error.message ||
           "Something went wrong while submitting your review."
         );
 
@@ -1222,9 +1478,14 @@ function ProductDetails() {
       );
 
 
-      setEditRating(0);
+      setEditRating(
+        0
+      );
 
-      setEditComment("");
+
+      setEditComment(
+        ""
+      );
 
     };
 
@@ -1240,7 +1501,9 @@ function ProductDetails() {
         getCurrentUser();
 
 
-      if (!user) {
+      if (
+        !user
+      ) {
 
         alert(
           "Please login."
@@ -1252,7 +1515,20 @@ function ProductDetails() {
       }
 
 
-      if (!editingReview) {
+      if (
+        !editingReview
+      ) {
+
+        return;
+
+      }
+
+
+      if (
+        !getAuthToken()
+      ) {
+
+        handleReviewAuthFailure();
 
         return;
 
@@ -1303,15 +1579,16 @@ function ProductDetails() {
               method:
                 "PUT",
 
-              headers: {
-
-                "Content-Type":
-                  "application/json"
-
-              },
+              headers:
+                getReviewAuthHeaders(),
 
               body:
                 JSON.stringify({
+
+                  /*
+                   * Current backend controller
+                   * still requires userEmail.
+                   */
 
                   userEmail:
                     user.email,
@@ -1328,7 +1605,21 @@ function ProductDetails() {
           );
 
 
-        if (!response.ok) {
+        if (
+          response.status === 401 ||
+          response.status === 403
+        ) {
+
+          handleReviewAuthFailure();
+
+          return;
+
+        }
+
+
+        if (
+          !response.ok
+        ) {
 
           const errorMessage =
             await response.text();
@@ -1353,10 +1644,14 @@ function ProductDetails() {
           previousReviews =>
             previousReviews.map(
               review =>
+
                 review.id ===
                 updatedReview.id
+
                   ? updatedReview
+
                   : review
+
             )
         );
 
@@ -1366,9 +1661,14 @@ function ProductDetails() {
         );
 
 
-        setEditRating(0);
+        setEditRating(
+          0
+        );
 
-        setEditComment("");
+
+        setEditComment(
+          ""
+        );
 
 
         await fetchReviews();
@@ -1392,6 +1692,7 @@ function ProductDetails() {
 
 
         alert(
+          error.message ||
           "Something went wrong while updating your review."
         );
 
@@ -1420,7 +1721,20 @@ function ProductDetails() {
         getCurrentUser();
 
 
-      if (!user) {
+      if (
+        !user
+      ) {
+
+        return;
+
+      }
+
+
+      if (
+        !getAuthToken()
+      ) {
+
+        handleReviewAuthFailure();
 
         return;
 
@@ -1433,7 +1747,9 @@ function ProductDetails() {
         );
 
 
-      if (!confirmed) {
+      if (
+        !confirmed
+      ) {
 
         return;
 
@@ -1441,6 +1757,11 @@ function ProductDetails() {
 
 
       try {
+
+        /*
+         * Current backend controller still
+         * requires userEmail.
+         */
 
         const response =
           await fetch(
@@ -1450,13 +1771,30 @@ function ProductDetails() {
             {
 
               method:
-                "DELETE"
+                "DELETE",
+
+              headers:
+                getReviewAuthHeaders()
 
             }
           );
 
 
-        if (!response.ok) {
+        if (
+          response.status === 401 ||
+          response.status === 403
+        ) {
+
+          handleReviewAuthFailure();
+
+          return;
+
+        }
+
+
+        if (
+          !response.ok
+        ) {
 
           const errorMessage =
             await response.text();
@@ -1488,9 +1826,14 @@ function ProductDetails() {
         );
 
 
-        setEditRating(0);
+        setEditRating(
+          0
+        );
 
-        setEditComment("");
+
+        setEditComment(
+          ""
+        );
 
 
         await fetchReviews();
@@ -1514,6 +1857,7 @@ function ProductDetails() {
 
 
         alert(
+          error.message ||
           "Something went wrong while deleting your review."
         );
 
@@ -1545,7 +1889,9 @@ function ProductDetails() {
             star => (
 
               <span
-                key={star}
+                key={
+                  star
+                }
                 className={
                   star <= numericRating
                     ? "star active"
@@ -1573,7 +1919,8 @@ function ProductDetails() {
     (star) => {
 
       if (
-        reviewCount === 0
+        reviewCount ===
+        0
       ) {
 
         return 0;
@@ -1586,7 +1933,8 @@ function ProductDetails() {
         (
           ratingBreakdown[star] /
           reviewCount
-        ) * 100
+        ) *
+        100
 
       );
 
@@ -1597,7 +1945,9 @@ function ProductDetails() {
   // LOADING
   // =========================================
 
-  if (loading) {
+  if (
+    loading
+  ) {
 
     return (
 
@@ -1640,7 +1990,9 @@ function ProductDetails() {
   // PRODUCT NOT FOUND
   // =========================================
 
-  if (!product) {
+  if (
+    !product
+  ) {
 
     return (
 
@@ -1689,12 +2041,17 @@ function ProductDetails() {
   // MAIN PAGE
   // =========================================
 
+  const productAvailable =
+    isProductAvailable(
+      product
+    );
+
+
   return (
 
     <div
       className="product-details-page"
     >
-
 
       {/* =====================================
           BACK BUTTON
@@ -1721,7 +2078,6 @@ function ProductDetails() {
       <div
         className="product-details-container"
       >
-
 
         {/* IMAGE */}
 
@@ -1760,9 +2116,7 @@ function ProductDetails() {
           </h1>
 
 
-          {/* =================================
-              RATING SUMMARY
-          ================================== */}
+          {/* RATING SUMMARY */}
 
           <div
             className="product-rating-summary"
@@ -1776,7 +2130,9 @@ function ProductDetails() {
 
 
             <strong>
-              {averageRating.toFixed(1)}
+              {averageRating.toFixed(
+                1
+              )}
             </strong>
 
 
@@ -1797,10 +2153,11 @@ function ProductDetails() {
 
 
           {/* =================================
-              SIZE / QUANTITY SELECTOR
+              SIZE / QUANTITY
           ================================== */}
 
-          {productVariants.length > 1 && (
+          {productVariants.length >
+            1 && (
 
             <div
               className="product-details-size-selector"
@@ -1835,16 +2192,10 @@ function ProductDetails() {
                       }
                     >
 
-                      {variant.size ||
-                        "Size not specified"}
-
-                      {" — ₹"}
-
-                      {variant.price}
-
-                      {" — Stock: "}
-
-                      {variant.stock}
+                      {
+                        variant.size ||
+                        "Size not specified"
+                      }
 
                     </option>
 
@@ -1858,9 +2209,7 @@ function ProductDetails() {
           )}
 
 
-          {/* =================================
-              PRICE
-          ================================== */}
+          {/* PRICE */}
 
           <h2
             className="product-details-price"
@@ -1872,22 +2221,16 @@ function ProductDetails() {
           </h2>
 
 
-          {/* =================================
-              DESCRIPTION
-          ================================== */}
+          {/* DESCRIPTION */}
 
           <p
             className="product-description"
           >
-
             {product.description}
-
           </p>
 
 
-          {/* =================================
-              PRODUCT INFORMATION
-          ================================== */}
+          {/* PRODUCT INFORMATION */}
 
           <div
             className="product-info-grid"
@@ -1953,11 +2296,9 @@ function ProductDetails() {
           </div>
 
 
-          {/* =================================
-              ADD TO CART
-          ================================== */}
+          {/* ADD TO CART */}
 
-          {product.stock > 0 ? (
+          {productAvailable ? (
 
             <button
               className="product-add-cart-btn"
@@ -2000,7 +2341,6 @@ function ProductDetails() {
         className="product-reviews-section"
       >
 
-
         {/* =================================
             RATING OVERVIEW
         ================================== */}
@@ -2016,11 +2356,9 @@ function ProductDetails() {
             <div
               className="rating-big-number"
             >
-
               {averageRating.toFixed(
                 1
               )}
-
             </div>
 
 
@@ -2060,7 +2398,9 @@ function ProductDetails() {
 
                 <div
                   className="rating-breakdown-row"
-                  key={star}
+                  key={
+                    star
+                  }
                 >
 
                   <span
@@ -2128,12 +2468,14 @@ function ProductDetails() {
 
             <p>
 
-              {reviewCount === 0
+              {reviewCount ===
+              0
 
                 ? "Be the first to share your experience."
 
                 : `${reviewCount} customer review${
-                    reviewCount !== 1
+                    reviewCount !==
+                    1
                       ? "s"
                       : ""
                   }`
@@ -2200,7 +2542,7 @@ function ProductDetails() {
 
 
         ) : String(
-            currentUser.role
+            currentUser.role || ""
           )
             .trim()
             .toUpperCase() ===
@@ -2364,7 +2706,9 @@ function ProductDetails() {
                       star => (
 
                         <button
-                          key={star}
+                          key={
+                            star
+                          }
                           type="button"
                           className={
                             star <=
@@ -2403,16 +2747,16 @@ function ProductDetails() {
                         event.target.value
                       )
                   }
-                  maxLength={1000}
+                  maxLength={
+                    1000
+                  }
                 />
 
 
                 <div
                   className="review-character-count"
                 >
-                  {
-                    editComment.length
-                  }/1000
+                  {editComment.length}/1000
                 </div>
 
 
@@ -2458,10 +2802,11 @@ function ProductDetails() {
           </div>
 
 
-        ) : (
+        ) : eligibility?.canReview ? (
 
           /* =================================
-             NEW REVIEW FORM
+             DELIVERED CUSTOMER
+             CAN WRITE REVIEW
           ================================== */
 
           <div
@@ -2476,51 +2821,21 @@ function ProductDetails() {
             </h3>
 
 
-            {/* DELIVERED */}
+            <p
+              className="verified-review-message"
+            >
 
-            {eligibility?.delivered ? (
+              ✅ You purchased and received
+              this product.
 
-              <p
-                className="verified-review-message"
-              >
+              Your review will be marked as
 
-                ✅ You purchased and received
-                this product.
+              <strong>
+                {" "}
+                Verified Purchase.
+              </strong>
 
-                Your review will be marked as
-
-                <strong>
-                  {" "}
-                  Verified Purchase.
-                </strong>
-
-              </p>
-
-
-            ) : eligibility?.purchased ? (
-
-              <p
-                className="review-status-message"
-              >
-
-                🛒 You purchased this product.
-
-                You can review it now.
-
-                Since the order is not delivered yet,
-                it will not receive the Verified Purchase
-                badge.
-
-              </p>
-
-
-            ) : (
-
-              <p>
-                Share your experience with this product.
-              </p>
-
-            )}
+            </p>
 
 
             {/* =================================
@@ -2544,10 +2859,13 @@ function ProductDetails() {
                   star => (
 
                     <button
-                      key={star}
+                      key={
+                        star
+                      }
                       type="button"
                       className={
-                        star <= rating
+                        star <=
+                        rating
                           ? "rating-star selected"
                           : "rating-star"
                       }
@@ -2585,16 +2903,16 @@ function ProductDetails() {
                     event.target.value
                   )
               }
-              maxLength={1000}
+              maxLength={
+                1000
+              }
             />
 
 
             <div
               className="review-character-count"
             >
-              {
-                comment.length
-              }/1000
+              {comment.length}/1000
             </div>
 
 
@@ -2617,6 +2935,113 @@ function ProductDetails() {
               }
 
             </button>
+
+          </div>
+
+
+        ) : eligibility?.reason ===
+          "PURCHASE_REQUIRED" ? (
+
+          /* =================================
+             NEVER PURCHASED
+          ================================== */
+
+          <div
+            className="review-status-card"
+          >
+
+            <div
+              className="review-status-icon"
+            >
+              🔒
+            </div>
+
+
+            <div>
+
+              <h3>
+                Purchase Required
+              </h3>
+
+
+              <p>
+                Purchase this product to share
+                your experience.
+              </p>
+
+            </div>
+
+          </div>
+
+
+        ) : eligibility?.reason ===
+          "DELIVERY_REQUIRED" ? (
+
+          /* =================================
+             PURCHASED BUT NOT DELIVERED
+          ================================== */
+
+          <div
+            className="review-status-card"
+          >
+
+            <div
+              className="review-status-icon"
+            >
+              🚚
+            </div>
+
+
+            <div>
+
+              <h3>
+                Review Available After Delivery
+              </h3>
+
+
+              <p>
+                You purchased this product.
+                Once your order is delivered,
+                you can rate and review your
+                experience.
+              </p>
+
+            </div>
+
+          </div>
+
+
+        ) : (
+
+          /* =================================
+             UNKNOWN / ERROR
+          ================================== */
+
+          <div
+            className="review-status-card"
+          >
+
+            <div
+              className="review-status-icon"
+            >
+              ℹ️
+            </div>
+
+
+            <div>
+
+              <h3>
+                Review Unavailable
+              </h3>
+
+
+              <p>
+                We could not confirm your review
+                eligibility right now. Please try
+                again later.
+              </p>
+
+            </div>
 
           </div>
 
@@ -2645,7 +3070,8 @@ function ProductDetails() {
                   review.id !==
                   myReview?.id
               )
-              .length === 0 ? (
+              .length ===
+            0 ? (
 
             <div
               className="no-reviews"
