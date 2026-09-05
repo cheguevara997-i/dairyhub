@@ -112,7 +112,8 @@ function Login() {
                 JSON.stringify({
 
                   email:
-                    email.trim(),
+                    email.trim()
+                      .toLowerCase(),
 
                   password:
                     password
@@ -286,29 +287,12 @@ function Login() {
 
 
         // =====================================
-        // NAVIGATION
+        // GO TO HOME PAGE
         // =====================================
 
-        if (
-          String(
-            user.role || ""
-          )
-            .trim()
-            .toUpperCase() ===
-          "ADMIN"
-        ) {
-
-          navigate(
-            "/admin"
-          );
-
-        } else {
-
-          navigate(
-            "/dashboard"
-          );
-
-        }
+        navigate(
+          "/"
+        );
 
       } catch (error) {
 
@@ -545,29 +529,12 @@ function Login() {
 
 
         // =====================================
-        // NAVIGATION
+        // GO TO HOME PAGE
         // =====================================
 
-        if (
-          String(
-            user.role || ""
-          )
-            .trim()
-            .toUpperCase() ===
-          "ADMIN"
-        ) {
-
-          navigate(
-            "/admin"
-          );
-
-        } else {
-
-          navigate(
-            "/dashboard"
-          );
-
-        }
+        navigate(
+          "/"
+        );
 
       } catch (error) {
 
@@ -650,11 +617,6 @@ function Login() {
             theme="outline"
 
             size="large"
-
-            /*
-             * Google Sign-In expects a valid
-             * button width value.
-             */
 
             width="320"
 
