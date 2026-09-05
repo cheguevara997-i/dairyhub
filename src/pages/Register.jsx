@@ -1,106 +1,284 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+
+const API_URL =
+  "https://dairyhub-backend.onrender.com/api/users/register";
+
+
 function Register() {
 
   const navigate = useNavigate();
 
+
   const [formData, setFormData] = useState({
+
     name: "",
     email: "",
     password: "",
     phone: ""
+
   });
 
-  const [loading, setLoading] = useState(false);
 
+  const [loading, setLoading] =
+    useState(false);
+
+
+  // =========================================
+  // FORM CHANGE
+  // =========================================
 
   const handleChange = (e) => {
 
     setFormData({
+
       ...formData,
-      [e.target.name]: e.target.value
+
+      [e.target.name]:
+        e.target.value
+
     });
 
   };
 
 
-  const handleSubmit = async (e) => {
+  // =========================================
+  // REGISTER
+  // =========================================
 
-    e.preventDefault();
+  const handleSubmit =
+    async (e) => {
 
-    setLoading(true);
-
-    try {
-
-      const response = await fetch(
-        "https://dairyhub-backend.onrender.com/api/users/register",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json"
-          },
-
-          body: JSON.stringify(formData)
-        }
-      );
+      e.preventDefault();
 
 
-      if (!response.ok) {
+      // =======================================
+      // BASIC VALIDATION
+      // =======================================
 
-        throw new Error(
-          "Registration failed"
+      if (
+        !formData.name.trim()
+      ) {
+
+        alert(
+          "Please enter your name."
         );
+
+        return;
 
       }
 
 
-      const savedUser =
-        await response.json();
+      if (
+        !formData.email.trim()
+      ) {
+
+        alert(
+          "Please enter your email."
+        );
+
+        return;
+
+      }
 
 
-      console.log(
-        "Registered user:",
-        savedUser
-      );
+      if (
+        !formData.password.trim()
+      ) {
+
+        alert(
+          "Please enter your password."
+        );
+
+        return;
+
+      }
 
 
-      alert(
-        "Registration successful! Please login."
-      );
+      setLoading(true);
 
 
-      setFormData({
-        name: "",
-        email: "",
-        password: "",
-        phone: ""
-      });
+      try {
+
+        const response =
+          await fetch(
+            API_URL,
+            {
+
+              method:
+                "POST",
+
+              headers: {
+
+                "Content-Type":
+                  "application/json",
+
+                "Accept":
+                  "application/json"
+
+              },
+
+              body:
+                JSON.stringify({
+
+                  name:
+                    formData.name.trim(),
+
+                  email:
+                    formData.email.trim()
+                      .toLowerCase(),
+
+                  password:
+                    formData.password,
+
+                  phone:
+                    formData.phone.trim() ||
+                    null
+
+                })
+
+            }
+          );
 
 
-      navigate("/login");
+        // =====================================
+        // READ RESPONSE
+        // =====================================
+
+        const responseText =
+          await response.text();
 
 
-    } catch (error) {
+        let responseData =
+          null;
 
-      console.error(
-        "Registration error:",
-        error
-      );
 
-      alert(
-        "Unable to register. Please try again."
-      );
+        if (responseText) {
 
-    } finally {
+          try {
 
-      setLoading(false);
+            responseData =
+              JSON.parse(
+                responseText
+              );
 
-    }
+          } catch {
 
-  };
+            responseData =
+              responseText;
 
+          }
+
+        }
+
+
+        console.log(
+          "Registration response:",
+          response.status,
+          responseData
+        );
+
+
+        // =====================================
+        // ERROR
+        // =====================================
+
+        if (!response.ok) {
+
+          let message =
+            "Registration failed.";
+
+
+          if (
+            typeof responseData ===
+            "string" &&
+            responseData.trim()
+          ) {
+
+            message =
+              responseData;
+
+          } else if (
+            responseData?.message
+          ) {
+
+            message =
+              responseData.message;
+
+          } else if (
+            responseData?.error
+          ) {
+
+            message =
+              responseData.error;
+
+          }
+
+
+          throw new Error(
+            message
+          );
+
+        }
+
+
+        // =====================================
+        // SUCCESS
+        // =====================================
+
+        console.log(
+          "Registered user:",
+          responseData
+        );
+
+
+        alert(
+          "Registration successful! Please login."
+        );
+
+
+        setFormData({
+
+          name: "",
+          email: "",
+          password: "",
+          phone: ""
+
+        });
+
+
+        navigate(
+          "/login"
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Registration error:",
+          error
+        );
+
+
+        alert(
+          error.message ||
+          "Unable to register. Please try again."
+        );
+
+
+      } finally {
+
+        setLoading(false);
+
+      }
+
+    };
+
+
+  // =========================================
+  // PAGE
+  // =========================================
 
   return (
 
@@ -108,69 +286,123 @@ function Register() {
 
       <form
         className="auth-form"
-        onSubmit={handleSubmit}
+        onSubmit={
+          handleSubmit
+        }
       >
 
-        <h2>Create Account</h2>
+        <h2>
+          Create Account
+        </h2>
 
+
+        {/* ===================================
+            NAME
+        ==================================== */}
 
         <input
           name="name"
+          type="text"
           placeholder="Full Name"
-          value={formData.name}
+          value={
+            formData.name
+          }
           required
-          onChange={handleChange}
+          onChange={
+            handleChange
+          }
         />
 
+
+        {/* ===================================
+            EMAIL
+        ==================================== */}
 
         <input
           name="email"
           type="email"
           placeholder="Email"
-          value={formData.email}
+          value={
+            formData.email
+          }
           required
-          onChange={handleChange}
+          onChange={
+            handleChange
+          }
         />
 
+
+        {/* ===================================
+            PASSWORD
+        ==================================== */}
 
         <input
           name="password"
           type="password"
           placeholder="Password"
-          value={formData.password}
+          value={
+            formData.password
+          }
           required
-          onChange={handleChange}
+          onChange={
+            handleChange
+          }
         />
 
+
+        {/* ===================================
+            PHONE
+        ==================================== */}
 
         <input
           name="phone"
           type="tel"
+          inputMode="numeric"
           placeholder="Phone Number"
-          value={formData.phone}
-          onChange={handleChange}
+          value={
+            formData.phone
+          }
+          onChange={
+            handleChange
+          }
         />
 
 
+        {/* ===================================
+            REGISTER BUTTON
+        ==================================== */}
+
         <button
           type="submit"
-          disabled={loading}
+          disabled={
+            loading
+          }
         >
 
           {loading
             ? "Creating Account..."
-            : "Register"}
+            : "Register"
+          }
 
         </button>
 
 
+        {/* ===================================
+            LOGIN LINK
+        ==================================== */}
+
         <div className="auth-links">
 
           <p>
+
             Already have an account?{" "}
-            <Link to="/login">
+
+            <Link
+              to="/login"
+            >
               Login
             </Link>
+
           </p>
 
         </div>
@@ -182,5 +414,6 @@ function Register() {
   );
 
 }
+
 
 export default Register;

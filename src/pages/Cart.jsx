@@ -3,25 +3,40 @@ import { useNavigate } from "react-router-dom";
 
 import BackButton from "../components/BackButton";
 
+
+const API_BASE =
+  "https://dairyhub-backend.onrender.com";
+
+
 function Cart() {
 
   const navigate = useNavigate();
 
-  const [cart, setCart] = useState([]);
 
-  const [selectedItems, setSelectedItems] = useState([]);
+  const [cart, setCart] =
+    useState([]);
 
-  const [showCheckout, setShowCheckout] = useState(false);
 
-  const [placingOrder, setPlacingOrder] = useState(false);
+  const [selectedItems, setSelectedItems] =
+    useState([]);
 
-  const [addressData, setAddressData] = useState({
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    pincode: ""
-  });
+
+  const [showCheckout, setShowCheckout] =
+    useState(false);
+
+
+  const [placingOrder, setPlacingOrder] =
+    useState(false);
+
+
+  const [addressData, setAddressData] =
+    useState({
+      phone: "",
+      address: "",
+      city: "",
+      state: "",
+      pincode: ""
+    });
 
 
   /* =========================================
@@ -34,15 +49,36 @@ function Cart() {
 
       const savedCart =
         JSON.parse(
-          localStorage.getItem("dairyhubCart")
+          localStorage.getItem(
+            "dairyhubCart"
+          )
         ) || [];
 
-      setCart(savedCart);
 
-      // Select all products by default
-      setSelectedItems(
-        savedCart.map(item => item.id)
+      const safeCart =
+        Array.isArray(savedCart)
+          ? savedCart
+          : [];
+
+
+      setCart(
+        safeCart
       );
+
+
+      /*
+       * Select all cart items by default.
+       *
+       * Each product size/variant has its own
+       * product ID, so variants remain separate.
+       */
+
+      setSelectedItems(
+        safeCart.map(
+          item => item.id
+        )
+      );
+
 
     } catch (error) {
 
@@ -51,7 +87,9 @@ function Cart() {
         error
       );
 
+
       setCart([]);
+
       setSelectedItems([]);
 
     }
@@ -65,12 +103,16 @@ function Cart() {
 
   let user = null;
 
+
   try {
 
     user =
       JSON.parse(
-        localStorage.getItem("dairyhubUser")
+        localStorage.getItem(
+          "dairyhubUser"
+        )
       );
+
 
   } catch (error) {
 
@@ -79,77 +121,144 @@ function Cart() {
       error
     );
 
+
     user = null;
 
   }
 
 
   /* =========================================
-     UPDATE QUANTITY
+     UPDATE CART QUANTITY
   ========================================= */
 
-  const updateQuantity = (id, value) => {
+  const updateQuantity = (
+    id,
+    value
+  ) => {
 
     const updatedCart =
-      cart.map(item => {
+      cart.map(
+        item => {
 
-        if (item.id === id) {
+          if (
+            item.id === id
+          ) {
 
-          return {
-            ...item,
+            const currentQuantity =
+              Number(
+                item.quantity || 1
+              );
 
-            quantity:
+
+            /*
+             * Minimum quantity = 1
+             */
+
+            const newQuantity =
               Math.max(
                 1,
-                Number(item.quantity || 1) + value
-              )
+                currentQuantity + value
+              );
 
-          };
+
+            /*
+             * Do not allow quantity to exceed
+             * the selected product variant stock.
+             */
+
+            const availableStock =
+              Number(
+                item.stock
+              );
+
+
+            if (
+              availableStock >= 0 &&
+              newQuantity >
+                availableStock
+            ) {
+
+              alert(
+                "You cannot add more than the available stock."
+              );
+
+
+              return item;
+
+            }
+
+
+            return {
+
+              ...item,
+
+              quantity:
+                newQuantity
+
+            };
+
+          }
+
+
+          return item;
 
         }
-
-        return item;
-
-      });
+      );
 
 
-    setCart(updatedCart);
+    setCart(
+      updatedCart
+    );
 
 
     localStorage.setItem(
       "dairyhubCart",
-      JSON.stringify(updatedCart)
+      JSON.stringify(
+        updatedCart
+      )
     );
 
   };
 
 
   /* =========================================
-     REMOVE ITEM
+     REMOVE CART ITEM
   ========================================= */
 
-  const removeItem = (id) => {
+  const removeItem = (
+    id
+  ) => {
 
     const updatedCart =
       cart.filter(
-        item => item.id !== id
+        item =>
+          item.id !== id
       );
 
 
-    setCart(updatedCart);
+    setCart(
+      updatedCart
+    );
 
 
     localStorage.setItem(
       "dairyhubCart",
-      JSON.stringify(updatedCart)
+      JSON.stringify(
+        updatedCart
+      )
     );
 
 
-    // Also remove from selected items
+    /*
+     * Remove this specific product variant
+     * from selected items.
+     */
+
     setSelectedItems(
       previous =>
         previous.filter(
-          itemId => itemId !== id
+          itemId =>
+            itemId !== id
         )
     );
 
@@ -157,27 +266,36 @@ function Cart() {
 
 
   /* =========================================
-     SELECT / UNSELECT PRODUCT
+     SELECT / UNSELECT ITEM
   ========================================= */
 
-  const toggleItemSelection = (id) => {
+  const toggleItemSelection = (
+    id
+  ) => {
 
     setSelectedItems(
       previous => {
 
         if (
-          previous.includes(id)
+          previous.includes(
+            id
+          )
         ) {
 
           return previous.filter(
-            itemId => itemId !== id
+            itemId =>
+              itemId !== id
           );
 
         }
 
+
         return [
+
           ...previous,
+
           id
+
         ];
 
       }
@@ -202,7 +320,10 @@ function Cart() {
     } else {
 
       setSelectedItems(
-        cart.map(item => item.id)
+        cart.map(
+          item =>
+            item.id
+        )
       );
 
     }
@@ -229,10 +350,17 @@ function Cart() {
 
   const selectedTotal =
     selectedCartItems.reduce(
-      (sum, item) =>
+      (
+        sum,
+        item
+      ) =>
         sum +
-        Number(item.price || 0) *
-        Number(item.quantity || 1),
+        Number(
+          item.price || 0
+        ) *
+        Number(
+          item.quantity || 1
+        ),
       0
     );
 
@@ -243,10 +371,17 @@ function Cart() {
 
   const cartTotal =
     cart.reduce(
-      (sum, item) =>
+      (
+        sum,
+        item
+      ) =>
         sum +
-        Number(item.price || 0) *
-        Number(item.quantity || 1),
+        Number(
+          item.price || 0
+        ) *
+        Number(
+          item.quantity || 1
+        ),
       0
     );
 
@@ -255,9 +390,12 @@ function Cart() {
      ADDRESS CHANGE
   ========================================= */
 
-  const handleAddressChange = (e) => {
+  const handleAddressChange = (
+    e
+  ) => {
 
     setAddressData({
+
       ...addressData,
 
       [e.target.name]:
@@ -280,18 +418,25 @@ function Cart() {
         "Please login before placing an order."
       );
 
-      navigate("/login");
+
+      navigate(
+        "/login"
+      );
+
 
       return;
 
     }
 
 
-    if (cart.length === 0) {
+    if (
+      cart.length === 0
+    ) {
 
       alert(
         "Your cart is empty."
       );
+
 
       return;
 
@@ -305,6 +450,7 @@ function Cart() {
       alert(
         "Please select at least one product to continue."
       );
+
 
       return;
 
@@ -327,7 +473,9 @@ function Cart() {
     });
 
 
-    setShowCheckout(true);
+    setShowCheckout(
+      true
+    );
 
   };
 
@@ -341,19 +489,25 @@ function Cart() {
 
       const response =
         await fetch(
-          "https://dairyhub-backend.onrender.com/api/payment/create-order",
+          `${API_BASE}/api/payment/create-order`,
           {
-            method: "POST",
+
+            method:
+              "POST",
 
             headers: {
+
               "Content-Type":
                 "application/json"
+
             },
 
             body:
               JSON.stringify({
+
                 amount:
                   selectedTotal
+
               })
 
           }
@@ -364,6 +518,7 @@ function Cart() {
 
         const errorText =
           await response.text();
+
 
         throw new Error(
           errorText ||
@@ -389,13 +544,17 @@ function Cart() {
 
       const response =
         await fetch(
-          "https://dairyhub-backend.onrender.com/api/payment/verify",
+          `${API_BASE}/api/payment/verify`,
           {
-            method: "POST",
+
+            method:
+              "POST",
 
             headers: {
+
               "Content-Type":
                 "application/json"
+
             },
 
             body:
@@ -431,8 +590,7 @@ function Cart() {
 
   /* =========================================
      SAVE DAIRYHUB ORDER
-     ONLY SELECTED ITEMS
-  ========================================= */
+     ========================================= */
 
   const saveDairyHubOrder =
     async (
@@ -485,28 +643,80 @@ function Cart() {
 
 
         /* =====================================
-           ONLY SELECTED PRODUCTS
-        ===================================== */
+           SELECTED ORDER ITEMS
+        ====================================== */
 
         items:
           selectedCartItems.map(
             item => ({
 
+              /*
+               * Database product variant ID.
+               *
+               * Different sizes have different
+               * product IDs.
+               */
+
               productId:
                 item.id,
+
+
+              /*
+               * Product name.
+               */
 
               productName:
                 item.name,
 
+
+              /*
+               * Selected size / quantity per unit.
+               *
+               * Examples:
+               * 180 ml
+               * 500 ml
+               * 1 L
+               * 100 g
+               * 500 g
+               * 1 kg
+               */
+
+              size:
+                item.size ||
+                null,
+
+
+              /*
+               * Number of units purchased.
+               */
+
               quantity:
-                Number(item.quantity || 1),
+                Number(
+                  item.quantity || 1
+                ),
+
+
+              /*
+               * Price for ONE selected unit.
+               */
 
               price:
-                Number(item.price || 0),
+                Number(
+                  item.price || 0
+                ),
+
+
+              /*
+               * Price × number of units.
+               */
 
               subtotal:
-                Number(item.price || 0) *
-                Number(item.quantity || 1)
+                Number(
+                  item.price || 0
+                ) *
+                Number(
+                  item.quantity || 1
+                )
 
             })
           )
@@ -522,17 +732,23 @@ function Cart() {
 
       const response =
         await fetch(
-          "https://dairyhub-backend.onrender.com/api/orders",
+          `${API_BASE}/api/orders`,
           {
-            method: "POST",
+
+            method:
+              "POST",
 
             headers: {
+
               "Content-Type":
                 "application/json"
+
             },
 
             body:
-              JSON.stringify(order)
+              JSON.stringify(
+                order
+              )
 
           }
         );
@@ -542,6 +758,7 @@ function Cart() {
 
         const errorText =
           await response.text();
+
 
         throw new Error(
           errorText ||
@@ -572,7 +789,11 @@ function Cart() {
           "Please login before placing an order."
         );
 
-        navigate("/login");
+
+        navigate(
+          "/login"
+        );
+
 
         return;
 
@@ -587,6 +808,7 @@ function Cart() {
           "Please select at least one product."
         );
 
+
         return;
 
       }
@@ -594,7 +816,7 @@ function Cart() {
 
       /* =====================================
          VALIDATE DELIVERY DETAILS
-      ===================================== */
+      ====================================== */
 
       if (
         !addressData.phone.trim() ||
@@ -608,6 +830,7 @@ function Cart() {
           "Please fill all delivery details."
         );
 
+
         return;
 
       }
@@ -620,6 +843,7 @@ function Cart() {
         alert(
           "Please enter a valid 6-digit pincode."
         );
+
 
         return;
 
@@ -635,12 +859,15 @@ function Cart() {
           "Razorpay could not be loaded. Please refresh the page and try again."
         );
 
+
         return;
 
       }
 
 
-      setPlacingOrder(true);
+      setPlacingOrder(
+        true
+      );
 
 
       try {
@@ -739,7 +966,7 @@ function Cart() {
 
 
                 /* =============================
-                   SAVE ORDER IN DATABASE
+                   SAVE ORDER
                 ============================= */
 
                 const savedOrder =
@@ -783,7 +1010,7 @@ function Cart() {
 
 
                 /* =============================
-                   SUCCESS MESSAGE
+                   SUCCESS
                 ============================= */
 
                 alert(
@@ -792,10 +1019,12 @@ function Cart() {
 
 
                 /* =============================
-                   GO TO MY ORDERS
+                   MY ORDERS
                 ============================= */
 
-                navigate("/orders");
+                navigate(
+                  "/orders"
+                );
 
 
               } catch (error) {
@@ -857,7 +1086,9 @@ function Cart() {
 
         razorpay.on(
           "payment.failed",
-          function(response) {
+          function(
+            response
+          ) {
 
             console.error(
               "Razorpay payment failed:",
@@ -909,7 +1140,9 @@ function Cart() {
      EMPTY CART
   ========================================= */
 
-  if (cart.length === 0) {
+  if (
+    cart.length === 0
+  ) {
 
     return (
 
@@ -931,6 +1164,7 @@ function Cart() {
           <h3>
             Your cart is empty
           </h3>
+
 
           <p>
             Add some fresh dairy products
@@ -963,9 +1197,11 @@ function Cart() {
 
       {/* =====================================
           SELECT ALL
-      ===================================== */}
+      ====================================== */}
 
-      <div className="cart-selection-header">
+      <div
+        className="cart-selection-header"
+      >
 
         <label>
 
@@ -981,6 +1217,7 @@ function Cart() {
             }
           />
 
+
           <span>
             Select All
           </span>
@@ -989,13 +1226,20 @@ function Cart() {
 
 
         <span>
+
           {selectedItems.length}
+
           {" "}
+
           item
           {selectedItems.length !== 1
             ? "s"
-            : ""}{" "}
+            : ""}
+
+          {" "}
+
           selected
+
         </span>
 
       </div>
@@ -1003,149 +1247,232 @@ function Cart() {
 
       {/* =====================================
           CART ITEMS
-      ===================================== */}
+      ====================================== */}
 
-      <div className="cart-items-section">
+      <div
+        className="cart-items-section"
+      >
 
-        {cart.map(item => (
+        {cart.map(
+          item => (
 
-          <div
-            className={
-              `cart-item ${
-                selectedItems.includes(
-                  item.id
-                )
-                  ? "cart-item-selected"
-                  : ""
-              }`
-            }
-            key={item.id}
-          >
-
-            {/* CHECKBOX */}
-
-            <div className="cart-select-box">
-
-              <input
-                type="checkbox"
-                checked={
+            <div
+              className={
+                `cart-item ${
                   selectedItems.includes(
                     item.id
                   )
-                }
-                onChange={() =>
-                  toggleItemSelection(
-                    item.id
-                  )
-                }
-              />
-
-            </div>
-
-
-            {/* IMAGE */}
-
-            <img
-              src={item.image}
-              alt={item.name}
-            />
+                    ? "cart-item-selected"
+                    : ""
+                }`
+              }
+              key={
+                item.id
+              }
+            >
 
 
-            {/* DETAILS */}
+              {/* CHECKBOX */}
 
-            <div className="cart-item-details">
+              <div
+                className="cart-select-box"
+              >
 
-              <h3>
-                {item.name}
-              </h3>
-
-
-              <p>
-                ₹{item.price}
-              </p>
-
-
-              <div className="cart-quantity">
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateQuantity(
-                      item.id,
-                      -1
-                    )
-                  }
-                >
-                  -
-                </button>
-
-
-                <span>
-                  {item.quantity}
-                </span>
-
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateQuantity(
-                      item.id,
-                      1
-                    )
-                  }
-                >
-                  +
-                </button>
-
-
-                <button
-                  type="button"
-                  className="remove-cart-btn"
-                  onClick={() =>
-                    removeItem(
+                <input
+                  type="checkbox"
+                  checked={
+                    selectedItems.includes(
                       item.id
                     )
                   }
-                >
-                  Remove
-                </button>
+                  onChange={() =>
+                    toggleItemSelection(
+                      item.id
+                    )
+                  }
+                />
 
               </div>
 
 
-              <p className="cart-item-subtotal">
+              {/* IMAGE */}
 
-                Subtotal: ₹
-                {Number(item.price || 0) *
-                  Number(item.quantity || 1)}
+              <img
+                src={
+                  item.image
+                }
+                alt={
+                  item.name
+                }
+              />
 
-              </p>
+
+              {/* DETAILS */}
+
+              <div
+                className="cart-item-details"
+              >
+
+                {/* PRODUCT NAME */}
+
+                <h3>
+                  {item.name}
+                </h3>
+
+
+                {/* =================================
+                    PRODUCT SIZE
+                ================================== */}
+
+                {item.size && (
+
+                  <p>
+                    Size:{" "}
+                    {item.size}
+                  </p>
+
+                )}
+
+
+                {/* PRICE */}
+
+                <p>
+                  ₹
+                  {item.price}
+                </p>
+
+
+                {/* AVAILABLE STOCK */}
+
+                {typeof item.stock !==
+                  "undefined" && (
+
+                  <p>
+                    Available Stock:{" "}
+                    {item.stock}
+                  </p>
+
+                )}
+
+
+                {/* CART QUANTITY */}
+
+                <div
+                  className="cart-quantity"
+                >
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateQuantity(
+                        item.id,
+                        -1
+                      )
+                    }
+                    disabled={
+                      Number(
+                        item.quantity || 1
+                      ) <= 1
+                    }
+                  >
+                    -
+                  </button>
+
+
+                  <span>
+                    {item.quantity}
+                  </span>
+
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateQuantity(
+                        item.id,
+                        1
+                      )
+                    }
+                    disabled={
+                      Number(
+                        item.stock
+                      ) > 0 &&
+                      Number(
+                        item.quantity || 1
+                      ) >=
+                      Number(
+                        item.stock
+                      )
+                    }
+                  >
+                    +
+                  </button>
+
+
+                  <button
+                    type="button"
+                    className="remove-cart-btn"
+                    onClick={() =>
+                      removeItem(
+                        item.id
+                      )
+                    }
+                  >
+                    Remove
+                  </button>
+
+                </div>
+
+
+                {/* SUBTOTAL */}
+
+                <p
+                  className="cart-item-subtotal"
+                >
+
+                  Subtotal: ₹
+
+                  {
+                    Number(
+                      item.price || 0
+                    ) *
+                    Number(
+                      item.quantity || 1
+                    )
+                  }
+
+                </p>
+
+              </div>
 
             </div>
 
-          </div>
-
-        ))}
+          )
+        )}
 
       </div>
 
 
       {/* =====================================
           ORDER SUMMARY
-      ===================================== */}
+      ====================================== */}
 
-      <div className="cart-summary">
+      <div
+        className="cart-summary"
+      >
 
         <h2>
           Order Summary
         </h2>
 
 
-        <div className="summary-row">
+        <div
+          className="summary-row"
+        >
 
           <span>
             Cart Total
           </span>
+
 
           <strong>
             ₹{cartTotal}
@@ -1154,11 +1481,14 @@ function Cart() {
         </div>
 
 
-        <div className="summary-row">
+        <div
+          className="summary-row"
+        >
 
           <span>
             Selected Items
           </span>
+
 
           <strong>
             {selectedItems.length}
@@ -1167,11 +1497,14 @@ function Cart() {
         </div>
 
 
-        <div className="summary-row">
+        <div
+          className="summary-row"
+        >
 
           <span>
             Selected Subtotal
           </span>
+
 
           <strong>
             ₹{selectedTotal}
@@ -1180,11 +1513,14 @@ function Cart() {
         </div>
 
 
-        <div className="summary-row">
+        <div
+          className="summary-row"
+        >
 
           <span>
             Delivery
           </span>
+
 
           <strong>
             Free
@@ -1193,11 +1529,14 @@ function Cart() {
         </div>
 
 
-        <div className="summary-total">
+        <div
+          className="summary-total"
+        >
 
           <span>
             Payable Total
           </span>
+
 
           <strong>
             ₹{selectedTotal}
@@ -1209,15 +1548,20 @@ function Cart() {
         <button
           type="button"
           className="btn checkout-open-btn"
-          onClick={openCheckout}
+          onClick={
+            openCheckout
+          }
           disabled={
             selectedItems.length === 0
           }
         >
 
           {selectedItems.length === 0
+
             ? "Select Products"
+
             : "Proceed to Checkout"
+
           }
 
         </button>
@@ -1227,22 +1571,29 @@ function Cart() {
 
       {/* =====================================
           CHECKOUT
-      ===================================== */}
+      ====================================== */}
 
       {showCheckout && (
 
-        <div className="checkout-container">
+        <div
+          className="checkout-container"
+        >
 
 
           {/* CUSTOMER DETAILS */}
 
-          <div className="checkout-section">
+          <div
+            className="checkout-section"
+          >
 
-            <div className="checkout-section-title">
+            <div
+              className="checkout-section-title"
+            >
 
               <span>
                 1
               </span>
+
 
               <h2>
                 Customer Details
@@ -1251,29 +1602,39 @@ function Cart() {
             </div>
 
 
-            <div className="customer-details-grid">
+            <div
+              className="customer-details-grid"
+            >
 
-              <div className="checkout-info-box">
+              <div
+                className="checkout-info-box"
+              >
 
                 <small>
                   Name
                 </small>
 
+
                 <strong>
-                  {user?.name || "N/A"}
+                  {user?.name ||
+                    "N/A"}
                 </strong>
 
               </div>
 
 
-              <div className="checkout-info-box">
+              <div
+                className="checkout-info-box"
+              >
 
                 <small>
                   Email
                 </small>
 
+
                 <strong>
-                  {user?.email || "N/A"}
+                  {user?.email ||
+                    "N/A"}
                 </strong>
 
               </div>
@@ -1285,13 +1646,18 @@ function Cart() {
 
           {/* SELECTED PRODUCTS */}
 
-          <div className="checkout-section">
+          <div
+            className="checkout-section"
+          >
 
-            <div className="checkout-section-title">
+            <div
+              className="checkout-section-title"
+            >
 
               <span>
                 🛒
               </span>
+
 
               <h2>
                 Products to Purchase
@@ -1300,25 +1666,48 @@ function Cart() {
             </div>
 
 
-            <div className="checkout-selected-items">
+            <div
+              className="checkout-selected-items"
+            >
 
               {selectedCartItems.map(
                 item => (
 
                   <div
                     className="checkout-selected-item"
-                    key={item.id}
+                    key={
+                      item.id
+                    }
                   >
 
                     <span>
-                      {item.name} ×{" "}
+
+                      {item.name}
+
+                      {item.size
+                        ? ` (${item.size})`
+                        : ""}
+
+                      {" × "}
+
                       {item.quantity}
+
                     </span>
 
+
                     <strong>
+
                       ₹
-                      {Number(item.price || 0) *
-                        Number(item.quantity || 1)}
+
+                      {
+                        Number(
+                          item.price || 0
+                        ) *
+                        Number(
+                          item.quantity || 1
+                        )
+                      }
+
                     </strong>
 
                   </div>
@@ -1333,13 +1722,18 @@ function Cart() {
 
           {/* DELIVERY DETAILS */}
 
-          <div className="checkout-section">
+          <div
+            className="checkout-section"
+          >
 
-            <div className="checkout-section-title">
+            <div
+              className="checkout-section-title"
+            >
 
               <span>
                 2
               </span>
+
 
               <h2>
                 Delivery Details
@@ -1348,7 +1742,9 @@ function Cart() {
             </div>
 
 
-            <div className="checkout-form">
+            <div
+              className="checkout-form"
+            >
 
               <input
                 type="tel"
@@ -1426,13 +1822,18 @@ function Cart() {
 
           {/* PAYMENT */}
 
-          <div className="checkout-section">
+          <div
+            className="checkout-section"
+          >
 
-            <div className="checkout-section-title">
+            <div
+              className="checkout-section-title"
+            >
 
               <span>
                 3
               </span>
+
 
               <h2>
                 Payment
@@ -1441,13 +1842,16 @@ function Cart() {
             </div>
 
 
-            <div className="payment-method-box">
+            <div
+              className="payment-method-box"
+            >
 
               <div>
 
                 <strong>
                   💳 Razorpay
                 </strong>
+
 
                 <p>
                   Pay securely using UPI,
@@ -1458,18 +1862,23 @@ function Cart() {
               </div>
 
 
-              <span className="secure-payment">
+              <span
+                className="secure-payment"
+              >
                 🔒 Secure Payment
               </span>
 
             </div>
 
 
-            <div className="checkout-payment-total">
+            <div
+              className="checkout-payment-total"
+            >
 
               <span>
                 Amount to Pay
               </span>
+
 
               <strong>
                 ₹{selectedTotal}
@@ -1482,13 +1891,17 @@ function Cart() {
 
           {/* ACTION BUTTONS */}
 
-          <div className="checkout-actions">
+          <div
+            className="checkout-actions"
+          >
 
             <button
               type="button"
               className="btn"
               onClick={() =>
-                setShowCheckout(false)
+                setShowCheckout(
+                  false
+                )
               }
               disabled={
                 placingOrder
@@ -1501,15 +1914,20 @@ function Cart() {
             <button
               type="button"
               className="btn"
-              onClick={placeOrder}
+              onClick={
+                placeOrder
+              }
               disabled={
                 placingOrder
               }
             >
 
               {placingOrder
+
                 ? "Opening Payment..."
+
                 : `Pay ₹${selectedTotal}`
+
               }
 
             </button>
@@ -1525,5 +1943,6 @@ function Cart() {
   );
 
 }
+
 
 export default Cart;

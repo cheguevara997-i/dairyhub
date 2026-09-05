@@ -1,37 +1,68 @@
 import { useEffect, useState } from "react";
 import BackButton from "../components/BackButton";
 
+
+const API_URL =
+  "https://dairyhub-backend.onrender.com/api/products";
+
+
 function ManageProducts() {
 
   const [products, setProducts] = useState([]);
 
+
   const [formData, setFormData] = useState({
+
     name: "",
     category: "Milk",
     price: "",
+    size: "",
     stock: "",
     description: "",
-    image: "",
+    image: ""
+
   });
 
-  const [loading, setLoading] = useState(false);
 
+  const [loading, setLoading] =
+    useState(false);
+
+
+  const [editingProduct, setEditingProduct] =
+    useState(null);
+
+
+  // =========================================
+  // FETCH PRODUCTS
+  // =========================================
 
   const fetchProducts = async () => {
 
     try {
 
-      const response = await fetch(
-        "https://dairyhub-backend.onrender.com/api/products"
-      );
+      const response =
+        await fetch(API_URL);
+
 
       if (!response.ok) {
-        throw new Error("Failed to fetch products");
+
+        throw new Error(
+          "Failed to fetch products"
+        );
+
       }
 
-      const data = await response.json();
 
-      setProducts(data);
+      const data =
+        await response.json();
+
+
+      setProducts(
+        Array.isArray(data)
+          ? data
+          : []
+      );
+
 
     } catch (error) {
 
@@ -45,6 +76,10 @@ function ManageProducts() {
   };
 
 
+  // =========================================
+  // INITIAL LOAD
+  // =========================================
+
   useEffect(() => {
 
     fetchProducts();
@@ -52,216 +87,684 @@ function ManageProducts() {
   }, []);
 
 
+  // =========================================
+  // HANDLE INPUT CHANGE
+  // =========================================
+
   const handleChange = (e) => {
 
+    const {
+      name,
+      value
+    } = e.target;
+
+
+    /*
+     * Price and stock cannot be negative.
+     */
+
+    if (
+      name === "price" ||
+      name === "stock"
+    ) {
+
+      if (
+        value !== "" &&
+        Number(value) < 0
+      ) {
+
+        return;
+
+      }
+
+    }
+
+
     setFormData({
+
       ...formData,
-      [e.target.name]: e.target.value,
+
+      [name]:
+        value
+
     });
 
   };
 
 
-  const handleSubmit = async (e) => {
+  // =========================================
+  // RESET FORM
+  // =========================================
 
-    e.preventDefault();
+  const resetForm = () => {
 
-    setLoading(true);
+    setFormData({
 
-    const newProduct = {
-      name: formData.name,
-      category: formData.category,
-      price: Number(formData.price),
-      stock: Number(formData.stock),
-      description: formData.description,
-      image: formData.image,
+      name: "",
+      category: "Milk",
+      price: "",
+      size: "",
+      stock: "",
+      description: "",
+      image: ""
+
+    });
+
+
+    setEditingProduct(null);
+
+  };
+
+
+  // =========================================
+  // VALIDATE FORM
+  // =========================================
+
+  const validateForm = () => {
+
+    if (
+      !formData.name.trim()
+    ) {
+
+      alert(
+        "Please enter a product name."
+      );
+
+      return false;
+
+    }
+
+
+    if (
+      !formData.size.trim()
+    ) {
+
+      alert(
+        "Please enter the product size / quantity."
+      );
+
+      return false;
+
+    }
+
+
+    const price =
+      Number(
+        formData.price
+      );
+
+
+    if (
+      formData.price === "" ||
+      Number.isNaN(price) ||
+      price < 0
+    ) {
+
+      alert(
+        "Price must be 0 or greater."
+      );
+
+      return false;
+
+    }
+
+
+    const stock =
+      Number(
+        formData.stock
+      );
+
+
+    if (
+      formData.stock === "" ||
+      Number.isNaN(stock) ||
+      stock < 0
+    ) {
+
+      alert(
+        "Available Stock must be 0 or greater."
+      );
+
+      return false;
+
+    }
+
+
+    if (
+      !Number.isInteger(stock)
+    ) {
+
+      alert(
+        "Available Stock must be a whole number."
+      );
+
+      return false;
+
+    }
+
+
+    /*
+     * Image can be:
+     *
+     * /images/milk.jpg
+     *
+     * OR
+     *
+     * https://example.com/milk.jpg
+     */
+
+    const imageValue =
+      formData.image.trim();
+
+
+    if (imageValue) {
+
+      const isLocalPath =
+        imageValue.startsWith("/");
+
+
+      let isValidUrl =
+        false;
+
+
+      try {
+
+        new URL(
+          imageValue
+        );
+
+        isValidUrl = true;
+
+      } catch {
+
+        isValidUrl = false;
+
+      }
+
+
+      if (
+        !isLocalPath &&
+        !isValidUrl
+      ) {
+
+        alert(
+          "Please enter a valid image path or URL."
+        );
+
+        return false;
+
+      }
+
+    }
+
+
+    return true;
+
+  };
+
+
+  // =========================================
+  // ADD / UPDATE PRODUCT
+  // =========================================
+
+  const handleSubmit =
+    async (e) => {
+
+      e.preventDefault();
+
+
+      if (
+        !validateForm()
+      ) {
+
+        return;
+
+      }
+
+
+      setLoading(true);
+
+
+      const productData = {
+
+        name:
+          formData.name.trim(),
+
+        category:
+          formData.category,
+
+        price:
+          Number(
+            formData.price
+          ),
+
+        size:
+          formData.size.trim(),
+
+        stock:
+          Number(
+            formData.stock
+          ),
+
+        description:
+          formData.description.trim(),
+
+        image:
+          formData.image.trim()
+
+      };
+
+
+      try {
+
+        let response;
+
+
+        // ===================================
+        // UPDATE EXISTING PRODUCT
+        // ===================================
+
+        if (
+          editingProduct
+        ) {
+
+          response =
+            await fetch(
+              `${API_URL}/${editingProduct.id}`,
+              {
+
+                method:
+                  "PUT",
+
+                headers: {
+
+                  "Content-Type":
+                    "application/json"
+
+                },
+
+                body:
+                  JSON.stringify(
+                    productData
+                  )
+
+              }
+            );
+
+        }
+
+
+        // ===================================
+        // ADD NEW PRODUCT
+        // ===================================
+
+        else {
+
+          response =
+            await fetch(
+              API_URL,
+              {
+
+                method:
+                  "POST",
+
+                headers: {
+
+                  "Content-Type":
+                    "application/json"
+
+                },
+
+                body:
+                  JSON.stringify(
+                    productData
+                  )
+
+              }
+            );
+
+        }
+
+
+        // ===================================
+        // CHECK RESPONSE
+        // ===================================
+
+        if (!response.ok) {
+
+          const errorMessage =
+            await response.text();
+
+
+          throw new Error(
+            errorMessage ||
+            "Unable to save product."
+          );
+
+        }
+
+
+        const savedProduct =
+          await response.json();
+
+
+        // ===================================
+        // UPDATE LOCAL UI
+        // ===================================
+
+        if (
+          editingProduct
+        ) {
+
+          setProducts(
+            previousProducts =>
+              previousProducts.map(
+                product =>
+                  product.id ===
+                  savedProduct.id
+                    ? savedProduct
+                    : product
+              )
+          );
+
+
+          alert(
+            "Product updated successfully!"
+          );
+
+        } else {
+
+          setProducts(
+            previousProducts => [
+              ...previousProducts,
+              savedProduct
+            ]
+          );
+
+
+          alert(
+            "Product added successfully!"
+          );
+
+        }
+
+
+        resetForm();
+
+
+      } catch (error) {
+
+        console.error(
+          "Save product error:",
+          error
+        );
+
+
+        alert(
+          error.message ||
+          "Unable to save product."
+        );
+
+
+      } finally {
+
+        setLoading(false);
+
+      }
+
     };
 
 
-    try {
+  // =========================================
+  // EDIT PRODUCT
+  // =========================================
 
-      const response = await fetch(
-        "https://dairyhub-backend.onrender.com/api/products",
-        {
-          method: "POST",
+  const editProduct = (
+    product
+  ) => {
 
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify(newProduct),
-        }
-      );
+    setEditingProduct(
+      product
+    );
 
 
-      if (!response.ok) {
-        throw new Error(
-          "Failed to add product"
-        );
-      }
+    setFormData({
+
+      name:
+        product.name ||
+        "",
+
+      category:
+        product.category ||
+        "Milk",
+
+      price:
+        product.price ??
+        "",
+
+      size:
+        product.size ||
+        "",
+
+      stock:
+        product.stock ??
+        "",
+
+      description:
+        product.description ||
+        "",
+
+      image:
+        product.image ||
+        ""
+
+    });
 
 
-      const savedProduct =
-        await response.json();
+    window.scrollTo({
 
+      top: 0,
 
-      setProducts((previousProducts) => [
-        ...previousProducts,
-        savedProduct,
-      ]);
+      behavior: "smooth"
 
-
-      setFormData({
-        name: "",
-        category: "Milk",
-        price: "",
-        stock: "",
-        description: "",
-        image: "",
-      });
-
-
-      alert(
-        "Product added successfully!"
-      );
-
-
-    } catch (error) {
-
-      console.error(
-        "Add product error:",
-        error
-      );
-
-      alert(
-        "Unable to add product."
-      );
-
-    } finally {
-
-      setLoading(false);
-
-    }
+    });
 
   };
 
 
-  const deleteProduct = async (id) => {
+  // =========================================
+  // DELETE PRODUCT
+  // =========================================
 
-    const confirmDelete =
-      window.confirm(
-        "Are you sure you want to delete this product?"
-      );
+  const deleteProduct =
+    async (
+      id
+    ) => {
 
-
-    if (!confirmDelete) {
-      return;
-    }
-
-
-    try {
-
-      const response = await fetch(
-        `https://dairyhub-backend.onrender.com/api/products/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-
-      if (!response.ok) {
-        throw new Error(
-          "Failed to delete product"
+      const confirmDelete =
+        window.confirm(
+          "Are you sure you want to permanently delete this product?"
         );
+
+
+      if (
+        !confirmDelete
+      ) {
+
+        return;
+
       }
 
 
-      setProducts(
-        (previousProducts) =>
-          previousProducts.filter(
-            (product) =>
-              product.id !== id
-          )
-      );
+      try {
+
+        const response =
+          await fetch(
+            `${API_URL}/${id}`,
+            {
+
+              method:
+                "DELETE"
+
+            }
+          );
 
 
-      alert(
-        "Product deleted successfully!"
-      );
+        if (!response.ok) {
+
+          const errorMessage =
+            await response.text();
 
 
-    } catch (error) {
+          throw new Error(
+            errorMessage ||
+            "Failed to delete product"
+          );
 
-      console.error(
-        "Delete product error:",
-        error
-      );
+        }
 
-      alert(
-        "Unable to delete product."
-      );
 
-    }
+        setProducts(
+          previousProducts =>
+            previousProducts.filter(
+              product =>
+                product.id !== id
+            )
+        );
 
-  };
 
+        /*
+         * If the deleted product was currently
+         * being edited, reset the form.
+         */
+
+        if (
+          editingProduct?.id ===
+          id
+        ) {
+
+          resetForm();
+
+        }
+
+
+        alert(
+          "Product deleted successfully!"
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Delete product error:",
+          error
+        );
+
+
+        alert(
+          error.message ||
+          "Unable to delete product."
+        );
+
+      }
+
+    };
+
+
+  // =========================================
+  // PAGE
+  // =========================================
 
   return (
 
-    <div className="admin-page">
+    <div
+      className="admin-page"
+    >
 
       <BackButton
         to="/admin"
         text="← Back to Admin Dashboard"
       />
 
+
       <h1>
         Manage Products
       </h1>
 
 
-      <div className="admin-form-container">
+      {/* =====================================
+          PRODUCT FORM
+      ====================================== */}
+
+      <div
+        className="admin-form-container"
+      >
 
         <h2>
-          Add New Product
+
+          {editingProduct
+            ? "Edit Product"
+            : "Add New Product"
+          }
+
         </h2>
 
 
         <form
           className="admin-form"
-          onSubmit={handleSubmit}
+          onSubmit={
+            handleSubmit
+          }
         >
+
+
+          {/* PRODUCT NAME */}
 
           <input
             name="name"
+            type="text"
             placeholder="Product Name"
-            value={formData.name}
-            onChange={handleChange}
+            value={
+              formData.name
+            }
+            onChange={
+              handleChange
+            }
             required
           />
 
 
+          {/* CATEGORY */}
+
           <select
             name="category"
-            value={formData.category}
-            onChange={handleChange}
+            value={
+              formData.category
+            }
+            onChange={
+              handleChange
+            }
           >
 
             <option value="Milk">
               Milk
             </option>
 
+
             <option value="Curd">
               Curd
             </option>
+
 
             <option value="Paneer">
               Paneer
             </option>
 
+
             <option value="Butter">
               Butter
             </option>
+
 
             <option value="Ghee">
               Ghee
@@ -270,126 +773,277 @@ function ManageProducts() {
           </select>
 
 
+          {/* PRICE */}
+
           <input
             type="number"
             name="price"
             placeholder="Price"
-            value={formData.price}
-            onChange={handleChange}
+            value={
+              formData.price
+            }
+            min="0"
+            step="1"
+            onChange={
+              handleChange
+            }
             required
           />
 
+
+          {/* AVAILABLE STOCK */}
 
           <input
             type="number"
             name="stock"
             placeholder="Available Stock"
-            value={formData.stock}
-            onChange={handleChange}
+            value={
+              formData.stock
+            }
+            min="0"
+            step="1"
+            onChange={
+              handleChange
+            }
             required
           />
 
 
+          {/* PRODUCT SIZE */}
+
           <input
-            name="image"
-            placeholder="Product Image URL"
-            value={formData.image}
-            onChange={handleChange}
+            type="text"
+            name="size"
+            placeholder="Product Size / Quantity (e.g. 1 L, 500 ml, 250 ml, 1 kg, 500 g)"
+            value={
+              formData.size
+            }
+            onChange={
+              handleChange
+            }
+            required
           />
 
+
+          {/* IMAGE */}
+
+          <input
+            name="image"
+            type="text"
+            placeholder="Image path or URL"
+            value={
+              formData.image
+            }
+            onChange={
+              handleChange
+            }
+          />
+
+
+          {/* DESCRIPTION */}
 
           <textarea
             name="description"
             placeholder="Product Description"
-            value={formData.description}
-            onChange={handleChange}
+            value={
+              formData.description
+            }
+            onChange={
+              handleChange
+            }
             required
           />
 
 
-          <button
-            type="submit"
-            disabled={loading}
+          {/* FORM BUTTONS */}
+
+          <div
+            className="product-form-buttons"
           >
 
-            {loading
-              ? "Adding Product..."
-              : "Add Product"}
+            <button
+              type="submit"
+              disabled={
+                loading
+              }
+            >
 
-          </button>
+              {loading
+
+                ? editingProduct
+                  ? "Updating Product..."
+                  : "Adding Product..."
+
+                : editingProduct
+                  ? "Update Product"
+                  : "Add Product"
+
+              }
+
+            </button>
+
+
+            {editingProduct && (
+
+              <button
+                type="button"
+                className="cancel-edit-product"
+                onClick={
+                  resetForm
+                }
+              >
+                Cancel Edit
+              </button>
+
+            )}
+
+          </div>
 
         </form>
 
       </div>
 
 
-      <div className="manage-products">
+      {/* =====================================
+          ALL PRODUCTS
+      ====================================== */}
+
+      <div
+        className="manage-products"
+      >
 
         <h2>
           All Products
         </h2>
 
 
-        <div className="product-grid">
+        {products.length === 0 ? (
 
-          {products.map(
-            (product) => (
+          <p>
+            No products available.
+          </p>
 
-              <div
-                className="product-card"
-                key={product.id}
-              >
+        ) : (
 
-                {product.image && (
+          <div
+            className="product-grid"
+          >
 
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                  />
+            {products.map(
+              product => (
 
-                )}
-
-
-                <h3>
-                  {product.name}
-                </h3>
-
-
-                <p>
-                  Category: {product.category}
-                </p>
-
-
-                <p>
-                  Price: ₹{product.price}
-                </p>
-
-
-                <p>
-                  Stock: {product.stock}
-                </p>
-
-
-                <p>
-                  {product.description}
-                </p>
-
-
-                <button
-                  className="delete-btn"
-                  onClick={() =>
-                    deleteProduct(product.id)
+                <div
+                  className="product-card"
+                  key={
+                    product.id
                   }
                 >
-                  Delete
-                </button>
 
-              </div>
 
-            )
-          )}
+                  {/* IMAGE */}
 
-        </div>
+                  {product.image && (
+
+                    <img
+                      src={
+                        product.image
+                      }
+                      alt={
+                        product.name
+                      }
+                    />
+
+                  )}
+
+
+                  {/* NAME */}
+
+                  <h3>
+                    {product.name}
+                  </h3>
+
+
+                  {/* CATEGORY */}
+
+                  <p>
+                    Category:{" "}
+                    {product.category}
+                  </p>
+
+
+                  {/* SIZE */}
+
+                  <p>
+                    Size:{" "}
+                    {product.size ||
+                      "Not specified"}
+                  </p>
+
+
+                  {/* PRICE */}
+
+                  <p>
+                    Price: ₹
+                    {product.price}
+                  </p>
+
+
+                  {/* STOCK */}
+
+                  <p>
+                    Stock:{" "}
+                    {product.stock}
+                  </p>
+
+
+                  {/* DESCRIPTION */}
+
+                  <p>
+                    {product.description}
+                  </p>
+
+
+                  {/* ACTION BUTTONS */}
+
+                  <div
+                    className="product-actions"
+                  >
+
+                    <button
+                      type="button"
+                      className="edit-product-btn"
+                      onClick={() =>
+                        editProduct(
+                          product
+                        )
+                      }
+                    >
+                      ✏️ Edit
+                    </button>
+
+
+                    <button
+                      type="button"
+                      className="delete-btn"
+                      onClick={() =>
+                        deleteProduct(
+                          product.id
+                        )
+                      }
+                    >
+                      🗑 Delete
+                    </button>
+
+                  </div>
+
+                </div>
+
+              )
+            )}
+
+          </div>
+
+        )}
 
       </div>
 

@@ -10514,3 +10514,421 @@ body {
   }
 
 }
+
+/* =========================================
+   MAKE ADMIN BUTTON
+========================================= */
+
+.make-admin-button {
+  padding: 8px 11px;
+
+  border: 1px solid #c58b00;
+
+  border-radius: 6px;
+
+  background: #fffaf0;
+
+  color: #9a6900;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.make-admin-button:hover {
+  background: #f5b942;
+
+  color: #ffffff;
+
+  transform: translateY(-1px);
+}
+
+.make-admin-button:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+
+  transform: none;
+}
+
+
+/* =========================================
+   ADMIN ROLE WARNING
+========================================= */
+
+.admin-role-warning {
+  margin-top: 5px;
+
+  padding: 12px;
+
+  border: 1px solid #ead9a5;
+
+  border-radius: 8px;
+
+  background: #fffaf0;
+
+  color: #795f14;
+
+  font-size: 13px;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================
+   USER ACTIONS
+========================================= */
+
+.user-actions {
+  display: flex;
+
+  align-items: center;
+
+  flex-wrap: wrap;
+
+  gap: 7px;
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 900px) {
+
+  .users-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .users-table {
+    min-width: 900px;
+  }
+
+}
+
+@media (max-width: 600px) {
+
+  .user-actions {
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  .user-actions button {
+    width: 100%;
+  }
+
+}
+
+
+/* =========================================
+   REMOVE ADMIN
+========================================= */
+
+.remove-admin-button {
+  padding: 8px 11px;
+
+  border: 1px solid #b85c00;
+
+  border-radius: 6px;
+
+  background: #fff8f0;
+
+  color: #a34f00;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.remove-admin-button:hover {
+  background: #b85c00;
+
+  color: #ffffff;
+
+  transform: translateY(-1px);
+}
+
+.remove-admin-button:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+
+  transform: none;
+}
+
+
+/* =========================================
+   MAKE ADMIN
+========================================= */
+
+.make-admin-button {
+  padding: 8px 11px;
+
+  border: 1px solid #c58b00;
+
+  border-radius: 6px;
+
+  background: #fffaf0;
+
+  color: #9a6900;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.make-admin-button:hover {
+  background: #f5b942;
+
+  color: #ffffff;
+
+  transform: translateY(-1px);
+}
+
+.make-admin-button:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+
+  transform: none;
+}
+
+
+/* =========================================
+   USER ACTIONS
+========================================= */
+
+.user-actions {
+  display: flex;
+
+  align-items: center;
+
+  flex-wrap: wrap;
+
+  gap: 7px;
+}
+
+
+/* =========================================
+   ADMIN WARNING
+========================================= */
+
+.admin-role-warning {
+  margin-top: 5px;
+
+  padding: 12px;
+
+  border: 1px solid #ead9a5;
+
+  border-radius: 8px;
+
+  background: #fffaf0;
+
+  color: #795f14;
+
+  font-size: 13px;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 900px) {
+
+  .users-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .users-table {
+    min-width: 900px;
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .user-actions {
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  .user-actions button {
+    width: 100%;
+  }
+
+}
+
+/* =========================================
+   PRODUCT ACTIONS
+========================================= */
+
+.product-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+
+/* =========================================
+   EDIT PRODUCT
+========================================= */
+
+.edit-product-btn {
+  padding: 9px 14px;
+
+  border: 1px solid #2d7a46;
+
+  border-radius: 6px;
+
+  background: #f2faf4;
+
+  color: #2d7a46;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.edit-product-btn:hover {
+  background: #2d7a46;
+
+  color: #ffffff;
+}
+
+
+/* =========================================
+   CANCEL EDIT
+========================================= */
+
+.cancel-edit-product {
+  background: #f5f5f5 !important;
+
+  color: #555 !important;
+
+  border: 1px solid #ccc !important;
+}
+
+.cancel-edit-product:hover {
+  background: #e7e7e7 !important;
+
+  color: #222 !important;
+}
+
+
+/* =========================================
+   PRODUCT FORM BUTTONS
+========================================= */
+
+.product-form-buttons {
+  display: flex;
+
+  gap: 10px;
+
+  margin-top: 5px;
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 600px) {
+
+  .product-actions {
+    flex-direction: column;
+  }
+
+  .product-form-buttons {
+    flex-direction: column;
+  }
+
+}
+
+/* =========================================
+   PRODUCT SIZE SELECTOR
+========================================= */
+
+.featured-product-size,
+.product-size-selector,
+.product-details-size-selector {
+  margin: 14px 0;
+}
+
+
+.featured-product-size label,
+.product-size-selector label,
+.product-details-size-selector label {
+  display: block;
+
+  margin-bottom: 6px;
+
+  font-size: 13px;
+
+  font-weight: 600;
+}
+
+
+.featured-product-size select,
+.product-size-selector select,
+.product-details-size-selector select {
+  width: 100%;
+
+  padding: 9px 11px;
+
+  border: 1px solid #d5d5d5;
+
+  border-radius: 6px;
+
+  background: #ffffff;
+
+  font-size: 14px;
+
+  cursor: pointer;
+}
+
+
+/* =========================================
+   PRODUCT ACTIONS
+========================================= */
+
+.product-actions,
+.product-card-actions {
+  display: flex;
+
+  gap: 10px;
+
+  flex-wrap: wrap;
+}

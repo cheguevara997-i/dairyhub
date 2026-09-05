@@ -34,6 +34,11 @@ function ProductDetails() {
   const [product, setProduct] =
     useState(null);
 
+
+  const [productVariants, setProductVariants] =
+    useState([]);
+
+
   const [loading, setLoading] =
     useState(true);
 
@@ -45,11 +50,14 @@ function ProductDetails() {
   const [reviews, setReviews] =
     useState([]);
 
+
   const [averageRating, setAverageRating] =
     useState(0);
 
+
   const [reviewCount, setReviewCount] =
     useState(0);
+
 
   const [reviewLoading, setReviewLoading] =
     useState(true);
@@ -61,11 +69,13 @@ function ProductDetails() {
 
   const [ratingBreakdown, setRatingBreakdown] =
     useState({
+
       5: 0,
       4: 0,
       3: 0,
       2: 0,
       1: 0
+
     });
 
 
@@ -84,8 +94,10 @@ function ProductDetails() {
   const [rating, setRating] =
     useState(0);
 
+
   const [comment, setComment] =
     useState("");
+
 
   const [submittingReview, setSubmittingReview] =
     useState(false);
@@ -98,11 +110,14 @@ function ProductDetails() {
   const [editingReview, setEditingReview] =
     useState(null);
 
+
   const [editRating, setEditRating] =
     useState(0);
 
+
   const [editComment, setEditComment] =
     useState("");
+
 
   const [updatingReview, setUpdatingReview] =
     useState(false);
@@ -164,53 +179,158 @@ function ProductDetails() {
 
 
   // =========================================
-  // FETCH PRODUCT
+  // FETCH PRODUCT + PRODUCT VARIANTS
   // =========================================
 
   useEffect(() => {
 
-    const fetchProduct = async () => {
+    const fetchProduct =
+      async () => {
 
-      try {
+        try {
 
-        const response =
-          await fetch(
-            `${API_BASE}/api/products/${id}`
+          /*
+           * Fetch all products because products
+           * with different sizes are stored as
+           * separate database records.
+           */
+
+          const response =
+            await fetch(
+              `${API_BASE}/api/products`
+            );
+
+
+          if (!response.ok) {
+
+            throw new Error(
+              "Unable to fetch products"
+            );
+
+          }
+
+
+          const data =
+            await response.json();
+
+
+          const allProducts =
+            Array.isArray(data)
+              ? data
+              : [];
+
+
+          // ===================================
+          // FIND CURRENT PRODUCT
+          // ===================================
+
+          const currentProduct =
+            allProducts.find(
+              item =>
+                String(
+                  item.id
+                ) ===
+                String(id)
+            );
+
+
+          if (!currentProduct) {
+
+            throw new Error(
+              "Product not found"
+            );
+
+          }
+
+
+          // ===================================
+          // IDENTIFY PRODUCT GROUP
+          // ===================================
+
+          const currentName =
+            String(
+              currentProduct.name ||
+              ""
+            )
+              .trim()
+              .toLowerCase();
+
+
+          const currentCategory =
+            String(
+              currentProduct.category ||
+              ""
+            )
+              .trim()
+              .toLowerCase();
+
+
+          // ===================================
+          // FIND ALL SIZE VARIANTS
+          // ===================================
+
+          const variants =
+            allProducts.filter(
+              item => {
+
+                const itemName =
+                  String(
+                    item.name ||
+                    ""
+                  )
+                    .trim()
+                    .toLowerCase();
+
+
+                const itemCategory =
+                  String(
+                    item.category ||
+                    ""
+                  )
+                    .trim()
+                    .toLowerCase();
+
+
+                return (
+                  itemName ===
+                    currentName &&
+                  itemCategory ===
+                    currentCategory
+                );
+
+              }
+            );
+
+
+          setProductVariants(
+            variants
           );
 
 
-        if (!response.ok) {
-
-          throw new Error(
-            "Product not found"
+          setProduct(
+            currentProduct
           );
+
+
+        } catch (error) {
+
+          console.error(
+            "Error fetching product:",
+            error
+          );
+
+
+          setProduct(null);
+
+          setProductVariants([]);
+
+        } finally {
+
+          setLoading(false);
 
         }
 
-
-        const data =
-          await response.json();
-
-
-        setProduct(data);
-
-      } catch (error) {
-
-        console.error(
-          "Error fetching product:",
-          error
-        );
-
-
-        setProduct(null);
-
-      } finally {
-
-        setLoading(false);
-
-      }
-
-    };
+      };
 
 
     fetchProduct();
@@ -222,103 +342,109 @@ function ProductDetails() {
   // FETCH REVIEWS
   // =========================================
 
-  const fetchReviews = async () => {
+  const fetchReviews =
+    async () => {
 
-    try {
+      try {
 
-      const response =
-        await fetch(
-          `${API_BASE}/api/reviews/product/${id}`
+        const response =
+          await fetch(
+            `${API_BASE}/api/reviews/product/${id}`
+          );
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            "Unable to fetch reviews"
+          );
+
+        }
+
+
+        const data =
+          await response.json();
+
+
+        const safeReviews =
+          Array.isArray(data)
+            ? data
+            : [];
+
+
+        setReviews(
+          safeReviews
         );
 
 
-      if (!response.ok) {
+        // ===================================
+        // RATING BREAKDOWN
+        // ===================================
 
-        throw new Error(
-          "Unable to fetch reviews"
+        const breakdown = {
+
+          5: 0,
+          4: 0,
+          3: 0,
+          2: 0,
+          1: 0
+
+        };
+
+
+        safeReviews.forEach(
+          review => {
+
+            const reviewRating =
+              Number(
+                review.rating
+              );
+
+
+            if (
+              reviewRating >= 1 &&
+              reviewRating <= 5
+            ) {
+
+              breakdown[
+                reviewRating
+              ] += 1;
+
+            }
+
+          }
         );
+
+
+        setRatingBreakdown(
+          breakdown
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Error fetching reviews:",
+          error
+        );
+
+
+        setReviews([]);
+
+
+        setRatingBreakdown({
+
+          5: 0,
+          4: 0,
+          3: 0,
+          2: 0,
+          1: 0
+
+        });
 
       }
 
-
-      const data =
-        await response.json();
-
-
-      const safeReviews =
-        Array.isArray(data)
-          ? data
-          : [];
-
-
-      setReviews(
-        safeReviews
-      );
-
-
-      // =====================================
-      // RATING BREAKDOWN
-      // =====================================
-
-      const breakdown = {
-        5: 0,
-        4: 0,
-        3: 0,
-        2: 0,
-        1: 0
-      };
-
-
-      safeReviews.forEach(
-        (review) => {
-
-          const reviewRating =
-            Number(
-              review.rating
-            );
-
-
-          if (
-            reviewRating >= 1 &&
-            reviewRating <= 5
-          ) {
-
-            breakdown[
-              reviewRating
-            ] += 1;
-
-          }
-
-        }
-      );
-
-
-      setRatingBreakdown(
-        breakdown
-      );
-
-
-    } catch (error) {
-
-      console.error(
-        "Error fetching reviews:",
-        error
-      );
-
-
-      setReviews([]);
-
-      setRatingBreakdown({
-        5: 0,
-        4: 0,
-        3: 0,
-        2: 0,
-        1: 0
-      });
-
-    }
-
-  };
+    };
 
 
   // =========================================
@@ -420,7 +546,9 @@ function ProductDetails() {
       // =====================================
 
       if (
-        String(user.role)
+        String(
+          user.role
+        )
           .trim()
           .toUpperCase() ===
         "ADMIN"
@@ -480,11 +608,6 @@ function ProductDetails() {
         );
 
 
-        /*
-         * Keep the form available for
-         * normal customer reviews.
-         */
-
         setEligibility({
 
           canReview: true,
@@ -516,9 +639,13 @@ function ProductDetails() {
 
 
         await Promise.all([
+
           fetchReviews(),
+
           fetchRatingSummary(),
+
           fetchEligibility()
+
         ]);
 
 
@@ -546,13 +673,15 @@ function ProductDetails() {
 
   const myReview =
     currentUser &&
-    String(currentUser.role)
+    String(
+      currentUser.role
+    )
       .trim()
       .toUpperCase() !==
-      "ADMIN"
+    "ADMIN"
 
       ? reviews.find(
-          (review) =>
+          review =>
             review.userEmail
               ?.trim()
               .toLowerCase() ===
@@ -582,17 +711,11 @@ function ProductDetails() {
     }
 
 
-    /*
-     * Wait until the review section
-     * has been rendered.
-     */
-
     const timer =
       setTimeout(() => {
 
         // -----------------------------------
-        // If customer already reviewed:
-        // scroll to their existing review.
+        // EXISTING REVIEW
         // -----------------------------------
 
         if (
@@ -601,8 +724,13 @@ function ProductDetails() {
         ) {
 
           reviewSectionRef.current.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
+
+            behavior:
+              "smooth",
+
+            block:
+              "start"
+
           });
 
           return;
@@ -611,8 +739,7 @@ function ProductDetails() {
 
 
         // -----------------------------------
-        // New review:
-        // scroll directly to write review.
+        // NEW REVIEW
         // -----------------------------------
 
         if (
@@ -620,8 +747,13 @@ function ProductDetails() {
         ) {
 
           writeReviewRef.current.scrollIntoView({
-            behavior: "smooth",
-            block: "center"
+
+            behavior:
+              "smooth",
+
+            block:
+              "center"
+
           });
 
           return;
@@ -630,8 +762,7 @@ function ProductDetails() {
 
 
         // -----------------------------------
-        // Fallback:
-        // review section.
+        // FALLBACK
         // -----------------------------------
 
         if (
@@ -639,8 +770,13 @@ function ProductDetails() {
         ) {
 
           reviewSectionRef.current.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
+
+            behavior:
+              "smooth",
+
+            block:
+              "start"
+
           });
 
         }
@@ -652,85 +788,170 @@ function ProductDetails() {
       clearTimeout(timer);
 
   }, [
+
     shouldOpenReview,
+
     loading,
+
     product,
+
     reviewLoading,
+
     myReview
+
   ]);
+
+
+  // =========================================
+  // CHANGE PRODUCT SIZE / VARIANT
+  // =========================================
+
+  const changeProductVariant =
+    (event) => {
+
+      const selectedId =
+        event.target.value;
+
+
+      /*
+       * Preserve the current navigation source.
+       */
+
+      let query = "";
+
+
+      if (fromFooter) {
+
+        query =
+          "?from=footer";
+
+      } else if (shouldOpenReview) {
+
+        query =
+          "?review=1";
+
+      }
+
+
+      navigate(
+        `/products/${selectedId}${query}`
+      );
+
+    };
 
 
   // =========================================
   // ADD TO CART
   // =========================================
 
-  const addToCart = () => {
+  const addToCart =
+    () => {
 
-    const user =
-      getCurrentUser();
+      const user =
+        getCurrentUser();
 
 
-    if (!user) {
+      if (!user) {
+
+        alert(
+          "Please login before adding products to cart."
+        );
+
+
+        navigate(
+          "/login"
+        );
+
+
+        return;
+
+      }
+
+
+      let cart =
+        JSON.parse(
+          localStorage.getItem(
+            "dairyhubCart"
+          )
+        ) || [];
+
+
+      /*
+       * Product ID includes the selected
+       * size/variant ID.
+       *
+       * Therefore:
+       *
+       * Paneer 200 g
+       * and
+       * Paneer 500 g
+       *
+       * remain separate cart items.
+       */
+
+      const existingProduct =
+        cart.find(
+          item =>
+            item.id ===
+            product.id
+        );
+
+
+      if (
+        existingProduct
+      ) {
+
+        if (
+          existingProduct.quantity >=
+          product.stock
+        ) {
+
+          alert(
+            "You cannot add more than the available stock."
+          );
+
+
+          return;
+
+        }
+
+
+        existingProduct.quantity +=
+          1;
+
+      } else {
+
+        cart.push({
+
+          ...product,
+
+          quantity:
+            1
+
+        });
+
+      }
+
+
+      localStorage.setItem(
+        "dairyhubCart",
+        JSON.stringify(
+          cart
+        )
+      );
+
 
       alert(
-        "Please login before adding products to cart."
+
+        `${product.name}${
+          product.size
+            ? ` (${product.size})`
+            : ""
+        } added to cart!`
+
       );
 
-
-      navigate(
-        "/login"
-      );
-
-
-      return;
-
-    }
-
-
-    let cart =
-      JSON.parse(
-        localStorage.getItem(
-          "dairyhubCart"
-        )
-      ) || [];
-
-
-    const existingProduct =
-      cart.find(
-        (item) =>
-          item.id ===
-          product.id
-      );
-
-
-    if (existingProduct) {
-
-      existingProduct.quantity += 1;
-
-    } else {
-
-      cart.push({
-
-        ...product,
-
-        quantity: 1
-
-      });
-
-    }
-
-
-    localStorage.setItem(
-      "dairyhubCart",
-      JSON.stringify(cart)
-    );
-
-
-    alert(
-      `${product.name} added to cart!`
-    );
-
-  };
+    };
 
 
   // =========================================
@@ -762,7 +983,9 @@ function ProductDetails() {
 
 
       if (
-        String(user.role)
+        String(
+          user.role
+        )
           .trim()
           .toUpperCase() ===
         "ADMIN"
@@ -790,7 +1013,9 @@ function ProductDetails() {
       }
 
 
-      if (rating === 0) {
+      if (
+        rating === 0
+      ) {
 
         alert(
           "Please select a rating."
@@ -802,7 +1027,9 @@ function ProductDetails() {
       }
 
 
-      if (!comment.trim()) {
+      if (
+        !comment.trim()
+      ) {
 
         alert(
           "Please write a review."
@@ -885,9 +1112,12 @@ function ProductDetails() {
 
 
         setReviews(
-          (previousReviews) => [
+          previousReviews => [
+
             newReview,
+
             ...previousReviews
+
           ]
         );
 
@@ -934,7 +1164,7 @@ function ProductDetails() {
 
 
   // =========================================
-  // START EDIT
+  // START EDIT REVIEW
   // =========================================
 
   const startEditReview =
@@ -964,8 +1194,13 @@ function ProductDetails() {
         ) {
 
           reviewSectionRef.current.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
+
+            behavior:
+              "smooth",
+
+            block:
+              "start"
+
           });
 
         }
@@ -979,17 +1214,19 @@ function ProductDetails() {
   // CANCEL EDIT
   // =========================================
 
-  const cancelEdit = () => {
+  const cancelEdit =
+    () => {
 
-    setEditingReview(
-      null
-    );
+      setEditingReview(
+        null
+      );
 
-    setEditRating(0);
 
-    setEditComment("");
+      setEditRating(0);
 
-  };
+      setEditComment("");
+
+    };
 
 
   // =========================================
@@ -1113,9 +1350,9 @@ function ProductDetails() {
 
 
         setReviews(
-          (previousReviews) =>
+          previousReviews =>
             previousReviews.map(
-              (review) =>
+              review =>
                 review.id ===
                 updatedReview.id
                   ? updatedReview
@@ -1127,6 +1364,7 @@ function ProductDetails() {
         setEditingReview(
           null
         );
+
 
         setEditRating(0);
 
@@ -1174,7 +1412,9 @@ function ProductDetails() {
   // =========================================
 
   const deleteOwnReview =
-    async (reviewId) => {
+    async (
+      reviewId
+    ) => {
 
       const user =
         getCurrentUser();
@@ -1208,8 +1448,10 @@ function ProductDetails() {
               user.email
             )}`,
             {
+
               method:
                 "DELETE"
+
             }
           );
 
@@ -1232,9 +1474,9 @@ function ProductDetails() {
 
 
         setReviews(
-          (previousReviews) =>
+          previousReviews =>
             previousReviews.filter(
-              (review) =>
+              review =>
                 review.id !==
                 reviewId
             )
@@ -1244,6 +1486,7 @@ function ProductDetails() {
         setEditingReview(
           null
         );
+
 
         setEditRating(0);
 
@@ -1299,7 +1542,7 @@ function ProductDetails() {
         >
 
           {[1, 2, 3, 4, 5].map(
-            (star) => (
+            star => (
 
               <span
                 key={star}
@@ -1339,10 +1582,12 @@ function ProductDetails() {
 
 
       return Math.round(
+
         (
           ratingBreakdown[star] /
           reviewCount
         ) * 100
+
       );
 
     };
@@ -1486,8 +1731,12 @@ function ProductDetails() {
 
           <img
             className="product-details-image"
-            src={product.image}
-            alt={product.name}
+            src={
+              product.image
+            }
+            alt={
+              product.name
+            }
           />
 
         </div>
@@ -1511,7 +1760,9 @@ function ProductDetails() {
           </h1>
 
 
-          {/* RATING SUMMARY */}
+          {/* =================================
+              RATING SUMMARY
+          ================================== */}
 
           <div
             className="product-rating-summary"
@@ -1545,29 +1796,104 @@ function ProductDetails() {
           </div>
 
 
-          {/* PRICE */}
+          {/* =================================
+              SIZE / QUANTITY SELECTOR
+          ================================== */}
+
+          {productVariants.length > 1 && (
+
+            <div
+              className="product-details-size-selector"
+            >
+
+              <label
+                htmlFor="product-size"
+              >
+                Size / Quantity
+              </label>
+
+
+              <select
+                id="product-size"
+                value={
+                  product.id
+                }
+                onChange={
+                  changeProductVariant
+                }
+              >
+
+                {productVariants.map(
+                  variant => (
+
+                    <option
+                      key={
+                        variant.id
+                      }
+                      value={
+                        variant.id
+                      }
+                    >
+
+                      {variant.size ||
+                        "Size not specified"}
+
+                      {" — ₹"}
+
+                      {variant.price}
+
+                      {" — Stock: "}
+
+                      {variant.stock}
+
+                    </option>
+
+                  )
+                )}
+
+              </select>
+
+            </div>
+
+          )}
+
+
+          {/* =================================
+              PRICE
+          ================================== */}
 
           <h2
             className="product-details-price"
           >
-            ₹{product.price}
+
+            ₹
+            {product.price}
+
           </h2>
 
 
-          {/* DESCRIPTION */}
+          {/* =================================
+              DESCRIPTION
+          ================================== */}
 
           <p
             className="product-description"
           >
+
             {product.description}
+
           </p>
 
 
-          {/* PRODUCT INFORMATION */}
+          {/* =================================
+              PRODUCT INFORMATION
+          ================================== */}
 
           <div
             className="product-info-grid"
           >
+
+            {/* STOCK */}
 
             <div
               className="product-info-item"
@@ -1594,7 +1920,9 @@ function ProductDetails() {
             </div>
 
 
-            {product.quantity && (
+            {/* SIZE */}
+
+            {product.size && (
 
               <div
                 className="product-info-item"
@@ -1608,12 +1936,12 @@ function ProductDetails() {
                 <div>
 
                   <small>
-                    Quantity
+                    Size / Quantity
                   </small>
 
 
                   <strong>
-                    {product.quantity}
+                    {product.size}
                   </strong>
 
                 </div>
@@ -1625,7 +1953,9 @@ function ProductDetails() {
           </div>
 
 
-          {/* ADD TO CART */}
+          {/* =================================
+              ADD TO CART
+          ================================== */}
 
           {product.stock > 0 ? (
 
@@ -1635,7 +1965,9 @@ function ProductDetails() {
                 addToCart
               }
             >
+
               🛒 Add to Cart
+
             </button>
 
           ) : (
@@ -1644,7 +1976,9 @@ function ProductDetails() {
               className="product-add-cart-btn"
               disabled
             >
+
               Out of Stock
+
             </button>
 
           )}
@@ -1682,7 +2016,11 @@ function ProductDetails() {
             <div
               className="rating-big-number"
             >
-              {averageRating.toFixed(1)}
+
+              {averageRating.toFixed(
+                1
+              )}
+
             </div>
 
 
@@ -1700,12 +2038,14 @@ function ProductDetails() {
 
 
             <p>
+
               {reviewCount} customer
               {" "}
               review
               {reviewCount !== 1
                 ? "s"
                 : ""}
+
             </p>
 
           </div>
@@ -1716,7 +2056,7 @@ function ProductDetails() {
           >
 
             {[5, 4, 3, 2, 1].map(
-              (star) => (
+              star => (
 
                 <div
                   className="rating-breakdown-row"
@@ -1726,7 +2066,9 @@ function ProductDetails() {
                   <span
                     className="rating-breakdown-label"
                   >
+
                     {star} ★
+
                   </span>
 
 
@@ -1750,7 +2092,13 @@ function ProductDetails() {
                   <span
                     className="rating-breakdown-count"
                   >
-                    {ratingBreakdown[star]}
+
+                    {
+                      ratingBreakdown[
+                        star
+                      ]
+                    }
+
                   </span>
 
                 </div>
@@ -1977,134 +2325,135 @@ function ProductDetails() {
 
 
             {/* =================================
-                EDIT FORM
+                EDIT REVIEW FORM
             ================================== */}
 
             {editingReview &&
               editingReview.id ===
                 myReview.id && (
 
+              <div
+                className="edit-review-form"
+              >
+
                 <div
-                  className="edit-review-form"
+                  className="edit-review-title"
                 >
 
-                  <div
-                    className="edit-review-title"
-                  >
+                  <strong>
+                    Edit Your Review
+                  </strong>
 
-                    <strong>
-                      Edit Your Review
-                    </strong>
-
-                  </div>
+                </div>
 
 
-                  <div
-                    className="rating-selector"
-                  >
+                <div
+                  className="rating-selector"
+                >
 
-                    <span>
-                      Your Rating:
-                    </span>
-
-
-                    <div
-                      className="selectable-stars"
-                    >
-
-                      {[1, 2, 3, 4, 5].map(
-                        (star) => (
-
-                          <button
-                            key={star}
-                            type="button"
-                            className={
-                              star <= editRating
-                                ? "rating-star selected"
-                                : "rating-star"
-                            }
-                            onClick={() =>
-                              setEditRating(
-                                star
-                              )
-                            }
-                            aria-label={
-                              `${star} star`
-                            }
-                          >
-                            ★
-                          </button>
-
-                        )
-                      )}
-
-                    </div>
-
-                  </div>
-
-
-                  <textarea
-                    className="review-comment"
-                    value={
-                      editComment
-                    }
-                    onChange={
-                      (event) =>
-                        setEditComment(
-                          event.target.value
-                        )
-                    }
-                    maxLength={1000}
-                  />
+                  <span>
+                    Your Rating:
+                  </span>
 
 
                   <div
-                    className="review-character-count"
-                  >
-                    {
-                      editComment.length
-                    }/1000
-                  </div>
-
-
-                  <div
-                    className="edit-review-buttons"
+                    className="selectable-stars"
                   >
 
-                    <button
-                      type="button"
-                      className="submit-review-btn"
-                      onClick={
-                        updateReview
-                      }
-                      disabled={
-                        updatingReview
-                      }
-                    >
+                    {[1, 2, 3, 4, 5].map(
+                      star => (
 
-                      {updatingReview
-                        ? "Updating..."
-                        : "Save Changes"
-                      }
+                        <button
+                          key={star}
+                          type="button"
+                          className={
+                            star <=
+                            editRating
+                              ? "rating-star selected"
+                              : "rating-star"
+                          }
+                          onClick={() =>
+                            setEditRating(
+                              star
+                            )
+                          }
+                          aria-label={
+                            `${star} star`
+                          }
+                        >
+                          ★
+                        </button>
 
-                    </button>
-
-
-                    <button
-                      type="button"
-                      className="cancel-review-btn"
-                      onClick={
-                        cancelEdit
-                      }
-                    >
-                      Cancel
-                    </button>
+                      )
+                    )}
 
                   </div>
 
                 </div>
 
-              )}
+
+                <textarea
+                  className="review-comment"
+                  value={
+                    editComment
+                  }
+                  onChange={
+                    event =>
+                      setEditComment(
+                        event.target.value
+                      )
+                  }
+                  maxLength={1000}
+                />
+
+
+                <div
+                  className="review-character-count"
+                >
+                  {
+                    editComment.length
+                  }/1000
+                </div>
+
+
+                <div
+                  className="edit-review-buttons"
+                >
+
+                  <button
+                    type="button"
+                    className="submit-review-btn"
+                    onClick={
+                      updateReview
+                    }
+                    disabled={
+                      updatingReview
+                    }
+                  >
+
+                    {updatingReview
+                      ? "Updating..."
+                      : "Save Changes"
+                    }
+
+                  </button>
+
+
+                  <button
+                    type="button"
+                    className="cancel-review-btn"
+                    onClick={
+                      cancelEdit
+                    }
+                  >
+                    Cancel
+                  </button>
+
+                </div>
+
+              </div>
+
+            )}
 
           </div>
 
@@ -2192,7 +2541,7 @@ function ProductDetails() {
               >
 
                 {[1, 2, 3, 4, 5].map(
-                  (star) => (
+                  star => (
 
                     <button
                       key={star}
@@ -2231,7 +2580,7 @@ function ProductDetails() {
                 comment
               }
               onChange={
-                (event) =>
+                event =>
                   setComment(
                     event.target.value
                   )
@@ -2243,7 +2592,9 @@ function ProductDetails() {
             <div
               className="review-character-count"
             >
-              {comment.length}/1000
+              {
+                comment.length
+              }/1000
             </div>
 
 
@@ -2290,7 +2641,7 @@ function ProductDetails() {
 
           ) : reviews
               .filter(
-                (review) =>
+                review =>
                   review.id !==
                   myReview?.id
               )
@@ -2323,12 +2674,12 @@ function ProductDetails() {
 
             reviews
               .filter(
-                (review) =>
+                review =>
                   review.id !==
                   myReview?.id
               )
               .map(
-                (review) => (
+                review => (
 
                   <div
                     className="review-card"

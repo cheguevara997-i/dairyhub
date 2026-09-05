@@ -1,31 +1,80 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+
 const API_URL =
   "https://dairyhub-backend.onrender.com/api/users";
 
+
+const PROTECTED_ADMIN_EMAIL =
+  "admin@dairyhub.com";
+
+
 function ManageUsers() {
 
-  const [users, setUsers] = useState([]);
-  const [searchText, setSearchText] = useState("");
-  const [roleFilter, setRoleFilter] = useState("ALL");
-
-  const [selectedUser, setSelectedUser] = useState(null);
-
-  const [editingUser, setEditingUser] = useState(null);
-
-  const [editForm, setEditForm] = useState({
-    name: "",
-    phone: "",
-    role: ""
-  });
-
-  const [loading, setLoading] = useState(true);
+  const [users, setUsers] =
+    useState([]);
 
 
-  // =========================
+  const [searchText, setSearchText] =
+    useState("");
+
+
+  const [roleFilter, setRoleFilter] =
+    useState("ALL");
+
+
+  const [selectedUser, setSelectedUser] =
+    useState(null);
+
+
+  const [editingUser, setEditingUser] =
+    useState(null);
+
+
+  const [editForm, setEditForm] =
+    useState({
+
+      name: "",
+
+      phone: "",
+
+      role: ""
+
+    });
+
+
+  const [loading, setLoading] =
+    useState(true);
+
+
+  const [processingUserId, setProcessingUserId] =
+    useState(null);
+
+
+  // =========================================
+  // CHECK ORIGINAL PROTECTED ADMIN
+  // =========================================
+
+  const isProtectedAdmin = (
+    user
+  ) => {
+
+    return (
+      String(
+        user?.email || ""
+      )
+        .trim()
+        .toLowerCase() ===
+      PROTECTED_ADMIN_EMAIL
+    );
+
+  };
+
+
+  // =========================================
   // LOAD USERS
-  // =========================
+  // =========================================
 
   const loadUsers = async () => {
 
@@ -33,29 +82,58 @@ function ManageUsers() {
 
       setLoading(true);
 
-      const response = await fetch(API_URL);
+
+      const response =
+        await fetch(
+          API_URL
+        );
+
 
       if (!response.ok) {
-        throw new Error("Failed to load users");
+
+        throw new Error(
+          "Failed to load users"
+        );
+
       }
 
-      const data = await response.json();
 
-      setUsers(data);
+      const data =
+        await response.json();
+
+
+      setUsers(
+        Array.isArray(data)
+          ? data
+          : []
+      );
+
 
     } catch (error) {
 
-      console.error("Error loading users:", error);
+      console.error(
+        "Error loading users:",
+        error
+      );
 
-      alert("Failed to load users.");
+
+      alert(
+        "Failed to load users."
+      );
+
 
     } finally {
 
       setLoading(false);
 
     }
+
   };
 
+
+  // =========================================
+  // INITIAL LOAD
+  // =========================================
 
   useEffect(() => {
 
@@ -64,180 +142,651 @@ function ManageUsers() {
   }, []);
 
 
-  // =========================
+  // =========================================
   // DELETE USER
-  // =========================
+  // =========================================
 
-  const deleteUser = async (user) => {
+  const deleteUser = async (
+    user
+  ) => {
 
-    if (user.role === "ADMIN") {
+    if (
+      isProtectedAdmin(user)
+    ) {
 
-      alert("Admin account cannot be deleted.");
+      alert(
+        "The original DairyHub admin account cannot be deleted."
+      );
 
       return;
 
     }
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete ${user.name}?`
-    );
+
+    const confirmed =
+      window.confirm(
+        `Are you sure you want to permanently delete ${user.name}?`
+      );
+
 
     if (!confirmed) {
+
       return;
+
     }
+
 
     try {
 
-      const response = await fetch(
-        `${API_URL}/${user.id}`,
-        {
-          method: "DELETE"
-        }
+      setProcessingUserId(
+        user.id
       );
+
+
+      const response =
+        await fetch(
+          `${API_URL}/${user.id}`,
+          {
+            method:
+              "DELETE"
+          }
+        );
+
 
       if (!response.ok) {
 
-        throw new Error("Delete failed");
+        const errorMessage =
+          await response.text();
+
+
+        throw new Error(
+          errorMessage ||
+          "Delete failed"
+        );
 
       }
 
-      setUsers((previousUsers) =>
-        previousUsers.filter(
-          (item) => item.id !== user.id
-        )
+
+      setUsers(
+        previousUsers =>
+          previousUsers.filter(
+            item =>
+              item.id !== user.id
+          )
       );
 
-      alert("User deleted successfully.");
+
+      alert(
+        `${user.name} deleted successfully.`
+      );
+
 
     } catch (error) {
 
-      console.error("Delete error:", error);
+      console.error(
+        "Delete error:",
+        error
+      );
 
-      alert("Failed to delete user.");
+
+      alert(
+        error.message ||
+        "Failed to delete user."
+      );
+
+
+    } finally {
+
+      setProcessingUserId(
+        null
+      );
 
     }
 
   };
 
 
-  // =========================
+  // =========================================
   // OPEN EDIT
-  // =========================
+  // =========================================
 
-  const openEdit = (user) => {
+  const openEdit = (
+    user
+  ) => {
 
-    setEditingUser(user);
+    setEditingUser(
+      user
+    );
+
 
     setEditForm({
-      name: user.name || "",
-      phone: user.phone || "",
-      role: user.role || "CUSTOMER"
+
+      name:
+        user.name || "",
+
+      phone:
+        user.phone || "",
+
+      role:
+        user.role || "CUSTOMER"
+
     });
 
   };
 
 
-  // =========================
+  // =========================================
   // SAVE EDIT
-  // =========================
+  // =========================================
 
-  const saveEdit = async (e) => {
+  const saveEdit =
+    async (e) => {
 
-    e.preventDefault();
+      e.preventDefault();
 
-    if (!editForm.name.trim()) {
 
-      alert("Name is required.");
+      if (
+        !editForm.name.trim()
+      ) {
+
+        alert(
+          "Name is required."
+        );
+
+        return;
+
+      }
+
+
+      /*
+       * Original admin cannot be changed
+       * to CUSTOMER.
+       */
+
+      if (
+        isProtectedAdmin(
+          editingUser
+        ) &&
+        editForm.role !==
+          "ADMIN"
+      ) {
+
+        alert(
+          "The original DairyHub admin cannot be demoted."
+        );
+
+        return;
+
+      }
+
+
+      try {
+
+        setProcessingUserId(
+          editingUser.id
+        );
+
+
+        const response =
+          await fetch(
+            `${API_URL}/${editingUser.id}`,
+            {
+
+              method:
+                "PUT",
+
+              headers: {
+
+                "Content-Type":
+                  "application/json"
+
+              },
+
+              body:
+                JSON.stringify({
+
+                  name:
+                    editForm.name.trim(),
+
+                  phone:
+                    editForm.phone.trim() ||
+                    null,
+
+                  role:
+                    editForm.role
+
+                })
+
+            }
+          );
+
+
+        if (!response.ok) {
+
+          const errorMessage =
+            await response.text();
+
+
+          throw new Error(
+            errorMessage ||
+            "Update failed"
+          );
+
+        }
+
+
+        const updatedUser =
+          await response.json();
+
+
+        setUsers(
+          previousUsers =>
+            previousUsers.map(
+              item =>
+                item.id ===
+                updatedUser.id
+                  ? updatedUser
+                  : item
+            )
+        );
+
+
+        setEditingUser(
+          null
+        );
+
+
+        alert(
+          "User updated successfully."
+        );
+
+
+    } catch (error) {
+
+        console.error(
+          "Update error:",
+          error
+        );
+
+
+        alert(
+          error.message ||
+          "Failed to update user."
+        );
+
+
+      } finally {
+
+        setProcessingUserId(
+          null
+        );
+
+      }
+
+    };
+
+
+  // =========================================
+  // MAKE ADMIN
+  // =========================================
+
+  const makeAdmin = async (
+    user
+  ) => {
+
+    if (
+      isProtectedAdmin(user)
+    ) {
 
       return;
 
     }
 
+
+    const confirmed =
+      window.confirm(
+        `Make ${user.name} an ADMIN?\n\nThis user will receive access to the DairyHub Admin Dashboard.`
+      );
+
+
+    if (!confirmed) {
+
+      return;
+
+    }
+
+
     try {
 
-      const response = await fetch(
-        `${API_URL}/${editingUser.id}`,
-        {
-          method: "PUT",
-
-          headers: {
-            "Content-Type": "application/json"
-          },
-
-          body: JSON.stringify({
-            name: editForm.name.trim(),
-            phone: editForm.phone.trim() || null,
-            role: editForm.role
-          })
-        }
+      setProcessingUserId(
+        user.id
       );
+
+
+      const response =
+        await fetch(
+          `${API_URL}/${user.id}`,
+          {
+
+            method:
+              "PUT",
+
+            headers: {
+
+              "Content-Type":
+                "application/json"
+
+            },
+
+            body:
+              JSON.stringify({
+
+                name:
+                  user.name || "",
+
+                phone:
+                  user.phone || null,
+
+                role:
+                  "ADMIN"
+
+              })
+
+          }
+        );
+
 
       if (!response.ok) {
 
-        throw new Error("Update failed");
+        const errorMessage =
+          await response.text();
+
+
+        throw new Error(
+          errorMessage ||
+          "Unable to make user admin"
+        );
 
       }
 
-      const updatedUser = await response.json();
 
-      setUsers((previousUsers) =>
-        previousUsers.map((item) =>
-          item.id === updatedUser.id
-            ? updatedUser
-            : item
-        )
+      const updatedUser =
+        await response.json();
+
+
+      setUsers(
+        previousUsers =>
+          previousUsers.map(
+            item =>
+              item.id ===
+              updatedUser.id
+                ? updatedUser
+                : item
+          )
       );
 
-      setEditingUser(null);
 
-      alert("User updated successfully.");
+      alert(
+        `${user.name} is now an ADMIN.`
+      );
+
 
     } catch (error) {
 
-      console.error("Update error:", error);
+      console.error(
+        "Make admin error:",
+        error
+      );
 
-      alert("Failed to update user.");
+
+      alert(
+        error.message ||
+        "Unable to make this user an admin."
+      );
+
+
+    } finally {
+
+      setProcessingUserId(
+        null
+      );
 
     }
 
   };
 
 
-  // =========================
+  // =========================================
+  // REMOVE ADMIN
+  // =========================================
+
+  const removeAdmin = async (
+    user
+  ) => {
+
+    if (
+      isProtectedAdmin(user)
+    ) {
+
+      alert(
+        "The original DairyHub admin account is protected."
+      );
+
+      return;
+
+    }
+
+
+    const role =
+      String(
+        user.role || ""
+      )
+        .trim()
+        .toUpperCase();
+
+
+    if (
+      role !== "ADMIN"
+    ) {
+
+      return;
+
+    }
+
+
+    const confirmed =
+      window.confirm(
+        `Remove ADMIN access from ${user.name}?\n\nThey will become a CUSTOMER again.`
+      );
+
+
+    if (!confirmed) {
+
+      return;
+
+    }
+
+
+    try {
+
+      setProcessingUserId(
+        user.id
+      );
+
+
+      const response =
+        await fetch(
+          `${API_URL}/${user.id}`,
+          {
+
+            method:
+              "PUT",
+
+            headers: {
+
+              "Content-Type":
+                "application/json"
+
+            },
+
+            body:
+              JSON.stringify({
+
+                name:
+                  user.name || "",
+
+                phone:
+                  user.phone || null,
+
+                role:
+                  "CUSTOMER"
+
+              })
+
+          }
+        );
+
+
+      if (!response.ok) {
+
+        const errorMessage =
+          await response.text();
+
+
+        throw new Error(
+          errorMessage ||
+          "Unable to remove admin access"
+        );
+
+      }
+
+
+      const updatedUser =
+        await response.json();
+
+
+      setUsers(
+        previousUsers =>
+          previousUsers.map(
+            item =>
+              item.id ===
+              updatedUser.id
+                ? updatedUser
+                : item
+          )
+      );
+
+
+      alert(
+        `${user.name} is now a CUSTOMER again.`
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        "Remove admin error:",
+        error
+      );
+
+
+      alert(
+        error.message ||
+        "Unable to remove admin access."
+      );
+
+
+    } finally {
+
+      setProcessingUserId(
+        null
+      );
+
+    }
+
+  };
+
+
+  // =========================================
   // FILTER USERS
-  // =========================
+  // =========================================
 
-  const filteredUsers = users.filter((user) => {
+  const filteredUsers =
+    users.filter(
+      user => {
 
-    const search = searchText
-      .toLowerCase()
-      .trim();
-
-    const matchesSearch =
-      !search ||
-      user.name?.toLowerCase().includes(search) ||
-      user.email?.toLowerCase().includes(search) ||
-      user.phone?.toLowerCase().includes(search);
-
-    const matchesRole =
-      roleFilter === "ALL" ||
-      user.role === roleFilter;
-
-    return matchesSearch && matchesRole;
-
-  });
+        const search =
+          searchText
+            .toLowerCase()
+            .trim();
 
 
-  // =========================
+        const userName =
+          user.name
+            ?.toLowerCase() || "";
+
+
+        const userEmail =
+          user.email
+            ?.toLowerCase() || "";
+
+
+        const userPhone =
+          user.phone
+            ?.toLowerCase() || "";
+
+
+        const matchesSearch =
+          !search ||
+          userName.includes(
+            search
+          ) ||
+          userEmail.includes(
+            search
+          ) ||
+          userPhone.includes(
+            search
+          );
+
+
+        const normalizedRole =
+          String(
+            user.role || ""
+          )
+            .trim()
+            .toUpperCase();
+
+
+        const matchesRole =
+          roleFilter === "ALL" ||
+          normalizedRole ===
+            roleFilter;
+
+
+        return (
+          matchesSearch &&
+          matchesRole
+        );
+
+      }
+    );
+
+
+  // =========================================
   // LOADING
-  // =========================
+  // =========================================
 
   if (loading) {
 
     return (
-      <div className="manage-users-page">
 
-        <div className="manage-users-container">
+      <div
+        className="manage-users-page"
+      >
+
+        <div
+          className="manage-users-container"
+        >
 
           <Link
             to="/admin"
@@ -246,28 +795,45 @@ function ManageUsers() {
             ← Back to Admin Dashboard
           </Link>
 
-          <h1>Manage Users</h1>
 
-          <p className="users-loading">
+          <h1>
+            Manage Users
+          </h1>
+
+
+          <p
+            className="users-loading"
+          >
             Loading users...
           </p>
 
         </div>
 
       </div>
+
     );
 
   }
 
 
+  // =========================================
+  // PAGE
+  // =========================================
+
   return (
 
-    <div className="manage-users-page">
+    <div
+      className="manage-users-page"
+    >
 
-      <div className="manage-users-container">
+      <div
+        className="manage-users-container"
+      >
 
 
-        {/* BACK BUTTON */}
+        {/* =====================================
+            BACK
+        ====================================== */}
 
         <Link
           to="/admin"
@@ -277,46 +843,72 @@ function ManageUsers() {
         </Link>
 
 
-        {/* TITLE */}
+        {/* =====================================
+            HEADER
+        ====================================== */}
 
-        <div className="manage-users-heading">
+        <div
+          className="manage-users-heading"
+        >
 
           <div>
 
-            <h1>Manage Users</h1>
+            <h1>
+              Manage Users
+            </h1>
+
 
             <p>
-              View, manage and maintain DairyHub users.
+              View, manage and maintain
+              DairyHub users.
             </p>
 
           </div>
 
-          <div className="user-count">
+
+          <div
+            className="user-count"
+          >
 
             Total Users
-            <strong>{users.length}</strong>
+
+            <strong>
+              {users.length}
+            </strong>
 
           </div>
 
         </div>
 
 
-        {/* SEARCH + FILTER */}
+        {/* =====================================
+            SEARCH + FILTER
+        ====================================== */}
 
-        <div className="user-controls">
+        <div
+          className="user-controls"
+        >
 
-          <div className="user-search-box">
+          <div
+            className="user-search-box"
+          >
 
-            <span>🔍</span>
+            <span>
+              🔍
+            </span>
+
 
             <input
               type="text"
               placeholder="Search name, email or phone..."
               value={searchText}
               onChange={(e) =>
-                setSearchText(e.target.value)
+                setSearchText(
+                  e.target.value
+                )
               }
             />
+
 
             {searchText && (
 
@@ -338,7 +930,9 @@ function ManageUsers() {
           <select
             value={roleFilter}
             onChange={(e) =>
-              setRoleFilter(e.target.value)
+              setRoleFilter(
+                e.target.value
+              )
             }
             className="role-filter"
           >
@@ -347,9 +941,11 @@ function ManageUsers() {
               All Roles
             </option>
 
+
             <option value="CUSTOMER">
               Customers
             </option>
+
 
             <option value="ADMIN">
               Admins
@@ -360,27 +956,45 @@ function ManageUsers() {
         </div>
 
 
-        {/* USER TABLE */}
+        {/* =====================================
+            USERS TABLE
+        ====================================== */}
 
-        <div className="users-table-wrapper">
+        <div
+          className="users-table-wrapper"
+        >
 
-          <table className="users-table">
+          <table
+            className="users-table"
+          >
 
             <thead>
 
               <tr>
 
-                <th>ID</th>
+                <th>
+                  ID
+                </th>
 
-                <th>Name</th>
+                <th>
+                  Name
+                </th>
 
-                <th>Email</th>
+                <th>
+                  Email
+                </th>
 
-                <th>Phone</th>
+                <th>
+                  Phone
+                </th>
 
-                <th>Role</th>
+                <th>
+                  Role
+                </th>
 
-                <th>Action</th>
+                <th>
+                  Action
+                </th>
 
               </tr>
 
@@ -389,7 +1003,8 @@ function ManageUsers() {
 
             <tbody>
 
-              {filteredUsers.length === 0 ? (
+              {filteredUsers.length ===
+              0 ? (
 
                 <tr>
 
@@ -404,89 +1019,266 @@ function ManageUsers() {
 
               ) : (
 
-                filteredUsers.map((user) => (
+                filteredUsers.map(
+                  user => {
 
-                  <tr key={user.id}>
+                    const normalizedRole =
+                      String(
+                        user.role || ""
+                      )
+                        .trim()
+                        .toUpperCase();
 
-                    <td>
-                      {user.id}
-                    </td>
 
-                    <td className="user-name">
-                      {user.name}
-                    </td>
+                    const isAdmin =
+                      normalizedRole ===
+                      "ADMIN";
 
-                    <td>
-                      {user.email}
-                    </td>
 
-                    <td>
-                      {user.phone || "N/A"}
-                    </td>
+                    const protectedAdmin =
+                      isProtectedAdmin(
+                        user
+                      );
 
-                    <td>
 
-                      <span
-                        className={
-                          user.role === "ADMIN"
-                            ? "role-badge admin"
-                            : "role-badge customer"
+                    const isProcessing =
+                      processingUserId ===
+                      user.id;
+
+
+                    return (
+
+                      <tr
+                        key={
+                          user.id
                         }
                       >
-                        {user.role}
-                      </span>
-
-                    </td>
 
 
-                    <td>
+                        {/* ID */}
 
-                      {user.role === "ADMIN" ? (
+                        <td>
+                          {user.id}
+                        </td>
 
-                        <span className="protected-user">
-                          🔒 Protected
-                        </span>
 
-                      ) : (
+                        {/* NAME */}
 
-                        <div className="user-actions">
+                        <td
+                          className="user-name"
+                        >
+                          {user.name}
+                        </td>
 
-                          <button
-                            className="view-user-button"
-                            onClick={() =>
-                              setSelectedUser(user)
+
+                        {/* EMAIL */}
+
+                        <td>
+                          {user.email}
+                        </td>
+
+
+                        {/* PHONE */}
+
+                        <td>
+                          {user.phone ||
+                            "N/A"}
+                        </td>
+
+
+                        {/* ROLE */}
+
+                        <td>
+
+                          <span
+                            className={
+                              isAdmin
+                                ? "role-badge admin"
+                                : "role-badge customer"
                             }
                           >
-                            👁 View
-                          </button>
 
-                          <button
-                            className="edit-user-button"
-                            onClick={() =>
-                              openEdit(user)
-                            }
-                          >
-                            ✏️ Edit
-                          </button>
+                            {isAdmin
+                              ? "ADMIN"
+                              : "CUSTOMER"}
 
-                          <button
-                            className="delete-user-button"
-                            onClick={() =>
-                              deleteUser(user)
-                            }
-                          >
-                            🗑 Delete
-                          </button>
+                          </span>
 
-                        </div>
+                        </td>
 
-                      )}
 
-                    </td>
+                        {/* ACTION */}
 
-                  </tr>
+                        <td>
 
-                ))
+                          {protectedAdmin ? (
+
+                            <span
+                              className="protected-user"
+                            >
+                              🔒 Protected
+                            </span>
+
+
+                          ) : isAdmin ? (
+
+                            /* =================================
+                               OTHER / PROMOTED ADMIN
+                            ================================== */
+
+                            <div
+                              className="user-actions"
+                            >
+
+                              <button
+                                type="button"
+                                className="view-user-button"
+                                onClick={() =>
+                                  setSelectedUser(
+                                    user
+                                  )
+                                }
+                              >
+                                👁 View
+                              </button>
+
+
+                              <button
+                                type="button"
+                                className="edit-user-button"
+                                onClick={() =>
+                                  openEdit(
+                                    user
+                                  )
+                                }
+                              >
+                                ✏️ Edit
+                              </button>
+
+
+                              <button
+                                type="button"
+                                className="remove-admin-button"
+                                onClick={() =>
+                                  removeAdmin(
+                                    user
+                                  )
+                                }
+                                disabled={
+                                  isProcessing
+                                }
+                              >
+
+                                {isProcessing
+                                  ? "Updating..."
+                                  : "↩ Remove Admin"
+                                }
+
+                              </button>
+
+
+                              <button
+                                type="button"
+                                className="delete-user-button"
+                                onClick={() =>
+                                  deleteUser(
+                                    user
+                                  )
+                                }
+                                disabled={
+                                  isProcessing
+                                }
+                              >
+                                🗑 Delete
+                              </button>
+
+                            </div>
+
+
+                          ) : (
+
+                            /* =================================
+                               CUSTOMER
+                            ================================== */
+
+                            <div
+                              className="user-actions"
+                            >
+
+                              <button
+                                type="button"
+                                className="view-user-button"
+                                onClick={() =>
+                                  setSelectedUser(
+                                    user
+                                  )
+                                }
+                              >
+                                👁 View
+                              </button>
+
+
+                              <button
+                                type="button"
+                                className="edit-user-button"
+                                onClick={() =>
+                                  openEdit(
+                                    user
+                                  )
+                                }
+                              >
+                                ✏️ Edit
+                              </button>
+
+
+                              <button
+                                type="button"
+                                className="make-admin-button"
+                                onClick={() =>
+                                  makeAdmin(
+                                    user
+                                  )
+                                }
+                                disabled={
+                                  isProcessing
+                                }
+                              >
+
+                                {isProcessing
+                                  ? "Promoting..."
+                                  : "👑 Make Admin"
+                                }
+
+                              </button>
+
+
+                              <button
+                                type="button"
+                                className="delete-user-button"
+                                onClick={() =>
+                                  deleteUser(
+                                    user
+                                  )
+                                }
+                                disabled={
+                                  isProcessing
+                                }
+                              >
+                                🗑 Delete
+                              </button>
+
+                            </div>
+
+                          )}
+
+                        </td>
+
+                      </tr>
+
+                    );
+
+                  }
+                )
 
               )}
 
@@ -497,16 +1289,18 @@ function ManageUsers() {
         </div>
 
 
-        {/* =========================
+        {/* =====================================
             VIEW USER MODAL
-        ========================= */}
+        ====================================== */}
 
         {selectedUser && (
 
           <div
             className="user-modal-overlay"
             onClick={() =>
-              setSelectedUser(null)
+              setSelectedUser(
+                null
+              )
             }
           >
 
@@ -517,16 +1311,22 @@ function ManageUsers() {
               }
             >
 
-              <div className="modal-header">
+              <div
+                className="modal-header"
+              >
 
                 <h2>
                   👤 User Details
                 </h2>
 
+
                 <button
+                  type="button"
                   className="modal-close"
                   onClick={() =>
-                    setSelectedUser(null)
+                    setSelectedUser(
+                      null
+                    )
                   }
                 >
                   ×
@@ -535,11 +1335,17 @@ function ManageUsers() {
               </div>
 
 
-              <div className="user-details">
+              <div
+                className="user-details"
+              >
 
-                <div className="detail-row">
+                <div
+                  className="detail-row"
+                >
 
-                  <span>ID</span>
+                  <span>
+                    ID
+                  </span>
 
                   <strong>
                     {selectedUser.id}
@@ -548,9 +1354,13 @@ function ManageUsers() {
                 </div>
 
 
-                <div className="detail-row">
+                <div
+                  className="detail-row"
+                >
 
-                  <span>Name</span>
+                  <span>
+                    Name
+                  </span>
 
                   <strong>
                     {selectedUser.name}
@@ -559,9 +1369,13 @@ function ManageUsers() {
                 </div>
 
 
-                <div className="detail-row">
+                <div
+                  className="detail-row"
+                >
 
-                  <span>Email</span>
+                  <span>
+                    Email
+                  </span>
 
                   <strong>
                     {selectedUser.email}
@@ -570,23 +1384,63 @@ function ManageUsers() {
                 </div>
 
 
-                <div className="detail-row">
+                <div
+                  className="detail-row"
+                >
 
-                  <span>Phone</span>
+                  <span>
+                    Phone
+                  </span>
 
                   <strong>
-                    {selectedUser.phone || "N/A"}
+                    {selectedUser.phone ||
+                      "N/A"}
                   </strong>
 
                 </div>
 
 
-                <div className="detail-row">
+                <div
+                  className="detail-row"
+                >
 
-                  <span>Role</span>
+                  <span>
+                    Role
+                  </span>
 
                   <strong>
                     {selectedUser.role}
+                  </strong>
+
+                </div>
+
+
+                <div
+                  className="detail-row"
+                >
+
+                  <span>
+                    Admin Type
+                  </span>
+
+                  <strong>
+
+                    {
+                      isProtectedAdmin(
+                        selectedUser
+                      )
+                        ? "Protected Admin"
+                        : String(
+                            selectedUser.role ||
+                            ""
+                          )
+                            .trim()
+                            .toUpperCase() ===
+                          "ADMIN"
+                          ? "Promoted Admin"
+                          : "Customer"
+                    }
+
                   </strong>
 
                 </div>
@@ -595,9 +1449,12 @@ function ManageUsers() {
 
 
               <button
+                type="button"
                 className="modal-ok-button"
                 onClick={() =>
-                  setSelectedUser(null)
+                  setSelectedUser(
+                    null
+                  )
                 }
               >
                 Close
@@ -610,16 +1467,18 @@ function ManageUsers() {
         )}
 
 
-        {/* =========================
+        {/* =====================================
             EDIT USER MODAL
-        ========================= */}
+        ====================================== */}
 
         {editingUser && (
 
           <div
             className="user-modal-overlay"
             onClick={() =>
-              setEditingUser(null)
+              setEditingUser(
+                null
+              )
             }
           >
 
@@ -630,16 +1489,22 @@ function ManageUsers() {
               }
             >
 
-              <div className="modal-header">
+              <div
+                className="modal-header"
+              >
 
                 <h2>
                   ✏️ Edit User
                 </h2>
 
+
                 <button
+                  type="button"
                   className="modal-close"
                   onClick={() =>
-                    setEditingUser(null)
+                    setEditingUser(
+                      null
+                    )
                   }
                 >
                   ×
@@ -649,86 +1514,165 @@ function ManageUsers() {
 
 
               <form
-                onSubmit={saveEdit}
+                onSubmit={
+                  saveEdit
+                }
                 className="edit-user-form"
               >
+
+
+                {/* NAME */}
 
                 <label>
                   Name
                 </label>
 
+
                 <input
                   type="text"
-                  value={editForm.name}
+                  value={
+                    editForm.name
+                  }
                   onChange={(e) =>
                     setEditForm({
+
                       ...editForm,
-                      name: e.target.value
+
+                      name:
+                        e.target.value
+
                     })
                   }
                 />
 
+
+                {/* EMAIL */}
 
                 <label>
                   Email
                 </label>
 
+
                 <input
                   type="email"
-                  value={editingUser.email}
+                  value={
+                    editingUser.email
+                  }
                   disabled
                 />
 
+
+                {/* PHONE */}
 
                 <label>
                   Phone
                 </label>
 
+
                 <input
                   type="text"
-                  value={editForm.phone}
+                  value={
+                    editForm.phone
+                  }
                   placeholder="Enter phone number"
                   onChange={(e) =>
                     setEditForm({
+
                       ...editForm,
-                      phone: e.target.value
+
+                      phone:
+                        e.target.value
+
                     })
                   }
                 />
 
 
+                {/* ROLE */}
+
                 <label>
                   Role
                 </label>
 
-                <select
-                  value={editForm.role}
-                  onChange={(e) =>
-                    setEditForm({
-                      ...editForm,
-                      role: e.target.value
-                    })
-                  }
+
+                {isProtectedAdmin(
+                  editingUser
+                ) ? (
+
+                  <input
+                    type="text"
+                    value="ADMIN"
+                    disabled
+                  />
+
+                ) : (
+
+                  <select
+                    value={
+                      editForm.role
+                    }
+                    onChange={(e) =>
+                      setEditForm({
+
+                        ...editForm,
+
+                        role:
+                          e.target.value
+
+                      })
+                    }
+                  >
+
+                    <option value="CUSTOMER">
+                      CUSTOMER
+                    </option>
+
+
+                    <option value="ADMIN">
+                      ADMIN
+                    </option>
+
+                  </select>
+
+                )}
+
+
+                {editForm.role ===
+                  "ADMIN" &&
+                !isProtectedAdmin(
+                  editingUser
+                ) && (
+
+                  <div
+                    className="admin-role-warning"
+                  >
+
+                    👑 This user will have
+                    Admin access.
+
+                  </div>
+
+                )}
+
+
+                {/* BUTTONS */}
+
+                <div
+                  className="edit-form-buttons"
                 >
-
-                  <option value="CUSTOMER">
-                    CUSTOMER
-                  </option>
-
-                </select>
-
-
-                <div className="edit-form-buttons">
 
                   <button
                     type="button"
                     className="cancel-edit-button"
                     onClick={() =>
-                      setEditingUser(null)
+                      setEditingUser(
+                        null
+                      )
                     }
                   >
                     Cancel
                   </button>
+
 
                   <button
                     type="submit"

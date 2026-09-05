@@ -3,28 +3,41 @@ import { Link, useSearchParams } from "react-router-dom";
 
 import BackButton from "../components/BackButton";
 
+
+const API_BASE =
+  "https://dairyhub-backend.onrender.com";
+
+
 function Products() {
 
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] =
+    useState([]);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-  const [ratings, setRatings] = useState({});
+  const [ratings, setRatings] =
+    useState({});
 
-  const [searchParams] = useSearchParams();
+  const [selectedVariants, setSelectedVariants] =
+    useState({});
+
+  const [searchParams] =
+    useSearchParams();
 
 
-  /* =========================================
-     NAVIGATION SOURCE
-  ========================================= */
+  // =========================================
+  // NAVIGATION SOURCE
+  // =========================================
 
   const fromDashboard =
-    searchParams.get("from") === "dashboard";
+    searchParams.get("from") ===
+    "dashboard";
 
 
-  /* =========================================
-     SEARCH TEXT
-  ========================================= */
+  // =========================================
+  // SEARCH
+  // =========================================
 
   const searchText =
     searchParams
@@ -33,172 +46,465 @@ function Products() {
       .toLowerCase() || "";
 
 
-  /* =========================================
-     FETCH PRODUCTS
-  ========================================= */
+  // =========================================
+  // GROUP PRODUCTS
+  // =========================================
 
-  useEffect(() => {
+  const groupProducts = (
+    productList
+  ) => {
 
-    const fetchProducts = async () => {
+    const groups =
+      new Map();
 
-      try {
 
-        const response = await fetch(
-          "https://dairyhub-backend.onrender.com/api/products"
-        );
+    productList.forEach(
+      product => {
 
-        if (!response.ok) {
+        const name =
+          String(
+            product.name || ""
+          )
+            .trim()
+            .toLowerCase();
 
-          throw new Error(
-            "Failed to fetch products"
+
+        const category =
+          String(
+            product.category || ""
+          )
+            .trim()
+            .toLowerCase();
+
+
+        const key =
+          `${name}__${category}`;
+
+
+        if (
+          !groups.has(key)
+        ) {
+
+          groups.set(
+            key,
+            {
+
+              key,
+
+              name:
+                product.name,
+
+              category:
+                product.category,
+
+              variants: []
+
+            }
           );
 
         }
 
-        const data =
-          await response.json();
 
-        setProducts(data);
-
-      } catch (error) {
-
-        console.error(
-          "Error fetching products:",
-          error
-        );
-
-      } finally {
-
-        setLoading(false);
+        groups
+          .get(key)
+          .variants
+          .push(product);
 
       }
+    );
 
-    };
+
+    return Array.from(
+      groups.values()
+    );
+
+  };
+
+
+  // =========================================
+  // FETCH PRODUCTS
+  // =========================================
+
+  useEffect(() => {
+
+    const fetchProducts =
+      async () => {
+
+        try {
+
+          const response =
+            await fetch(
+              `${API_BASE}/api/products`
+            );
+
+
+          if (!response.ok) {
+
+            throw new Error(
+              "Failed to fetch products"
+            );
+
+          }
+
+
+          const data =
+            await response.json();
+
+
+          const productList =
+            Array.isArray(data)
+              ? data
+              : [];
+
+
+          setProducts(
+            groupProducts(
+              productList
+            )
+          );
+
+
+        } catch (error) {
+
+          console.error(
+            "Error fetching products:",
+            error
+          );
+
+
+        } finally {
+
+          setLoading(false);
+
+        }
+
+      };
+
 
     fetchProducts();
 
   }, []);
 
 
-  /* =========================================
-     FETCH PRODUCT RATINGS
-  ========================================= */
+  // =========================================
+  // FETCH RATINGS
+  // =========================================
 
   useEffect(() => {
 
-    const fetchRatings = async () => {
+    const fetchRatings =
+      async () => {
 
-      if (products.length === 0) {
-        return;
-      }
+        if (
+          products.length === 0
+        ) {
 
-      try {
+          return;
 
-        const ratingResults =
-          await Promise.all(
+        }
 
-            products.map(async (product) => {
 
-              try {
+        try {
 
-                const response =
-                  await fetch(
-                    `http://localhost:8080/api/reviews/product/${product.id}/summary`
-                  );
+          const variants =
+            products.flatMap(
+              group =>
+                group.variants
+            );
 
-                if (!response.ok) {
 
-                  throw new Error(
-                    `Failed to fetch rating for product ${product.id}`
-                  );
+          const ratingResults =
+            await Promise.all(
+
+              variants.map(
+                async product => {
+
+                  try {
+
+                    const response =
+                      await fetch(
+                        `${API_BASE}/api/reviews/product/${product.id}/summary`
+                      );
+
+
+                    if (!response.ok) {
+
+                      throw new Error(
+                        `Failed to fetch rating for product ${product.id}`
+                      );
+
+                    }
+
+
+                    const data =
+                      await response.json();
+
+
+                    return {
+
+                      productId:
+                        product.id,
+
+                      average:
+                        Number(
+                          data.averageRating
+                        ) || 0,
+
+                      count:
+                        Number(
+                          data.reviewCount
+                        ) || 0
+
+                    };
+
+
+                  } catch (error) {
+
+                    console.error(
+                      `Error fetching rating for product ${product.id}:`,
+                      error
+                    );
+
+
+                    return {
+
+                      productId:
+                        product.id,
+
+                      average: 0,
+
+                      count: 0
+
+                    };
+
+                  }
 
                 }
+              )
 
-                const data =
-                  await response.json();
+            );
 
-                return {
-                  productId: product.id,
-                  average:
-                    Number(data.averageRating) || 0,
-                  count:
-                    Number(data.reviewCount) || 0
-                };
 
-              } catch (error) {
+          const ratingMap = {};
 
-                console.error(
-                  `Error fetching rating for product ${product.id}:`,
-                  error
-                );
 
-                return {
-                  productId: product.id,
-                  average: 0,
-                  count: 0
-                };
+          ratingResults.forEach(
+            item => {
 
-              }
+              ratingMap[
+                item.productId
+              ] = {
 
-            })
+                average:
+                  item.average,
 
+                count:
+                  item.count
+
+              };
+
+            }
           );
 
 
-        const ratingMap = {};
-
-        ratingResults.forEach((item) => {
-
-          ratingMap[item.productId] = {
-            average: item.average,
-            count: item.count
-          };
-
-        });
+          setRatings(
+            ratingMap
+          );
 
 
-        setRatings(ratingMap);
+        } catch (error) {
 
-      } catch (error) {
+          console.error(
+            "Error fetching product ratings:",
+            error
+          );
 
-        console.error(
-          "Error fetching product ratings:",
-          error
-        );
+        }
 
-      }
+      };
 
-    };
 
     fetchRatings();
 
   }, [products]);
 
 
-  /* =========================================
-     ADD TO CART
-  ========================================= */
+  // =========================================
+  // GET SELECTED VARIANT
+  // =========================================
 
-  const addToCart = (product) => {
+  const getSelectedVariant = (
+    group
+  ) => {
+
+    const selectedId =
+      selectedVariants[
+        group.key
+      ];
+
+
+    if (
+      selectedId
+    ) {
+
+      const selected =
+        group.variants.find(
+          variant =>
+            variant.id ===
+            selectedId
+        );
+
+
+      if (selected) {
+
+        return selected;
+
+      }
+
+    }
+
+
+    return group.variants[0];
+
+  };
+
+
+  // =========================================
+  // CHANGE SIZE
+  // =========================================
+
+  const handleVariantChange = (
+    groupKey,
+    variantId
+  ) => {
+
+    setSelectedVariants(
+      previous => ({
+
+        ...previous,
+
+        [groupKey]:
+          Number(
+            variantId
+          )
+
+      })
+    );
+
+  };
+
+
+  // =========================================
+  // GROUP RATING
+  // =========================================
+
+  const getGroupRating = (
+    group
+  ) => {
+
+    let totalReviews =
+      0;
+
+    let weightedTotal =
+      0;
+
+
+    group.variants.forEach(
+      variant => {
+
+        const rating =
+          ratings[
+            variant.id
+          ];
+
+
+        if (!rating) {
+
+          return;
+
+        }
+
+
+        const count =
+          Number(
+            rating.count
+          ) || 0;
+
+
+        const average =
+          Number(
+            rating.average
+          ) || 0;
+
+
+        totalReviews +=
+          count;
+
+
+        weightedTotal +=
+          average *
+          count;
+
+      }
+    );
+
+
+    if (
+      totalReviews === 0
+    ) {
+
+      return {
+
+        average: 0,
+
+        count: 0
+
+      };
+
+    }
+
+
+    return {
+
+      average:
+        weightedTotal /
+        totalReviews,
+
+      count:
+        totalReviews
+
+    };
+
+  };
+
+
+  // =========================================
+  // ADD TO CART
+  // =========================================
+
+  const addToCart = (
+    product
+  ) => {
 
     let cart =
       JSON.parse(
-        localStorage.getItem("dairyhubCart")
+        localStorage.getItem(
+          "dairyhubCart"
+        )
       ) || [];
 
 
     const existingProduct =
       cart.find(
-        item => item.id === product.id
+        item =>
+          item.id ===
+          product.id
       );
 
 
-    if (existingProduct) {
-
-      /*
-        Do not allow quantity
-        to exceed available stock.
-      */
+    if (
+      existingProduct
+    ) {
 
       if (
         existingProduct.quantity >=
@@ -213,7 +519,9 @@ function Products() {
 
       }
 
-      existingProduct.quantity += 1;
+
+      existingProduct.quantity +=
+        1;
 
     } else {
 
@@ -230,58 +538,89 @@ function Products() {
 
     localStorage.setItem(
       "dairyhubCart",
-      JSON.stringify(cart)
+      JSON.stringify(
+        cart
+      )
     );
 
 
     alert(
-      `${product.name} added to cart!`
+      `${product.name} (${product.size || "Size not specified"}) added to cart!`
     );
 
   };
 
 
-  /* =========================================
-     FILTER PRODUCTS
-  ========================================= */
+  // =========================================
+  // FILTER GROUPS
+  // =========================================
 
   const filteredProducts =
-    products.filter((product) => {
+    products.filter(
+      group => {
 
-      if (!searchText) {
+        if (
+          !searchText
+        ) {
 
-        return true;
+          return true;
+
+        }
+
+
+        return group.variants.some(
+          product => {
+
+            const name =
+              product.name
+                ?.toLowerCase() || "";
+
+
+            const category =
+              product.category
+                ?.toLowerCase() || "";
+
+
+            const description =
+              product.description
+                ?.toLowerCase() || "";
+
+
+            const size =
+              product.size
+                ?.toLowerCase() || "";
+
+
+            return (
+
+              name.includes(
+                searchText
+              ) ||
+
+              category.includes(
+                searchText
+              ) ||
+
+              description.includes(
+                searchText
+              ) ||
+
+              size.includes(
+                searchText
+              )
+
+            );
+
+          }
+        );
 
       }
+    );
 
 
-      const name =
-        product.name
-          ?.toLowerCase() || "";
-
-
-      const category =
-        product.category
-          ?.toLowerCase() || "";
-
-
-      const description =
-        product.description
-          ?.toLowerCase() || "";
-
-
-      return (
-        name.includes(searchText) ||
-        category.includes(searchText) ||
-        description.includes(searchText)
-      );
-
-    });
-
-
-  /* =========================================
-     BACK DESTINATION
-  ========================================= */
+  // =========================================
+  // BACK
+  // =========================================
 
   const backPath =
     fromDashboard
@@ -295,70 +634,84 @@ function Products() {
       : "← Back to Home";
 
 
-  /* =========================================
-     PRODUCT DETAILS URL
-  ========================================= */
+  // =========================================
+  // PRODUCT DETAILS URL
+  // =========================================
 
-  const getProductDetailsPath = (productId) => {
+  const getProductDetailsPath =
+    (productId) => {
 
-    const basePath =
-      `/products/${productId}`;
-
-
-    /*
-      Normal Products page:
-
-      Products
-         ↓
-      Product Details
-         ↓
-      Back to Products
+      const basePath =
+        `/products/${productId}`;
 
 
-      Dashboard:
+      if (
+        fromDashboard
+      ) {
 
-      Dashboard
-         ↓
-      Shop Products
-         ↓
-      Product Details
-         ↓
-      Back to Dashboard
-    */
+        return `${basePath}?from=dashboard`;
 
-    if (fromDashboard) {
-
-      return `${basePath}?from=dashboard`;
-
-    }
-
-    return basePath;
-
-  };
+      }
 
 
-  /* =========================================
-     PAGE
-  ========================================= */
+      return basePath;
+
+    };
+
+
+  // =========================================
+  // LOADING
+  // =========================================
+
+  if (loading) {
+
+    return (
+
+      <div className="page">
+
+        <BackButton
+          to={backPath}
+          text={backText}
+        />
+
+
+        <h1>
+          Our Products
+        </h1>
+
+
+        <div
+          className="empty-state"
+        >
+
+          <h3>
+            Loading products...
+          </h3>
+
+        </div>
+
+      </div>
+
+    );
+
+  }
+
+
+  // =========================================
+  // PAGE
+  // =========================================
 
   return (
 
-    <div className="page">
-
-
-      {/* =====================================
-          BACK BUTTON
-      ====================================== */}
+    <div
+      className="page"
+    >
 
       <BackButton
         to={backPath}
         text={backText}
       />
 
-
-      {/* =====================================
-          PAGE TITLE
-      ====================================== */}
 
       <h1>
 
@@ -370,27 +723,11 @@ function Products() {
       </h1>
 
 
-      {/* =====================================
-          LOADING
-      ====================================== */}
+      {filteredProducts.length === 0 ? (
 
-      {loading ? (
-
-        <div className="empty-state">
-
-          <h3>
-            Loading products...
-          </h3>
-
-        </div>
-
-      ) : filteredProducts.length === 0 ? (
-
-        /* =====================================
-           NO RESULTS
-        ===================================== */
-
-        <div className="empty-state">
+        <div
+          className="empty-state"
+        >
 
           <h3>
             No products found
@@ -432,72 +769,92 @@ function Products() {
 
       ) : (
 
-        /* =====================================
-           PRODUCT GRID
-        ===================================== */
-
-        <div className="product-grid">
+        <div
+          className="product-grid"
+        >
 
           {filteredProducts.map(
-            (product) => {
+            group => {
 
-              const productRating =
-                ratings[product.id];
+              const selectedProduct =
+                getSelectedVariant(
+                  group
+                );
+
+
+              const groupRating =
+                getGroupRating(
+                  group
+                );
+
 
               const averageRating =
-                productRating?.average || 0;
+                groupRating.average;
+
 
               const reviewCount =
-                productRating?.count || 0;
+                groupRating.count;
 
 
               return (
 
                 <div
                   className="product-card"
-                  key={product.id}
+                  key={
+                    group.key
+                  }
                 >
 
-
-                  {/* ===========================
-                      PRODUCT IMAGE
-                  ============================ */}
+                  {/* IMAGE */}
 
                   <img
-                    src={product.image}
-                    alt={product.name}
+                    src={
+                      selectedProduct.image
+                    }
+                    alt={
+                      group.name
+                    }
                   />
 
 
-                  {/* ===========================
-                      PRODUCT NAME
-                  ============================ */}
+                  {/* NAME */}
 
                   <h3>
-                    {product.name}
+                    {group.name}
                   </h3>
 
 
-                  {/* ===========================
-                      PRODUCT RATING
-                  ============================ */}
+                  {/* RATING */}
 
-                  <div className="product-card-rating">
+                  <div
+                    className="product-card-rating"
+                  >
 
                     {reviewCount > 0 ? (
 
                       <>
 
-                        <span className="product-rating-stars">
+                        <span
+                          className="product-rating-stars"
+                        >
                           ⭐
                         </span>
 
-                        <span className="product-rating-average">
-                          {averageRating.toFixed(1)}
+
+                        <span
+                          className="product-rating-average"
+                        >
+                          {averageRating.toFixed(
+                            1
+                          )}
                         </span>
 
-                        <span className="product-rating-count">
-                          ({reviewCount}{" "}
+
+                        <span
+                          className="product-rating-count"
+                        >
+                          (
+                          {reviewCount}{" "}
                           {reviewCount === 1
                             ? "review"
                             : "reviews"}
@@ -508,7 +865,9 @@ function Products() {
 
                     ) : (
 
-                      <span className="product-no-rating">
+                      <span
+                        className="product-no-rating"
+                      >
                         ⭐ No reviews yet
                       </span>
 
@@ -517,75 +876,117 @@ function Products() {
                   </div>
 
 
-                  {/* ===========================
-                      PRODUCT DESCRIPTION
-                  ============================ */}
+                  {/* DESCRIPTION */}
 
                   <p>
-                    {product.description}
+                    {selectedProduct.description}
                   </p>
 
 
-                  {/* ===========================
-                      PRODUCT PRICE
-                  ============================ */}
+                  {/* SIZE */}
+
+                  <div
+                    className="product-size-selector"
+                  >
+
+                    <label>
+                      Size / Quantity
+                    </label>
+
+
+                    <select
+                      value={
+                        selectedProduct.id
+                      }
+                      onChange={(e) =>
+                        handleVariantChange(
+                          group.key,
+                          e.target.value
+                        )
+                      }
+                    >
+
+                      {group.variants.map(
+                        variant => (
+
+                          <option
+                            key={
+                              variant.id
+                            }
+                            value={
+                              variant.id
+                            }
+                          >
+                            {variant.size ||
+                              "Size not specified"}
+                          </option>
+
+                        )
+                      )}
+
+                    </select>
+
+                  </div>
+
+
+                  {/* PRICE */}
 
                   <h2>
-                    ₹{product.price}
+                    ₹
+                    {selectedProduct.price}
                   </h2>
 
 
-                  {/* ===========================
-                      PRODUCT STOCK
-                  ============================ */}
+                  {/* STOCK */}
 
                   <p>
-                    Stock: {product.stock}
+                    {selectedProduct.stock > 0
+
+                      ? `Stock: ${selectedProduct.stock}`
+
+                      : "Out of Stock"
+
+                    }
                   </p>
 
 
-                  {/* =================================
-                      ACTION BUTTONS
-                  ================================== */}
+                  {/* ACTIONS */}
 
-                  <div className="product-card-actions">
-
-
-                    {/* =============================
-                        VIEW DETAILS
-                    ============================== */}
+                  <div
+                    className="product-card-actions"
+                  >
 
                     <Link
-                      to={getProductDetailsPath(
-                        product.id
-                      )}
+                      to={
+                        getProductDetailsPath(
+                          selectedProduct.id
+                        )
+                      }
                       className="product-view-btn"
                     >
                       View Details
                     </Link>
 
 
-                    {/* =============================
-                        ADD TO CART
-                    ============================== */}
-
                     <button
                       className="product-add-cart-btn"
                       onClick={() =>
-                        addToCart(product)
+                        addToCart(
+                          selectedProduct
+                        )
                       }
                       disabled={
-                        product.stock <= 0
+                        selectedProduct.stock <=
+                        0
                       }
                     >
 
-                      {product.stock > 0
+                      {selectedProduct.stock > 0
                         ? "Add to Cart"
                         : "Out of Stock"
                       }
 
                     </button>
-
 
                   </div>
 
@@ -605,5 +1006,6 @@ function Products() {
   );
 
 }
+
 
 export default Products;
