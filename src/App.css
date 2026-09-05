@@ -10932,3 +10932,188 @@ body {
 
   flex-wrap: wrap;
 }
+
+/* =========================================
+   USER SECTION TABS
+========================================= */
+
+.user-section-tabs {
+  display: flex;
+  gap: 10px;
+  margin: 25px 0;
+}
+
+
+.user-section-tab {
+  border: 1px solid #dbe3ec;
+  background: #ffffff;
+  color: #334155;
+  padding: 11px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  transition: 0.2s;
+}
+
+
+.user-section-tab:hover {
+  background: #f8fafc;
+}
+
+
+.user-section-tab.active {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+
+.user-section-tab.deleted.active {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+
+.user-section-tab span {
+  margin-left: 7px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+
+/* =========================================
+   DELETE BIN
+========================================= */
+
+.delete-bin-container {
+  margin-top: 20px;
+}
+
+
+.delete-bin-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding: 18px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+}
+
+
+.delete-bin-info h2 {
+  margin: 0;
+  color: #9a3412;
+}
+
+
+.delete-bin-info p {
+  margin-top: 6px;
+  color: #7c2d12;
+  font-size: 13px;
+}
+
+
+.delete-bin-warning {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+
+/* =========================================
+   DELETE DAYS
+========================================= */
+
+.delete-days-badge {
+  display: inline-block;
+  padding: 5px 9px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+
+/* =========================================
+   RESTORE BUTTON
+========================================= */
+
+.restore-user-button {
+  padding: 7px 10px;
+  border: 1px solid #16a34a;
+  background: #f0fdf4;
+  color: #166534;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+
+.restore-user-button:hover {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+
+/* =========================================
+   PERMANENT DELETE
+========================================= */
+
+.permanent-delete-user-button {
+  padding: 7px 10px;
+  border: 1px solid #dc2626;
+  background: #fef2f2;
+  color: #991b1b;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+
+.permanent-delete-user-button:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+
+/* =========================================
+   DISABLED BUTTONS
+========================================= */
+
+.user-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 800px) {
+
+  .user-section-tabs {
+    flex-direction: column;
+  }
+
+  .delete-bin-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .users-table-wrapper {
+    overflow-x: auto;
+  }
+
+}

@@ -2,8 +2,32 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 
-const API_URL =
-  "https://dairyhub-backend.onrender.com/api/users/register";
+// =========================================
+// API BASE URL
+// =========================================
+//
+// Both local development and production
+// use the SAME Render backend.
+//
+// LOCAL:
+//
+// http://localhost:5173
+//        ↓
+// https://dairyhub-backend.onrender.com
+//        ↓
+// Aiven MySQL
+//
+// PRODUCTION:
+//
+// https://dairyhub-five.vercel.app
+//        ↓
+// https://dairyhub-backend.onrender.com
+//        ↓
+// Aiven MySQL
+//
+
+const API_BASE =
+  "https://dairyhub-backend.onrender.com";
 
 
 function Register() {
@@ -11,15 +35,27 @@ function Register() {
   const navigate = useNavigate();
 
 
-  const [formData, setFormData] = useState({
+  // =========================================
+  // FORM DATA
+  // =========================================
 
-    name: "",
-    email: "",
-    password: "",
-    phone: ""
+  const [formData, setFormData] =
+    useState({
 
-  });
+      name: "",
 
+      email: "",
+
+      password: "",
+
+      phone: ""
+
+    });
+
+
+  // =========================================
+  // LOADING
+  // =========================================
 
   const [loading, setLoading] =
     useState(false);
@@ -101,9 +137,13 @@ function Register() {
 
       try {
 
+        // =====================================
+        // REGISTER REQUEST
+        // =====================================
+
         const response =
           await fetch(
-            API_URL,
+            `${API_BASE}/api/users/register`,
             {
 
               method:
@@ -123,17 +163,20 @@ function Register() {
                 JSON.stringify({
 
                   name:
-                    formData.name.trim(),
+                    formData.name
+                      .trim(),
 
                   email:
-                    formData.email.trim()
+                    formData.email
+                      .trim()
                       .toLowerCase(),
 
                   password:
                     formData.password,
 
                   phone:
-                    formData.phone.trim() ||
+                    formData.phone
+                      .trim() ||
                     null
 
                 })
@@ -154,7 +197,9 @@ function Register() {
           null;
 
 
-        if (responseText) {
+        if (
+          responseText
+        ) {
 
           try {
 
@@ -184,7 +229,9 @@ function Register() {
         // ERROR
         // =====================================
 
-        if (!response.ok) {
+        if (
+          !response.ok
+        ) {
 
           let message =
             "Registration failed.";
@@ -192,7 +239,7 @@ function Register() {
 
           if (
             typeof responseData ===
-            "string" &&
+              "string" &&
             responseData.trim()
           ) {
 
@@ -212,6 +259,13 @@ function Register() {
 
             message =
               responseData.error;
+
+          } else if (
+            responseData?.errorDetail
+          ) {
+
+            message =
+              responseData.errorDetail;
 
           }
 
@@ -238,15 +292,26 @@ function Register() {
         );
 
 
+        // =====================================
+        // CLEAR FORM
+        // =====================================
+
         setFormData({
 
           name: "",
+
           email: "",
+
           password: "",
+
           phone: ""
 
         });
 
+
+        // =====================================
+        // GO TO LOGIN
+        // =====================================
 
         navigate(
           "/login"
@@ -269,7 +334,9 @@ function Register() {
 
       } finally {
 
-        setLoading(false);
+        setLoading(
+          false
+        );
 
       }
 
@@ -282,7 +349,9 @@ function Register() {
 
   return (
 
-    <div className="auth-container">
+    <div
+      className="auth-container"
+    >
 
       <form
         className="auth-form"
@@ -308,6 +377,7 @@ function Register() {
             formData.name
           }
           required
+          autoComplete="name"
           onChange={
             handleChange
           }
@@ -326,6 +396,7 @@ function Register() {
             formData.email
           }
           required
+          autoComplete="email"
           onChange={
             handleChange
           }
@@ -344,6 +415,7 @@ function Register() {
             formData.password
           }
           required
+          autoComplete="new-password"
           onChange={
             handleChange
           }
@@ -362,6 +434,7 @@ function Register() {
           value={
             formData.phone
           }
+          autoComplete="tel"
           onChange={
             handleChange
           }
@@ -391,7 +464,9 @@ function Register() {
             LOGIN LINK
         ==================================== */}
 
-        <div className="auth-links">
+        <div
+          className="auth-links"
+        >
 
           <p>
 

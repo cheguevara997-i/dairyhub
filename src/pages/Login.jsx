@@ -2,142 +2,81 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 
+
+// =========================================
+// API BASE URL
+// =========================================
+//
+// BOTH local and deployed frontend versions
+// use the SAME Render backend.
+//
+// Local:
+// http://localhost:5173
+//        ↓
+// https://dairyhub-backend.onrender.com
+//        ↓
+// Aiven MySQL
+//
+// Production:
+// https://dairyhub-five.vercel.app
+//        ↓
+// https://dairyhub-backend.onrender.com
+//        ↓
+// Aiven MySQL
+//
+
+const API_BASE =
+  "https://dairyhub-backend.onrender.com";
+
+
 function Login() {
 
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
 
-  const [password, setPassword] = useState("");
+  // =========================================
+  // FORM STATE
+  // =========================================
 
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail] =
+    useState("");
 
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [password, setPassword] =
+    useState("");
+
+
+  // =========================================
+  // LOADING
+  // =========================================
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [googleLoading, setGoogleLoading] =
+    useState(false);
 
 
   // =========================================
   // NORMAL EMAIL + PASSWORD LOGIN
   // =========================================
 
-  const handleLogin = async (e) => {
+  const handleLogin =
+    async (e) => {
 
-    e.preventDefault();
-
-    setLoading(true);
-
-    try {
-
-      const response = await fetch(
-        "https://dairyhub-backend.onrender.com/api/users/login",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json"
-          },
-
-          body: JSON.stringify({
-            email: email,
-            password: password
-          })
-        }
-      );
+      e.preventDefault();
 
 
-      if (!response.ok) {
+      // =======================================
+      // BASIC VALIDATION
+      // =======================================
 
-        alert("Invalid email or password");
-
-        return;
-
-      }
-
-
-      const user = await response.json();
-
-
-      localStorage.setItem(
-        "dairyhubUser",
-        JSON.stringify(user)
-      );
-
-
-      if (user.role === "ADMIN") {
-
-        navigate("/admin");
-
-      } else {
-
-        navigate("/dashboard");
-
-      }
-
-
-    } catch (error) {
-
-      console.error(
-        "Login error:",
-        error
-      );
-
-      alert(
-        "Unable to login. Please make sure the backend is running."
-      );
-
-    } finally {
-
-      setLoading(false);
-
-    }
-
-  };
-
-
-  // =========================================
-  // GOOGLE LOGIN
-  // =========================================
-
-  const handleGoogleLogin = async (
-    credentialResponse
-  ) => {
-
-    if (!credentialResponse?.credential) {
-
-      alert(
-        "Google login failed. No credential received."
-      );
-
-      return;
-
-    }
-
-
-    setGoogleLoading(true);
-
-
-    try {
-
-      const response = await fetch(
-        "https://dairyhub-backend.onrender.com/api/users/google",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json"
-          },
-
-          body: JSON.stringify({
-            credential:
-              credentialResponse.credential
-          })
-        }
-      );
-
-
-      if (!response.ok) {
+      if (
+        !email.trim() ||
+        !password
+      ) {
 
         alert(
-          "Google account could not be verified."
+          "Please enter your email and password."
         );
 
         return;
@@ -145,53 +84,529 @@ function Login() {
       }
 
 
-      const user = await response.json();
+      setLoading(true);
 
 
-      localStorage.setItem(
-        "dairyhubUser",
-        JSON.stringify(user)
-      );
+      try {
+
+        // =====================================
+        // LOGIN REQUEST
+        // =====================================
+
+        const response =
+          await fetch(
+            `${API_BASE}/api/users/login`,
+            {
+
+              method:
+                "POST",
+
+              headers: {
+
+                "Content-Type":
+                  "application/json"
+
+              },
+
+              body:
+                JSON.stringify({
+
+                  email:
+                    email.trim(),
+
+                  password:
+                    password
+
+                })
+
+            }
+          );
 
 
-      if (user.role === "ADMIN") {
+        // =====================================
+        // READ RESPONSE
+        // =====================================
 
-        navigate("/admin");
+        const responseText =
+          await response.text();
 
-      } else {
 
-        navigate("/dashboard");
+        let data =
+          null;
+
+
+        try {
+
+          data =
+            responseText
+              ? JSON.parse(
+                  responseText
+                )
+              : null;
+
+        } catch {
+
+          data =
+            null;
+
+        }
+
+
+        // =====================================
+        // LOGIN FAILED
+        // =====================================
+
+        if (
+          !response.ok
+        ) {
+
+          alert(
+
+            data?.message ||
+
+            "Invalid email or password."
+
+          );
+
+
+          return;
+
+        }
+
+
+        // =====================================
+        // LOGIN SUCCESS
+        // =====================================
+
+        const user =
+          data;
+
+
+        if (
+          !user
+        ) {
+
+          alert(
+            "Login failed. Invalid server response."
+          );
+
+          return;
+
+        }
+
+
+        /*
+         * Expected backend response:
+         *
+         * id
+         * name
+         * email
+         * phone
+         * role
+         * adminManaged
+         * deleted
+         * token
+         *
+         * Password is NOT returned.
+         */
+
+
+        if (
+          !user.token
+        ) {
+
+          console.error(
+            "Login succeeded but no token was returned:",
+            user
+          );
+
+
+          alert(
+            "Login failed because the server did not return an authentication token."
+          );
+
+
+          return;
+
+        }
+
+
+        // =====================================
+        // CHECK LOCKED ACCOUNT
+        // =====================================
+
+        if (
+          Boolean(
+            user.deleted
+          )
+        ) {
+
+          alert(
+            "This account is currently locked."
+          );
+
+
+          return;
+
+        }
+
+
+        // =====================================
+        // SAVE LOGIN SESSION
+        // =====================================
+
+        localStorage.setItem(
+          "dairyhubUser",
+          JSON.stringify(
+            user
+          )
+        );
+
+
+        console.log(
+          "DairyHub login successful:",
+          {
+
+            id:
+              user.id,
+
+            email:
+              user.email,
+
+            role:
+              user.role,
+
+            hasToken:
+              Boolean(
+                user.token
+              )
+
+          }
+        );
+
+
+        // =====================================
+        // NAVIGATION
+        // =====================================
+
+        if (
+          String(
+            user.role || ""
+          )
+            .trim()
+            .toUpperCase() ===
+          "ADMIN"
+        ) {
+
+          navigate(
+            "/admin"
+          );
+
+        } else {
+
+          navigate(
+            "/dashboard"
+          );
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Login error:",
+          error
+        );
+
+
+        alert(
+          "Unable to login. Please try again."
+        );
+
+      } finally {
+
+        setLoading(
+          false
+        );
+
+      }
+
+    };
+
+
+  // =========================================
+  // GOOGLE LOGIN
+  // =========================================
+
+  const handleGoogleLogin =
+    async (
+      credentialResponse
+    ) => {
+
+      if (
+        !credentialResponse?.credential
+      ) {
+
+        alert(
+          "Google login failed. No credential received."
+        );
+
+        return;
 
       }
 
 
-    } catch (error) {
-
-      console.error(
-        "Google login error:",
-        error
+      setGoogleLoading(
+        true
       );
 
-      alert(
-        "Unable to login with Google. Please try again."
-      );
 
-    } finally {
+      try {
 
-      setGoogleLoading(false);
+        // =====================================
+        // GOOGLE LOGIN REQUEST
+        // =====================================
 
-    }
+        const response =
+          await fetch(
+            `${API_BASE}/api/users/google`,
+            {
 
-  };
+              method:
+                "POST",
 
+              headers: {
+
+                "Content-Type":
+                  "application/json"
+
+              },
+
+              body:
+                JSON.stringify({
+
+                  credential:
+                    credentialResponse.credential
+
+                })
+
+            }
+          );
+
+
+        // =====================================
+        // READ RESPONSE
+        // =====================================
+
+        const responseText =
+          await response.text();
+
+
+        let data =
+          null;
+
+
+        try {
+
+          data =
+            responseText
+              ? JSON.parse(
+                  responseText
+                )
+              : null;
+
+        } catch {
+
+          data =
+            null;
+
+        }
+
+
+        // =====================================
+        // GOOGLE LOGIN FAILED
+        // =====================================
+
+        if (
+          !response.ok
+        ) {
+
+          alert(
+
+            data?.message ||
+
+            "Google account could not be verified."
+
+          );
+
+
+          return;
+
+        }
+
+
+        // =====================================
+        // GOOGLE LOGIN SUCCESS
+        // =====================================
+
+        const user =
+          data;
+
+
+        if (
+          !user
+        ) {
+
+          alert(
+            "Google login failed. Invalid server response."
+          );
+
+          return;
+
+        }
+
+
+        /*
+         * Google login must also return
+         * the authentication token.
+         */
+
+        if (
+          !user.token
+        ) {
+
+          console.error(
+            "Google login succeeded but no token was returned:",
+            user
+          );
+
+
+          alert(
+            "Google login failed because the server did not return an authentication token."
+          );
+
+
+          return;
+
+        }
+
+
+        // =====================================
+        // CHECK LOCKED ACCOUNT
+        // =====================================
+
+        if (
+          Boolean(
+            user.deleted
+          )
+        ) {
+
+          alert(
+            "This account is currently locked."
+          );
+
+
+          return;
+
+        }
+
+
+        // =====================================
+        // SAVE LOGIN SESSION
+        // =====================================
+
+        localStorage.setItem(
+          "dairyhubUser",
+          JSON.stringify(
+            user
+          )
+        );
+
+
+        console.log(
+          "DairyHub Google login successful:",
+          {
+
+            id:
+              user.id,
+
+            email:
+              user.email,
+
+            role:
+              user.role,
+
+            hasToken:
+              Boolean(
+                user.token
+              )
+
+          }
+        );
+
+
+        // =====================================
+        // NAVIGATION
+        // =====================================
+
+        if (
+          String(
+            user.role || ""
+          )
+            .trim()
+            .toUpperCase() ===
+          "ADMIN"
+        ) {
+
+          navigate(
+            "/admin"
+          );
+
+        } else {
+
+          navigate(
+            "/dashboard"
+          );
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Google login error:",
+          error
+        );
+
+
+        alert(
+          "Unable to login with Google. Please try again."
+        );
+
+      } finally {
+
+        setGoogleLoading(
+          false
+        );
+
+      }
+
+    };
+
+
+  // =========================================
+  // PAGE
+  // =========================================
 
   return (
 
-    <div className="auth-container">
+    <div
+      className="auth-container"
+    >
 
       <form
         className="auth-form"
-        onSubmit={handleLogin}
+        onSubmit={
+          handleLogin
+        }
       >
 
         <h2>
@@ -199,9 +614,9 @@ function Login() {
         </h2>
 
 
-        {/* =========================================
+        {/* ===================================
             GOOGLE LOGIN
-            ========================================= */}
+        ==================================== */}
 
         <div
           style={{
@@ -212,13 +627,17 @@ function Login() {
         >
 
           <GoogleLogin
-            onSuccess={handleGoogleLogin}
+
+            onSuccess={
+              handleGoogleLogin
+            }
 
             onError={() => {
 
               console.error(
                 "Google Login Failed"
               );
+
 
               alert(
                 "Google login failed. Please try again."
@@ -232,11 +651,21 @@ function Login() {
 
             size="large"
 
-            width="100%"
+            /*
+             * Google Sign-In expects a valid
+             * button width value.
+             */
+
+            width="320"
+
           />
 
         </div>
 
+
+        {/* ===================================
+            DIVIDER
+        ==================================== */}
 
         <div
           style={{
@@ -249,57 +678,79 @@ function Login() {
         </div>
 
 
-        {/* =========================================
+        {/* ===================================
             EMAIL
-            ========================================= */}
+        ==================================== */}
 
         <input
           type="email"
           placeholder="Email"
-          value={email}
+          value={
+            email
+          }
           required
-          onChange={(e) =>
-            setEmail(e.target.value)
+          autoComplete="email"
+          onChange={
+            (e) =>
+              setEmail(
+                e.target.value
+              )
           }
         />
 
 
-        {/* =========================================
+        {/* ===================================
             PASSWORD
-            ========================================= */}
+        ==================================== */}
 
         <input
           type="password"
           placeholder="Password"
-          value={password}
+          value={
+            password
+          }
           required
-          onChange={(e) =>
-            setPassword(e.target.value)
+          autoComplete="current-password"
+          onChange={
+            (e) =>
+              setPassword(
+                e.target.value
+              )
           }
         />
 
 
-        {/* =========================================
-            NORMAL LOGIN BUTTON
-            ========================================= */}
+        {/* ===================================
+            LOGIN BUTTON
+        ==================================== */}
 
         <button
           type="submit"
           disabled={
-            loading || googleLoading
+            loading ||
+            googleLoading
           }
         >
 
           {loading
             ? "Logging in..."
-            : "Login"}
+            : "Login"
+          }
 
         </button>
 
 
-        <div className="auth-links">
+        {/* ===================================
+            LINKS
+        ==================================== */}
 
-          <Link to="/forgot-password">
+        <div
+          className="auth-links"
+        >
+
+          <Link
+            to="/forgot-password"
+          >
             Forgot Password?
           </Link>
 
@@ -308,7 +759,9 @@ function Login() {
 
             Don't have an account?{" "}
 
-            <Link to="/register">
+            <Link
+              to="/register"
+            >
               Register
             </Link>
 
@@ -323,5 +776,6 @@ function Login() {
   );
 
 }
+
 
 export default Login;

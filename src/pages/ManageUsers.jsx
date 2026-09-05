@@ -2,8 +2,16 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 
+/* =========================================
+   API CONFIGURATION
+========================================= */
+
+const API_BASE =
+  "https://dairyhub-backend.onrender.com";
+
+
 const API_URL =
-  "https://dairyhub-backend.onrender.com/api/users";
+  `${API_BASE}/api/users`;
 
 
 const PROTECTED_ADMIN_EMAIL =
@@ -12,21 +20,57 @@ const PROTECTED_ADMIN_EMAIL =
 
 function ManageUsers() {
 
+  // =========================================
+  // ACTIVE USERS
+  // =========================================
+
   const [users, setUsers] =
     useState([]);
 
+
+  // =========================================
+  // DELETED USERS / DELETE BIN
+  // =========================================
+
+  const [deletedUsers, setDeletedUsers] =
+    useState([]);
+
+
+  // =========================================
+  // SEARCH
+  // =========================================
 
   const [searchText, setSearchText] =
     useState("");
 
 
+  // =========================================
+  // ROLE FILTER
+  // =========================================
+
   const [roleFilter, setRoleFilter] =
     useState("ALL");
 
 
+  // =========================================
+  // CURRENT SECTION
+  // =========================================
+
+  const [activeSection, setActiveSection] =
+    useState("ACTIVE");
+
+
+  // =========================================
+  // VIEW USER
+  // =========================================
+
   const [selectedUser, setSelectedUser] =
     useState(null);
 
+
+  // =========================================
+  // EDIT USER
+  // =========================================
 
   const [editingUser, setEditingUser] =
     useState(null);
@@ -39,21 +83,122 @@ function ManageUsers() {
 
       phone: "",
 
-      role: ""
+      role: "CUSTOMER"
 
     });
 
 
+  // =========================================
+  // LOADING
+  // =========================================
+
   const [loading, setLoading] =
     useState(true);
 
+
+  // =========================================
+  // PROCESSING USER
+  // =========================================
 
   const [processingUserId, setProcessingUserId] =
     useState(null);
 
 
   // =========================================
-  // CHECK ORIGINAL PROTECTED ADMIN
+  // GET LOGGED-IN USER
+  // =========================================
+
+  const getLoggedInUser = () => {
+
+    try {
+
+      const savedUser =
+        localStorage.getItem(
+          "dairyhubUser"
+        );
+
+
+      if (!savedUser) {
+
+        return null;
+
+      }
+
+
+      return JSON.parse(
+        savedUser
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        "Unable to read dairyhubUser:",
+        error
+      );
+
+
+      return null;
+
+    }
+
+  };
+
+
+  // =========================================
+  // GET AUTH TOKEN
+  // =========================================
+
+  const getAuthToken = () => {
+
+    const user =
+      getLoggedInUser();
+
+
+    if (!user) {
+
+      return null;
+
+    }
+
+
+    return user.token || null;
+
+  };
+
+
+  // =========================================
+  // AUTHORIZATION HEADERS
+  // =========================================
+
+  const getAuthHeaders = () => {
+
+    const token =
+      getAuthToken();
+
+
+    return {
+
+      "Content-Type":
+        "application/json",
+
+      "Accept":
+        "application/json",
+
+      ...(token
+        ? {
+            Authorization:
+              `Bearer ${token}`
+          }
+        : {})
+
+    };
+
+  };
+
+
+  // =========================================
+  // CHECK PROTECTED ADMIN
   // =========================================
 
   const isProtectedAdmin = (
@@ -61,38 +206,153 @@ function ManageUsers() {
   ) => {
 
     return (
+
       String(
         user?.email || ""
       )
         .trim()
         .toLowerCase() ===
       PROTECTED_ADMIN_EMAIL
+
     );
 
   };
 
 
   // =========================================
-  // LOAD USERS
+  // CHECK CURRENT ADMIN SESSION
   // =========================================
 
-  const loadUsers = async () => {
+  const ensureAdminSession = () => {
 
-    try {
+    const user =
+      getLoggedInUser();
 
-      setLoading(true);
 
+    if (!user) {
+
+      return false;
+
+    }
+
+
+    const role =
+      String(
+        user.role || ""
+      )
+        .trim()
+        .toUpperCase();
+
+
+    if (
+      role !== "ADMIN"
+    ) {
+
+      return false;
+
+    }
+
+
+    if (
+      !user.token
+    ) {
+
+      return false;
+
+    }
+
+
+    return true;
+
+  };
+
+
+  // =========================================
+  // HANDLE AUTHORIZATION ERROR
+  // =========================================
+
+  const handleAuthorizationError = (
+    response
+  ) => {
+
+    return (
+      response.status === 401 ||
+      response.status === 403
+    );
+
+  };
+
+
+  // =========================================
+  // HANDLE INVALID ADMIN SESSION
+  // =========================================
+
+  const handleSessionFailure = () => {
+
+    localStorage.removeItem(
+      "dairyhubUser"
+    );
+
+
+    alert(
+      "Your admin session is invalid or expired. Please login again."
+    );
+
+
+    window.location.href =
+      "/login";
+
+  };
+
+
+  // =========================================
+  // LOAD ACTIVE USERS
+  // =========================================
+
+  const loadActiveUsers =
+    async () => {
 
       const response =
         await fetch(
-          API_URL
+          `${API_URL}/active`,
+          {
+
+            method:
+              "GET",
+
+            headers:
+              getAuthHeaders()
+
+          }
         );
 
 
-      if (!response.ok) {
+      if (
+        !response.ok
+      ) {
+
+        if (
+          handleAuthorizationError(
+            response
+          )
+        ) {
+
+          handleSessionFailure();
+
+          throw new Error(
+            "Admin authorization failed."
+          );
+
+        }
+
+
+        const errorText =
+          await response.text();
+
 
         throw new Error(
-          "Failed to load users"
+          errorText ||
+          "Failed to load active users."
         );
 
       }
@@ -108,27 +368,134 @@ function ManageUsers() {
           : []
       );
 
+    };
 
-    } catch (error) {
 
-      console.error(
-        "Error loading users:",
-        error
+  // =========================================
+  // LOAD DELETE BIN
+  // =========================================
+
+  const loadDeletedUsers =
+    async () => {
+
+      const response =
+        await fetch(
+          `${API_URL}/deleted`,
+          {
+
+            method:
+              "GET",
+
+            headers:
+              getAuthHeaders()
+
+          }
+        );
+
+
+      if (
+        !response.ok
+      ) {
+
+        if (
+          handleAuthorizationError(
+            response
+          )
+        ) {
+
+          handleSessionFailure();
+
+          throw new Error(
+            "Admin authorization failed."
+          );
+
+        }
+
+
+        const errorText =
+          await response.text();
+
+
+        throw new Error(
+          errorText ||
+          "Failed to load deleted users."
+        );
+
+      }
+
+
+      const data =
+        await response.json();
+
+
+      setDeletedUsers(
+        Array.isArray(data)
+          ? data
+          : []
       );
 
-
-      alert(
-        "Failed to load users."
-      );
+    };
 
 
-    } finally {
+  // =========================================
+  // LOAD USERS
+  // =========================================
 
-      setLoading(false);
+  const loadUsers =
+    async () => {
 
-    }
+      try {
 
-  };
+        setLoading(true);
+
+
+        if (
+          !ensureAdminSession()
+        ) {
+
+          handleSessionFailure();
+
+          return;
+
+        }
+
+
+        await Promise.all([
+
+          loadActiveUsers(),
+
+          loadDeletedUsers()
+
+        ]);
+
+
+      } catch (error) {
+
+        console.error(
+          "Error loading users:",
+          error
+        );
+
+
+        if (
+          error.message !==
+          "Admin authorization failed."
+        ) {
+
+          alert(
+            error.message ||
+            "Failed to load users."
+          );
+
+        }
+
+      } finally {
+
+        setLoading(false);
+
+      }
+
+    };
 
 
   // =========================================
@@ -143,107 +510,385 @@ function ManageUsers() {
 
 
   // =========================================
-  // DELETE USER
+  // MOVE USER TO DELETE BIN
   // =========================================
 
-  const deleteUser = async (
-    user
-  ) => {
+  const deleteUser =
+    async (
+      user
+    ) => {
 
-    if (
-      isProtectedAdmin(user)
-    ) {
+      if (
+        isProtectedAdmin(user)
+      ) {
 
-      alert(
-        "The original DairyHub admin account cannot be deleted."
-      );
-
-      return;
-
-    }
-
-
-    const confirmed =
-      window.confirm(
-        `Are you sure you want to permanently delete ${user.name}?`
-      );
-
-
-    if (!confirmed) {
-
-      return;
-
-    }
-
-
-    try {
-
-      setProcessingUserId(
-        user.id
-      );
-
-
-      const response =
-        await fetch(
-          `${API_URL}/${user.id}`,
-          {
-            method:
-              "DELETE"
-          }
+        alert(
+          "The original DairyHub admin account cannot be deleted or locked."
         );
 
-
-      if (!response.ok) {
-
-        const errorMessage =
-          await response.text();
-
-
-        throw new Error(
-          errorMessage ||
-          "Delete failed"
-        );
+        return;
 
       }
 
 
-      setUsers(
-        previousUsers =>
-          previousUsers.filter(
-            item =>
-              item.id !== user.id
-          )
-      );
+      const confirmed =
+        window.confirm(
+
+          `Move ${user.name} to the Delete Bin?\n\n` +
+
+          "The account will be locked immediately.\n\n" +
+
+          "The customer's data will be preserved for 30 days."
+
+        );
 
 
-      alert(
-        `${user.name} deleted successfully.`
-      );
+      if (
+        !confirmed
+      ) {
+
+        return;
+
+      }
 
 
-    } catch (error) {
+      try {
 
-      console.error(
-        "Delete error:",
-        error
-      );
-
-
-      alert(
-        error.message ||
-        "Failed to delete user."
-      );
+        setProcessingUserId(
+          user.id
+        );
 
 
-    } finally {
+        const response =
+          await fetch(
+            `${API_URL}/${user.id}`,
+            {
 
-      setProcessingUserId(
-        null
-      );
+              method:
+                "DELETE",
 
-    }
+              headers:
+                getAuthHeaders()
 
-  };
+            }
+          );
+
+
+        const responseText =
+          await response.text();
+
+
+        if (
+          !response.ok
+        ) {
+
+          if (
+            handleAuthorizationError(
+              response
+            )
+          ) {
+
+            handleSessionFailure();
+
+            return;
+
+          }
+
+
+          throw new Error(
+            responseText ||
+            "Unable to move user to Delete Bin."
+          );
+
+        }
+
+
+        setUsers(
+          previousUsers =>
+            previousUsers.filter(
+              item =>
+                item.id !==
+                user.id
+            )
+        );
+
+
+        await loadDeletedUsers();
+
+
+        alert(
+          `${user.name} has been moved to the Delete Bin.`
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Delete user error:",
+          error
+        );
+
+
+        alert(
+          error.message ||
+          "Unable to move user to Delete Bin."
+        );
+
+
+      } finally {
+
+        setProcessingUserId(
+          null
+        );
+
+      }
+
+    };
+
+
+  // =========================================
+  // RESTORE USER
+  // =========================================
+
+  const restoreUser =
+    async (
+      user
+    ) => {
+
+      const confirmed =
+        window.confirm(
+
+          `Restore ${user.name}'s account?\n\n` +
+
+          "The customer will be able to login and use DairyHub again."
+
+        );
+
+
+      if (
+        !confirmed
+      ) {
+
+        return;
+
+      }
+
+
+      try {
+
+        setProcessingUserId(
+          user.id
+        );
+
+
+        const response =
+          await fetch(
+            `${API_URL}/${user.id}/restore`,
+            {
+
+              method:
+                "POST",
+
+              headers:
+                getAuthHeaders()
+
+            }
+          );
+
+
+        const responseText =
+          await response.text();
+
+
+        if (
+          !response.ok
+        ) {
+
+          if (
+            handleAuthorizationError(
+              response
+            )
+          ) {
+
+            handleSessionFailure();
+
+            return;
+
+          }
+
+
+          throw new Error(
+            responseText ||
+            "Unable to restore user."
+          );
+
+        }
+
+
+        setDeletedUsers(
+          previousUsers =>
+            previousUsers.filter(
+              item =>
+                item.id !==
+                user.id
+            )
+        );
+
+
+        await loadActiveUsers();
+
+
+        alert(
+          `${user.name}'s account has been restored successfully.`
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Restore user error:",
+          error
+        );
+
+
+        alert(
+          error.message ||
+          "Unable to restore user."
+        );
+
+
+      } finally {
+
+        setProcessingUserId(
+          null
+        );
+
+      }
+
+    };
+
+
+  // =========================================
+  // PERMANENT DELETE
+  // =========================================
+
+  const permanentlyDeleteUser =
+    async (
+      user
+    ) => {
+
+      const confirmed =
+        window.confirm(
+
+          `PERMANENTLY DELETE ${user.name}?\n\n` +
+
+          "WARNING: This permanently removes the account from the database.\n\n" +
+
+          "This action cannot be undone.\n\n" +
+
+          "After deletion, the email can be used to create a new account."
+
+        );
+
+
+      if (
+        !confirmed
+      ) {
+
+        return;
+
+      }
+
+
+      try {
+
+        setProcessingUserId(
+          user.id
+        );
+
+
+        const response =
+          await fetch(
+            `${API_URL}/${user.id}/permanent`,
+            {
+
+              method:
+                "DELETE",
+
+              headers:
+                getAuthHeaders()
+
+            }
+          );
+
+
+        const responseText =
+          await response.text();
+
+
+        if (
+          !response.ok
+        ) {
+
+          if (
+            handleAuthorizationError(
+              response
+            )
+          ) {
+
+            handleSessionFailure();
+
+            return;
+
+          }
+
+
+          throw new Error(
+            responseText ||
+            "Unable to permanently delete user."
+          );
+
+        }
+
+
+        setDeletedUsers(
+          previousUsers =>
+            previousUsers.filter(
+              item =>
+                item.id !==
+                user.id
+            )
+        );
+
+
+        alert(
+          `${user.name} has been permanently deleted.`
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Permanent delete error:",
+          error
+        );
+
+
+        alert(
+          error.message ||
+          "Unable to permanently delete user."
+        );
+
+
+      } finally {
+
+        setProcessingUserId(
+          null
+        );
+
+      }
+
+    };
 
 
   // =========================================
@@ -280,7 +925,9 @@ function ManageUsers() {
   // =========================================
 
   const saveEdit =
-    async (e) => {
+    async (
+      e
+    ) => {
 
       e.preventDefault();
 
@@ -298,17 +945,15 @@ function ManageUsers() {
       }
 
 
-      /*
-       * Original admin cannot be changed
-       * to CUSTOMER.
-       */
-
       if (
+
         isProtectedAdmin(
           editingUser
         ) &&
+
         editForm.role !==
-          "ADMIN"
+        "ADMIN"
+
       ) {
 
         alert(
@@ -335,12 +980,8 @@ function ManageUsers() {
               method:
                 "PUT",
 
-              headers: {
-
-                "Content-Type":
-                  "application/json"
-
-              },
+              headers:
+                getAuthHeaders(),
 
               body:
                 JSON.stringify({
@@ -361,22 +1002,39 @@ function ManageUsers() {
           );
 
 
-        if (!response.ok) {
+        const responseText =
+          await response.text();
 
-          const errorMessage =
-            await response.text();
+
+        if (
+          !response.ok
+        ) {
+
+          if (
+            handleAuthorizationError(
+              response
+            )
+          ) {
+
+            handleSessionFailure();
+
+            return;
+
+          }
 
 
           throw new Error(
-            errorMessage ||
-            "Update failed"
+            responseText ||
+            "Update failed."
           );
 
         }
 
 
         const updatedUser =
-          await response.json();
+          JSON.parse(
+            responseText
+          );
 
 
         setUsers(
@@ -401,10 +1059,10 @@ function ManageUsers() {
         );
 
 
-    } catch (error) {
+      } catch (error) {
 
         console.error(
-          "Update error:",
+          "Update user error:",
           error
         );
 
@@ -430,353 +1088,527 @@ function ManageUsers() {
   // MAKE ADMIN
   // =========================================
 
-  const makeAdmin = async (
-    user
-  ) => {
+  const makeAdmin =
+    async (
+      user
+    ) => {
 
-    if (
-      isProtectedAdmin(user)
-    ) {
+      if (
+        isProtectedAdmin(
+          user
+        )
+      ) {
 
-      return;
-
-    }
-
-
-    const confirmed =
-      window.confirm(
-        `Make ${user.name} an ADMIN?\n\nThis user will receive access to the DairyHub Admin Dashboard.`
-      );
-
-
-    if (!confirmed) {
-
-      return;
-
-    }
-
-
-    try {
-
-      setProcessingUserId(
-        user.id
-      );
-
-
-      const response =
-        await fetch(
-          `${API_URL}/${user.id}`,
-          {
-
-            method:
-              "PUT",
-
-            headers: {
-
-              "Content-Type":
-                "application/json"
-
-            },
-
-            body:
-              JSON.stringify({
-
-                name:
-                  user.name || "",
-
-                phone:
-                  user.phone || null,
-
-                role:
-                  "ADMIN"
-
-              })
-
-          }
-        );
-
-
-      if (!response.ok) {
-
-        const errorMessage =
-          await response.text();
-
-
-        throw new Error(
-          errorMessage ||
-          "Unable to make user admin"
-        );
+        return;
 
       }
 
 
-      const updatedUser =
-        await response.json();
+      const confirmed =
+        window.confirm(
+
+          `Make ${user.name} an ADMIN?\n\n` +
+
+          "This user will receive access to the DairyHub Admin Dashboard."
+
+        );
 
 
-      setUsers(
-        previousUsers =>
-          previousUsers.map(
-            item =>
-              item.id ===
-              updatedUser.id
-                ? updatedUser
-                : item
-          )
-      );
+      if (
+        !confirmed
+      ) {
+
+        return;
+
+      }
 
 
-      alert(
-        `${user.name} is now an ADMIN.`
-      );
+      try {
+
+        setProcessingUserId(
+          user.id
+        );
 
 
-    } catch (error) {
+        const response =
+          await fetch(
+            `${API_URL}/${user.id}`,
+            {
 
-      console.error(
-        "Make admin error:",
-        error
-      );
+              method:
+                "PUT",
+
+              headers:
+                getAuthHeaders(),
+
+              body:
+                JSON.stringify({
+
+                  name:
+                    user.name || "",
+
+                  phone:
+                    user.phone || null,
+
+                  role:
+                    "ADMIN"
+
+                })
+
+            }
+          );
 
 
-      alert(
-        error.message ||
-        "Unable to make this user an admin."
-      );
+        const responseText =
+          await response.text();
 
 
-    } finally {
+        if (
+          !response.ok
+        ) {
 
-      setProcessingUserId(
-        null
-      );
+          if (
+            handleAuthorizationError(
+              response
+            )
+          ) {
 
-    }
+            handleSessionFailure();
 
-  };
+            return;
+
+          }
+
+
+          throw new Error(
+            responseText ||
+            "Unable to make user admin."
+          );
+
+        }
+
+
+        const updatedUser =
+          JSON.parse(
+            responseText
+          );
+
+
+        setUsers(
+          previousUsers =>
+            previousUsers.map(
+              item =>
+                item.id ===
+                updatedUser.id
+                  ? updatedUser
+                  : item
+            )
+        );
+
+
+        alert(
+          `${user.name} is now an ADMIN.`
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Make admin error:",
+          error
+        );
+
+
+        alert(
+          error.message ||
+          "Unable to make this user an admin."
+        );
+
+
+      } finally {
+
+        setProcessingUserId(
+          null
+        );
+
+      }
+
+    };
 
 
   // =========================================
   // REMOVE ADMIN
   // =========================================
 
-  const removeAdmin = async (
-    user
-  ) => {
+  const removeAdmin =
+    async (
+      user
+    ) => {
 
-    if (
-      isProtectedAdmin(user)
-    ) {
+      if (
+        isProtectedAdmin(
+          user
+        )
+      ) {
 
-      alert(
-        "The original DairyHub admin account is protected."
-      );
-
-      return;
-
-    }
-
-
-    const role =
-      String(
-        user.role || ""
-      )
-        .trim()
-        .toUpperCase();
-
-
-    if (
-      role !== "ADMIN"
-    ) {
-
-      return;
-
-    }
-
-
-    const confirmed =
-      window.confirm(
-        `Remove ADMIN access from ${user.name}?\n\nThey will become a CUSTOMER again.`
-      );
-
-
-    if (!confirmed) {
-
-      return;
-
-    }
-
-
-    try {
-
-      setProcessingUserId(
-        user.id
-      );
-
-
-      const response =
-        await fetch(
-          `${API_URL}/${user.id}`,
-          {
-
-            method:
-              "PUT",
-
-            headers: {
-
-              "Content-Type":
-                "application/json"
-
-            },
-
-            body:
-              JSON.stringify({
-
-                name:
-                  user.name || "",
-
-                phone:
-                  user.phone || null,
-
-                role:
-                  "CUSTOMER"
-
-              })
-
-          }
+        alert(
+          "The original DairyHub admin account is protected."
         );
 
-
-      if (!response.ok) {
-
-        const errorMessage =
-          await response.text();
-
-
-        throw new Error(
-          errorMessage ||
-          "Unable to remove admin access"
-        );
+        return;
 
       }
 
 
-      const updatedUser =
-        await response.json();
+      const role =
+        String(
+          user.role || ""
+        )
+          .trim()
+          .toUpperCase();
 
 
-      setUsers(
-        previousUsers =>
-          previousUsers.map(
-            item =>
-              item.id ===
-              updatedUser.id
-                ? updatedUser
-                : item
-          )
-      );
+      if (
+        role !==
+        "ADMIN"
+      ) {
+
+        return;
+
+      }
 
 
-      alert(
-        `${user.name} is now a CUSTOMER again.`
-      );
+      const confirmed =
+        window.confirm(
+
+          `Remove ADMIN access from ${user.name}?\n\n` +
+
+          "They will become a CUSTOMER again."
+
+        );
 
 
-    } catch (error) {
+      if (
+        !confirmed
+      ) {
 
-      console.error(
-        "Remove admin error:",
-        error
-      );
+        return;
 
-
-      alert(
-        error.message ||
-        "Unable to remove admin access."
-      );
+      }
 
 
-    } finally {
+      try {
 
-      setProcessingUserId(
-        null
-      );
+        setProcessingUserId(
+          user.id
+        );
 
-    }
 
-  };
+        const response =
+          await fetch(
+            `${API_URL}/${user.id}`,
+            {
+
+              method:
+                "PUT",
+
+              headers:
+                getAuthHeaders(),
+
+              body:
+                JSON.stringify({
+
+                  name:
+                    user.name || "",
+
+                  phone:
+                    user.phone || null,
+
+                  role:
+                    "CUSTOMER"
+
+                })
+
+            }
+          );
+
+
+        const responseText =
+          await response.text();
+
+
+        if (
+          !response.ok
+        ) {
+
+          if (
+            handleAuthorizationError(
+              response
+            )
+          ) {
+
+            handleSessionFailure();
+
+            return;
+
+          }
+
+
+          throw new Error(
+            responseText ||
+            "Unable to remove admin access."
+          );
+
+        }
+
+
+        const updatedUser =
+          JSON.parse(
+            responseText
+          );
+
+
+        setUsers(
+          previousUsers =>
+            previousUsers.map(
+              item =>
+                item.id ===
+                updatedUser.id
+                  ? updatedUser
+                  : item
+            )
+        );
+
+
+        alert(
+          `${user.name} is now a CUSTOMER again.`
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Remove admin error:",
+          error
+        );
+
+
+        alert(
+          error.message ||
+          "Unable to remove admin access."
+        );
+
+
+      } finally {
+
+        setProcessingUserId(
+          null
+        );
+
+      }
+
+    };
 
 
   // =========================================
   // FILTER USERS
   // =========================================
 
-  const filteredUsers =
-    users.filter(
-      user => {
+  const filterUsers =
+    (
+      userList
+    ) => {
 
-        const search =
-          searchText
-            .toLowerCase()
-            .trim();
+      return userList.filter(
+        user => {
 
-
-        const userName =
-          user.name
-            ?.toLowerCase() || "";
-
-
-        const userEmail =
-          user.email
-            ?.toLowerCase() || "";
+          const search =
+            searchText
+              .toLowerCase()
+              .trim();
 
 
-        const userPhone =
-          user.phone
-            ?.toLowerCase() || "";
+          const userName =
+            user.name
+              ?.toLowerCase() ||
+            "";
 
 
-        const matchesSearch =
-          !search ||
-          userName.includes(
-            search
-          ) ||
-          userEmail.includes(
-            search
-          ) ||
-          userPhone.includes(
-            search
-          );
+          const userEmail =
+            user.email
+              ?.toLowerCase() ||
+            "";
 
 
-        const normalizedRole =
-          String(
-            user.role || ""
-          )
-            .trim()
-            .toUpperCase();
+          const userPhone =
+            String(
+              user.phone || ""
+            )
+              .toLowerCase();
 
 
-        const matchesRole =
-          roleFilter === "ALL" ||
-          normalizedRole ===
+          const matchesSearch =
+            !search ||
+
+            userName.includes(
+              search
+            ) ||
+
+            userEmail.includes(
+              search
+            ) ||
+
+            userPhone.includes(
+              search
+            );
+
+
+          const normalizedRole =
+            String(
+              user.role || ""
+            )
+              .trim()
+              .toUpperCase();
+
+
+          const matchesRole =
+            roleFilter === "ALL" ||
+
+            normalizedRole ===
             roleFilter;
 
 
-        return (
-          matchesSearch &&
-          matchesRole
-        );
+          return (
+            matchesSearch &&
+            matchesRole
+          );
+
+        }
+      );
+
+    };
+
+
+  const filteredActiveUsers =
+    filterUsers(
+      users
+    );
+
+
+  const filteredDeletedUsers =
+    filterUsers(
+      deletedUsers
+    );
+
+
+  // =========================================
+  // FORMAT DELETED DATE
+  // =========================================
+
+  const formatDeletedDate =
+    (
+      deletedAt
+    ) => {
+
+      if (
+        !deletedAt
+      ) {
+
+        return "Unknown";
 
       }
-    );
+
+
+      const date =
+        new Date(
+          deletedAt
+        );
+
+
+      if (
+        Number.isNaN(
+          date.getTime()
+        )
+      ) {
+
+        return "Unknown";
+
+      }
+
+
+      return date.toLocaleString();
+
+    };
+
+
+  // =========================================
+  // DAYS REMAINING
+  // =========================================
+
+  const getDaysRemaining =
+    (
+      deletedAt
+    ) => {
+
+      if (
+        !deletedAt
+      ) {
+
+        return "Unknown";
+
+      }
+
+
+      const deletedDate =
+        new Date(
+          deletedAt
+        );
+
+
+      const expiryDate =
+        new Date(
+          deletedDate
+        );
+
+
+      expiryDate.setDate(
+        expiryDate.getDate() +
+        30
+      );
+
+
+      const difference =
+        expiryDate.getTime() -
+        Date.now();
+
+
+      const days =
+        Math.ceil(
+          difference /
+          (
+            1000 *
+            60 *
+            60 *
+            24
+          )
+        );
+
+
+      return Math.max(
+        0,
+        days
+      );
+
+    };
 
 
   // =========================================
   // LOADING
   // =========================================
 
-  if (loading) {
+  if (
+    loading
+  ) {
 
     return (
 
@@ -830,10 +1662,9 @@ function ManageUsers() {
         className="manage-users-container"
       >
 
-
-        {/* =====================================
+        {/* ===================================
             BACK
-        ====================================== */}
+        ==================================== */}
 
         <Link
           to="/admin"
@@ -843,9 +1674,9 @@ function ManageUsers() {
         </Link>
 
 
-        {/* =====================================
+        {/* ===================================
             HEADER
-        ====================================== */}
+        ==================================== */}
 
         <div
           className="manage-users-heading"
@@ -859,8 +1690,8 @@ function ManageUsers() {
 
 
             <p>
-              View, manage and maintain
-              DairyHub users.
+              Manage active accounts and
+              deleted accounts.
             </p>
 
           </div>
@@ -870,10 +1701,19 @@ function ManageUsers() {
             className="user-count"
           >
 
-            Total Users
+            {activeSection ===
+            "ACTIVE"
+              ? "Active Users"
+              : "Delete Bin"
+            }
+
 
             <strong>
-              {users.length}
+              {activeSection ===
+              "ACTIVE"
+                ? users.length
+                : deletedUsers.length
+              }
             </strong>
 
           </div>
@@ -881,9 +1721,67 @@ function ManageUsers() {
         </div>
 
 
-        {/* =====================================
+        {/* ===================================
+            SECTION TABS
+        ==================================== */}
+
+        <div
+          className="user-section-tabs"
+        >
+
+          <button
+            type="button"
+            className={
+              activeSection ===
+              "ACTIVE"
+                ? "user-section-tab active"
+                : "user-section-tab"
+            }
+            onClick={() =>
+              setActiveSection(
+                "ACTIVE"
+              )
+            }
+          >
+
+            👥 Active Users
+
+            <span>
+              {users.length}
+            </span>
+
+          </button>
+
+
+          <button
+            type="button"
+            className={
+              activeSection ===
+              "DELETED"
+                ? "user-section-tab deleted active"
+                : "user-section-tab deleted"
+            }
+            onClick={() =>
+              setActiveSection(
+                "DELETED"
+              )
+            }
+          >
+
+            🗑 Delete Bin
+
+            <span>
+              {deletedUsers.length}
+            </span>
+
+          </button>
+
+        </div>
+
+
+        {/* ===================================
             SEARCH + FILTER
-        ====================================== */}
+        ==================================== */}
 
         <div
           className="user-controls"
@@ -900,12 +1798,20 @@ function ManageUsers() {
 
             <input
               type="text"
-              placeholder="Search name, email or phone..."
-              value={searchText}
-              onChange={(e) =>
-                setSearchText(
-                  e.target.value
-                )
+              placeholder={
+                activeSection ===
+                "ACTIVE"
+                  ? "Search active users..."
+                  : "Search deleted users..."
+              }
+              value={
+                searchText
+              }
+              onChange={
+                (e) =>
+                  setSearchText(
+                    e.target.value
+                  )
               }
             />
 
@@ -928,11 +1834,14 @@ function ManageUsers() {
 
 
           <select
-            value={roleFilter}
-            onChange={(e) =>
-              setRoleFilter(
-                e.target.value
-              )
+            value={
+              roleFilter
+            }
+            onChange={
+              (e) =>
+                setRoleFilter(
+                  e.target.value
+                )
             }
             className="role-filter"
           >
@@ -956,342 +1865,538 @@ function ManageUsers() {
         </div>
 
 
-        {/* =====================================
-            USERS TABLE
-        ====================================== */}
+        {/* ===================================
+            ACTIVE USERS
+        ==================================== */}
 
-        <div
-          className="users-table-wrapper"
-        >
+        {activeSection ===
+          "ACTIVE" && (
 
-          <table
-            className="users-table"
+          <div
+            className="users-table-wrapper"
           >
 
-            <thead>
+            <table
+              className="users-table"
+            >
 
-              <tr>
-
-                <th>
-                  ID
-                </th>
-
-                <th>
-                  Name
-                </th>
-
-                <th>
-                  Email
-                </th>
-
-                <th>
-                  Phone
-                </th>
-
-                <th>
-                  Role
-                </th>
-
-                <th>
-                  Action
-                </th>
-
-              </tr>
-
-            </thead>
-
-
-            <tbody>
-
-              {filteredUsers.length ===
-              0 ? (
+              <thead>
 
                 <tr>
 
-                  <td
-                    colSpan="6"
-                    className="no-users"
-                  >
-                    No users found.
-                  </td>
+                  <th>
+                    ID
+                  </th>
+
+                  <th>
+                    Name
+                  </th>
+
+                  <th>
+                    Email
+                  </th>
+
+                  <th>
+                    Phone
+                  </th>
+
+                  <th>
+                    Role
+                  </th>
+
+                  <th>
+                    Action
+                  </th>
 
                 </tr>
 
-              ) : (
-
-                filteredUsers.map(
-                  user => {
-
-                    const normalizedRole =
-                      String(
-                        user.role || ""
-                      )
-                        .trim()
-                        .toUpperCase();
+              </thead>
 
 
-                    const isAdmin =
-                      normalizedRole ===
-                      "ADMIN";
+              <tbody>
+
+                {filteredActiveUsers.length ===
+                0 ? (
+
+                  <tr>
+
+                    <td
+                      colSpan="6"
+                      className="no-users"
+                    >
+                      No active users found.
+                    </td>
+
+                  </tr>
+
+                ) : (
+
+                  filteredActiveUsers.map(
+                    user => {
+
+                      const normalizedRole =
+                        String(
+                          user.role || ""
+                        )
+                          .trim()
+                          .toUpperCase();
 
 
-                    const protectedAdmin =
-                      isProtectedAdmin(
-                        user
+                      const isAdmin =
+                        normalizedRole ===
+                        "ADMIN";
+
+
+                      const protectedAdmin =
+                        isProtectedAdmin(
+                          user
+                        );
+
+
+                      const isProcessing =
+                        processingUserId ===
+                        user.id;
+
+
+                      return (
+
+                        <tr
+                          key={
+                            user.id
+                          }
+                        >
+
+                          <td>
+                            {user.id}
+                          </td>
+
+
+                          <td
+                            className="user-name"
+                          >
+                            {user.name}
+                          </td>
+
+
+                          <td>
+                            {user.email}
+                          </td>
+
+
+                          <td>
+                            {user.phone ||
+                              "N/A"}
+                          </td>
+
+
+                          <td>
+
+                            <span
+                              className={
+                                isAdmin
+                                  ? "role-badge admin"
+                                  : "role-badge customer"
+                              }
+                            >
+
+                              {isAdmin
+                                ? "ADMIN"
+                                : "CUSTOMER"
+                              }
+
+                            </span>
+
+                          </td>
+
+
+                          <td>
+
+                            {protectedAdmin ? (
+
+                              <span
+                                className="protected-user"
+                              >
+                                🔒 Protected
+                              </span>
+
+                            ) : (
+
+                              <div
+                                className="user-actions"
+                              >
+
+                                <button
+                                  type="button"
+                                  className="view-user-button"
+                                  onClick={() =>
+                                    setSelectedUser(
+                                      user
+                                    )
+                                  }
+                                >
+                                  👁 View
+                                </button>
+
+
+                                <button
+                                  type="button"
+                                  className="edit-user-button"
+                                  onClick={() =>
+                                    openEdit(
+                                      user
+                                    )
+                                  }
+                                  disabled={
+                                    isProcessing
+                                  }
+                                >
+                                  ✏️ Edit
+                                </button>
+
+
+                                {isAdmin ? (
+
+                                  <button
+                                    type="button"
+                                    className="remove-admin-button"
+                                    onClick={() =>
+                                      removeAdmin(
+                                        user
+                                      )
+                                    }
+                                    disabled={
+                                      isProcessing
+                                    }
+                                  >
+
+                                    {isProcessing
+                                      ? "Updating..."
+                                      : "↩ Remove Admin"
+                                    }
+
+                                  </button>
+
+                                ) : (
+
+                                  <button
+                                    type="button"
+                                    className="make-admin-button"
+                                    onClick={() =>
+                                      makeAdmin(
+                                        user
+                                      )
+                                    }
+                                    disabled={
+                                      isProcessing
+                                    }
+                                  >
+
+                                    {isProcessing
+                                      ? "Promoting..."
+                                      : "👑 Make Admin"
+                                    }
+
+                                  </button>
+
+                                )}
+
+
+                                <button
+                                  type="button"
+                                  className="delete-user-button"
+                                  onClick={() =>
+                                    deleteUser(
+                                      user
+                                    )
+                                  }
+                                  disabled={
+                                    isProcessing
+                                  }
+                                >
+
+                                  {isProcessing
+                                    ? "Moving..."
+                                    : "🗑 Delete"
+                                  }
+
+                                </button>
+
+                              </div>
+
+                            )}
+
+                          </td>
+
+                        </tr>
+
                       );
 
+                    }
+                  )
 
-                    const isProcessing =
-                      processingUserId ===
-                      user.id;
+                )}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        )}
 
 
-                    return (
+        {/* ===================================
+            DELETE BIN
+        ==================================== */}
 
-                      <tr
-                        key={
-                          user.id
-                        }
+        {activeSection ===
+          "DELETED" && (
+
+          <div
+            className="delete-bin-container"
+          >
+
+            <div
+              className="delete-bin-info"
+            >
+
+              <div>
+
+                <h2>
+                  🗑️ Delete Bin
+                </h2>
+
+
+                <p>
+
+                  Deleted accounts are kept for
+
+                  <strong>
+                    {" "}30 days
+                  </strong>
+
+                  {" "}
+                  before automatic permanent deletion.
+
+                </p>
+
+              </div>
+
+
+              <div
+                className="delete-bin-warning"
+              >
+                🔒 Accounts in the Delete Bin
+                cannot login.
+              </div>
+
+            </div>
+
+
+            <div
+              className="users-table-wrapper"
+            >
+
+              <table
+                className="users-table delete-bin-table"
+              >
+
+                <thead>
+
+                  <tr>
+
+                    <th>
+                      ID
+                    </th>
+
+                    <th>
+                      Name
+                    </th>
+
+                    <th>
+                      Email
+                    </th>
+
+                    <th>
+                      Deleted At
+                    </th>
+
+                    <th>
+                      Days Left
+                    </th>
+
+                    <th>
+                      Action
+                    </th>
+
+                  </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                  {filteredDeletedUsers.length ===
+                  0 ? (
+
+                    <tr>
+
+                      <td
+                        colSpan="6"
+                        className="no-users"
                       >
 
+                        🗑️ Delete Bin is empty.
 
-                        {/* ID */}
+                      </td>
 
-                        <td>
-                          {user.id}
-                        </td>
+                    </tr>
 
+                  ) : (
 
-                        {/* NAME */}
+                    filteredDeletedUsers.map(
+                      user => {
 
-                        <td
-                          className="user-name"
-                        >
-                          {user.name}
-                        </td>
-
-
-                        {/* EMAIL */}
-
-                        <td>
-                          {user.email}
-                        </td>
+                        const isProcessing =
+                          processingUserId ===
+                          user.id;
 
 
-                        {/* PHONE */}
+                        return (
 
-                        <td>
-                          {user.phone ||
-                            "N/A"}
-                        </td>
-
-
-                        {/* ROLE */}
-
-                        <td>
-
-                          <span
-                            className={
-                              isAdmin
-                                ? "role-badge admin"
-                                : "role-badge customer"
+                          <tr
+                            key={
+                              user.id
                             }
                           >
 
-                            {isAdmin
-                              ? "ADMIN"
-                              : "CUSTOMER"}
-
-                          </span>
-
-                        </td>
+                            <td>
+                              {user.id}
+                            </td>
 
 
-                        {/* ACTION */}
-
-                        <td>
-
-                          {protectedAdmin ? (
-
-                            <span
-                              className="protected-user"
+                            <td
+                              className="user-name"
                             >
-                              🔒 Protected
-                            </span>
+                              {user.name}
+                            </td>
 
 
-                          ) : isAdmin ? (
-
-                            /* =================================
-                               OTHER / PROMOTED ADMIN
-                            ================================== */
-
-                            <div
-                              className="user-actions"
-                            >
-
-                              <button
-                                type="button"
-                                className="view-user-button"
-                                onClick={() =>
-                                  setSelectedUser(
-                                    user
-                                  )
-                                }
-                              >
-                                👁 View
-                              </button>
+                            <td>
+                              {user.email}
+                            </td>
 
 
-                              <button
-                                type="button"
-                                className="edit-user-button"
-                                onClick={() =>
-                                  openEdit(
-                                    user
-                                  )
-                                }
-                              >
-                                ✏️ Edit
-                              </button>
+                            <td>
+                              {formatDeletedDate(
+                                user.deletedAt
+                              )}
+                            </td>
 
 
-                              <button
-                                type="button"
-                                className="remove-admin-button"
-                                onClick={() =>
-                                  removeAdmin(
-                                    user
-                                  )
-                                }
-                                disabled={
-                                  isProcessing
-                                }
+                            <td>
+
+                              <span
+                                className="delete-days-badge"
                               >
 
-                                {isProcessing
-                                  ? "Updating..."
-                                  : "↩ Remove Admin"
-                                }
+                                {getDaysRemaining(
+                                  user.deletedAt
+                                )}
 
-                              </button>
+                                {" "}
+                                days
 
+                              </span>
 
-                              <button
-                                type="button"
-                                className="delete-user-button"
-                                onClick={() =>
-                                  deleteUser(
-                                    user
-                                  )
-                                }
-                                disabled={
-                                  isProcessing
-                                }
-                              >
-                                🗑 Delete
-                              </button>
-
-                            </div>
+                            </td>
 
 
-                          ) : (
+                            <td>
 
-                            /* =================================
-                               CUSTOMER
-                            ================================== */
-
-                            <div
-                              className="user-actions"
-                            >
-
-                              <button
-                                type="button"
-                                className="view-user-button"
-                                onClick={() =>
-                                  setSelectedUser(
-                                    user
-                                  )
-                                }
-                              >
-                                👁 View
-                              </button>
-
-
-                              <button
-                                type="button"
-                                className="edit-user-button"
-                                onClick={() =>
-                                  openEdit(
-                                    user
-                                  )
-                                }
-                              >
-                                ✏️ Edit
-                              </button>
-
-
-                              <button
-                                type="button"
-                                className="make-admin-button"
-                                onClick={() =>
-                                  makeAdmin(
-                                    user
-                                  )
-                                }
-                                disabled={
-                                  isProcessing
-                                }
+                              <div
+                                className="user-actions"
                               >
 
-                                {isProcessing
-                                  ? "Promoting..."
-                                  : "👑 Make Admin"
-                                }
-
-                              </button>
-
-
-                              <button
-                                type="button"
-                                className="delete-user-button"
-                                onClick={() =>
-                                  deleteUser(
-                                    user
-                                  )
-                                }
-                                disabled={
-                                  isProcessing
-                                }
-                              >
-                                🗑 Delete
-                              </button>
-
-                            </div>
-
-                          )}
-
-                        </td>
-
-                      </tr>
-
-                    );
-
-                  }
-                )
-
-              )}
-
-            </tbody>
-
-          </table>
-
-        </div>
+                                <button
+                                  type="button"
+                                  className="view-user-button"
+                                  onClick={() =>
+                                    setSelectedUser(
+                                      user
+                                    )
+                                  }
+                                  disabled={
+                                    isProcessing
+                                  }
+                                >
+                                  👁 View
+                                </button>
 
 
-        {/* =====================================
+                                <button
+                                  type="button"
+                                  className="restore-user-button"
+                                  onClick={() =>
+                                    restoreUser(
+                                      user
+                                    )
+                                  }
+                                  disabled={
+                                    isProcessing
+                                  }
+                                >
+
+                                  {isProcessing
+                                    ? "Restoring..."
+                                    : "♻ Restore"
+                                  }
+
+                                </button>
+
+
+                                <button
+                                  type="button"
+                                  className="permanent-delete-user-button"
+                                  onClick={() =>
+                                    permanentlyDeleteUser(
+                                      user
+                                    )
+                                  }
+                                  disabled={
+                                    isProcessing
+                                  }
+                                >
+                                  🗑 Permanently Delete
+                                </button>
+
+                              </div>
+
+                            </td>
+
+                          </tr>
+
+                        );
+
+                      }
+                    )
+
+                  )}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          </div>
+
+        )}
+
+
+        {/* ===================================
             VIEW USER MODAL
-        ====================================== */}
+        ==================================== */}
 
         {selectedUser && (
 
@@ -1420,25 +2525,92 @@ function ManageUsers() {
                 >
 
                   <span>
+                    Account Status
+                  </span>
+
+                  <strong>
+
+                    {selectedUser.deleted
+                      ? "🔒 Deleted / Locked"
+                      : "✅ Active"
+                    }
+
+                  </strong>
+
+                </div>
+
+
+                {selectedUser.deleted && (
+
+                  <>
+
+                    <div
+                      className="detail-row"
+                    >
+
+                      <span>
+                        Deleted At
+                      </span>
+
+                      <strong>
+                        {formatDeletedDate(
+                          selectedUser.deletedAt
+                        )}
+                      </strong>
+
+                    </div>
+
+
+                    <div
+                      className="detail-row"
+                    >
+
+                      <span>
+                        Delete Bin Time Left
+                      </span>
+
+                      <strong>
+                        {getDaysRemaining(
+                          selectedUser.deletedAt
+                        )}{" "}
+                        days
+                      </strong>
+
+                    </div>
+
+                  </>
+
+                )}
+
+
+                <div
+                  className="detail-row"
+                >
+
+                  <span>
                     Admin Type
                   </span>
 
                   <strong>
 
-                    {
-                      isProtectedAdmin(
-                        selectedUser
-                      )
-                        ? "Protected Admin"
-                        : String(
-                            selectedUser.role ||
-                            ""
-                          )
-                            .trim()
-                            .toUpperCase() ===
-                          "ADMIN"
-                          ? "Promoted Admin"
-                          : "Customer"
+                    {isProtectedAdmin(
+                      selectedUser
+                    )
+
+                      ? "Protected Admin"
+
+                      : String(
+                          selectedUser.role ||
+                          ""
+                        )
+                          .trim()
+                          .toUpperCase() ===
+                        "ADMIN"
+
+                        ? "Promoted Admin"
+
+                        : "Customer"
+
                     }
 
                   </strong>
@@ -1467,9 +2639,9 @@ function ManageUsers() {
         )}
 
 
-        {/* =====================================
+        {/* ===================================
             EDIT USER MODAL
-        ====================================== */}
+        ==================================== */}
 
         {editingUser && (
 
@@ -1520,9 +2692,6 @@ function ManageUsers() {
                 className="edit-user-form"
               >
 
-
-                {/* NAME */}
-
                 <label>
                   Name
                 </label>
@@ -1533,20 +2702,19 @@ function ManageUsers() {
                   value={
                     editForm.name
                   }
-                  onChange={(e) =>
-                    setEditForm({
+                  onChange={
+                    (e) =>
+                      setEditForm({
 
-                      ...editForm,
+                        ...editForm,
 
-                      name:
-                        e.target.value
+                        name:
+                          e.target.value
 
-                    })
+                      })
                   }
                 />
 
-
-                {/* EMAIL */}
 
                 <label>
                   Email
@@ -1562,8 +2730,6 @@ function ManageUsers() {
                 />
 
 
-                {/* PHONE */}
-
                 <label>
                   Phone
                 </label>
@@ -1575,20 +2741,19 @@ function ManageUsers() {
                     editForm.phone
                   }
                   placeholder="Enter phone number"
-                  onChange={(e) =>
-                    setEditForm({
+                  onChange={
+                    (e) =>
+                      setEditForm({
 
-                      ...editForm,
+                        ...editForm,
 
-                      phone:
-                        e.target.value
+                        phone:
+                          e.target.value
 
-                    })
+                      })
                   }
                 />
 
-
-                {/* ROLE */}
 
                 <label>
                   Role
@@ -1611,15 +2776,16 @@ function ManageUsers() {
                     value={
                       editForm.role
                     }
-                    onChange={(e) =>
-                      setEditForm({
+                    onChange={
+                      (e) =>
+                        setEditForm({
 
-                        ...editForm,
+                          ...editForm,
 
-                        role:
-                          e.target.value
+                          role:
+                            e.target.value
 
-                      })
+                        })
                     }
                   >
 
@@ -1646,16 +2812,12 @@ function ManageUsers() {
                   <div
                     className="admin-role-warning"
                   >
-
                     👑 This user will have
                     Admin access.
-
                   </div>
 
                 )}
 
-
-                {/* BUTTONS */}
 
                 <div
                   className="edit-form-buttons"
@@ -1677,8 +2839,18 @@ function ManageUsers() {
                   <button
                     type="submit"
                     className="save-edit-button"
+                    disabled={
+                      processingUserId !==
+                      null
+                    }
                   >
-                    Save Changes
+
+                    {processingUserId ===
+                    editingUser?.id
+                      ? "Saving..."
+                      : "Save Changes"
+                    }
+
                   </button>
 
                 </div>
@@ -1698,5 +2870,6 @@ function ManageUsers() {
   );
 
 }
+
 
 export default ManageUsers;
