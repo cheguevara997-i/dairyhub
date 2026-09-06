@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import BackButton from "../components/BackButton";
@@ -80,6 +80,14 @@ function MyOrders() {
 
   const [reviewPopup, setReviewPopup] =
     useState(null);
+
+
+  // =========================================
+  // AUTO REVIEW PROMPT TRACKER
+  // =========================================
+
+  const autoPromptedItemsRef =
+    useRef(new Set());
 
 
   // =========================================
@@ -218,11 +226,40 @@ function MyOrders() {
 
         try {
 
+          const token =
+            currentUser?.token || null;
+
+
+          if (!token) {
+
+            throw new Error(
+              "Your login session is missing. Please login again."
+            );
+
+          }
+
+
           const response =
             await fetch(
               `${API_BASE}/api/orders/customer/${encodeURIComponent(
                 currentUser.email
-              )}`
+              )}`,
+              {
+
+                method:
+                  "GET",
+
+                headers: {
+
+                  "Content-Type":
+                    "application/json",
+
+                  Authorization:
+                    `Bearer ${token}`
+
+                }
+
+              }
             );
 
 
@@ -509,6 +546,155 @@ function MyOrders() {
     );
 
   }, [orders]);
+
+
+  // =========================================
+  // AUTOMATIC REVIEW POPUP FOR DELIVERED
+  // PRODUCTS THAT ARE NOT YET REVIEWED
+  // =========================================
+
+  useEffect(() => {
+
+    if (
+      !orders.length ||
+      reviewPopup ||
+      reviewLoading &&
+        Object.values(reviewLoading).some(Boolean)
+    ) {
+
+      return;
+
+    }
+
+
+    const deliveredItems = [];
+
+
+    orders.forEach(order => {
+
+      if (
+        normalizeStatus(order.status) !==
+        "DELIVERED"
+      ) {
+
+        return;
+
+      }
+
+
+      if (
+        !Array.isArray(order.items)
+      ) {
+
+        return;
+
+      }
+
+
+      order.items.forEach(item => {
+
+        if (!item?.productId) {
+
+          return;
+
+        }
+
+
+        const promptKey =
+          `${order.id}:${item.productId}`;
+
+
+        if (
+          autoPromptedItemsRef.current.has(promptKey)
+        ) {
+
+          return;
+
+        }
+
+
+        deliveredItems.push({
+          order,
+          item,
+          promptKey
+        });
+
+      });
+
+    });
+
+
+    const nextItem =
+      deliveredItems.find(({ item }) => {
+
+        const key =
+          String(item.productId);
+
+        const reviewData =
+          reviewsByProduct[key];
+
+        return (
+          reviewData &&
+          !reviewData.ownReview
+        );
+
+      });
+
+
+    if (!nextItem) {
+
+      return;
+
+    }
+
+
+    const sessionKey =
+      `dairyhubReviewPrompted:${nextItem.order.id}:${nextItem.item.productId}`;
+
+
+    if (
+      sessionStorage.getItem(sessionKey) ===
+      "true"
+    ) {
+
+      autoPromptedItemsRef.current.add(
+        nextItem.promptKey
+      );
+
+      return;
+
+    }
+
+
+    autoPromptedItemsRef.current.add(
+      nextItem.promptKey
+    );
+
+    sessionStorage.setItem(
+      sessionKey,
+      "true"
+    );
+
+
+    const timer =
+      setTimeout(() => {
+
+        openReviewPopup(
+          nextItem.item
+        );
+
+      }, 500);
+
+
+    return () =>
+      clearTimeout(timer);
+
+  }, [
+    orders,
+    reviewsByProduct,
+    reviewLoading,
+    reviewPopup
+  ]);
 
 
   // =========================================

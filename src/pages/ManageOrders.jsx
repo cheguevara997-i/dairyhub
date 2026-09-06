@@ -20,6 +20,70 @@ function ManageOrders() {
 
 
   // =========================================
+  // GET LOGGED-IN ADMIN USER
+  // =========================================
+
+  const getLoggedInUser = () => {
+
+    try {
+
+      return JSON.parse(
+        localStorage.getItem(
+          "dairyhubUser"
+        )
+      );
+
+    } catch {
+
+      return null;
+
+    }
+
+  };
+
+
+  // =========================================
+  // GET AUTH TOKEN
+  // =========================================
+
+  const getAuthToken = () => {
+
+    const user =
+      getLoggedInUser();
+
+    return user?.token || null;
+
+  };
+
+
+  // =========================================
+  // AUTH HEADERS
+  // =========================================
+
+  const getAuthHeaders = () => {
+
+    const token =
+      getAuthToken();
+
+
+    return {
+
+      "Content-Type":
+        "application/json",
+
+      ...(token
+        ? {
+            Authorization:
+              `Bearer ${token}`
+          }
+        : {})
+
+    };
+
+  };
+
+
+  // =========================================
   // FETCH ALL ORDERS
   // =========================================
 
@@ -30,23 +94,78 @@ function ManageOrders() {
       setLoading(true);
 
 
-      const response =
-        await fetch(
-          `${API_BASE}/api/orders`
-        );
+      const token =
+        getAuthToken();
 
 
-      if (!response.ok) {
+      if (!token) {
 
         throw new Error(
-          "Failed to fetch orders"
+          "Admin login token not found. Please login again."
         );
 
       }
 
 
-      const data =
-        await response.json();
+      const response =
+        await fetch(
+          `${API_BASE}/api/orders`,
+          {
+
+            method:
+              "GET",
+
+            headers:
+              getAuthHeaders()
+
+          }
+        );
+
+
+      const responseText =
+        await response.text();
+
+
+      let data = null;
+
+
+      try {
+
+        data =
+          responseText
+            ? JSON.parse(
+                responseText
+              )
+            : null;
+
+      } catch {
+
+        data = null;
+
+      }
+
+
+      if (!response.ok) {
+
+        if (
+          response.status === 401 ||
+          response.status === 403
+        ) {
+
+          throw new Error(
+            "Your admin session is invalid or expired. Please login again."
+          );
+
+        }
+
+
+        throw new Error(
+          data?.message ||
+          responseText ||
+          "Failed to fetch orders."
+        );
+
+      }
 
 
       setOrders(
@@ -65,6 +184,7 @@ function ManageOrders() {
 
 
       alert(
+        error.message ||
         "Unable to load orders."
       );
 
@@ -102,8 +222,9 @@ function ManageOrders() {
 
       const order =
         orders.find(
-          (currentOrder) =>
-            currentOrder.id === id
+          currentOrder =>
+            currentOrder.id ===
+            id
         );
 
 
@@ -113,11 +234,6 @@ function ManageOrders() {
 
       }
 
-
-      /*
-       * Keep all existing order information.
-       * Only update status.
-       */
 
       const updatedOrder = {
 
@@ -164,7 +280,16 @@ function ManageOrders() {
           order.orderDate,
 
         items:
-          order.items || []
+          order.items || [],
+
+        experienceRating:
+          order.experienceRating ?? null,
+
+        experienceFeedback:
+          order.experienceFeedback ?? null,
+
+        experienceFeedbackAt:
+          order.experienceFeedbackAt ?? null
 
       };
 
@@ -177,12 +302,8 @@ function ManageOrders() {
             method:
               "PUT",
 
-            headers: {
-
-              "Content-Type":
-                "application/json"
-
-            },
+            headers:
+              getAuthHeaders(),
 
             body:
               JSON.stringify(
@@ -193,30 +314,59 @@ function ManageOrders() {
         );
 
 
-      if (!response.ok) {
-
-        const errorText =
-          await response.text();
+      const responseText =
+        await response.text();
 
 
-        throw new Error(
-          errorText ||
-          "Failed to update order"
-        );
+      let data = null;
+
+
+      try {
+
+        data =
+          responseText
+            ? JSON.parse(
+                responseText
+              )
+            : null;
+
+      } catch {
+
+        data = null;
 
       }
 
 
-      const savedOrder =
-        await response.json();
+      if (!response.ok) {
+
+        if (
+          response.status === 401 ||
+          response.status === 403
+        ) {
+
+          throw new Error(
+            "Your admin session is invalid or expired. Please login again."
+          );
+
+        }
+
+
+        throw new Error(
+          data?.message ||
+          responseText ||
+          "Failed to update order."
+        );
+
+      }
 
 
       setOrders(
         previousOrders =>
           previousOrders.map(
             currentOrder =>
-              currentOrder.id === id
-                ? savedOrder
+              currentOrder.id ===
+              id
+                ? data
                 : currentOrder
           )
       );
@@ -251,7 +401,8 @@ function ManageOrders() {
     const order =
       orders.find(
         currentOrder =>
-          currentOrder.id === id
+          currentOrder.id ===
+          id
       );
 
 
@@ -261,10 +412,6 @@ function ManageOrders() {
 
     }
 
-
-    // =======================================
-    // CONFIRMATION
-    // =======================================
 
     const confirmed =
       window.confirm(
@@ -281,44 +428,58 @@ function ManageOrders() {
 
     try {
 
-      setDeletingOrderId(id);
+      setDeletingOrderId(
+        id
+      );
 
 
       const response =
         await fetch(
           `${API_BASE}/api/orders/${id}`,
           {
+
             method:
-              "DELETE"
+              "DELETE",
+
+            headers:
+              getAuthHeaders()
+
           }
         );
 
 
+      const responseText =
+        await response.text();
+
+
       if (!response.ok) {
 
-        const errorText =
-          await response.text();
+        if (
+          response.status === 401 ||
+          response.status === 403
+        ) {
+
+          throw new Error(
+            "Your admin session is invalid or expired. Please login again."
+          );
+
+        }
 
 
         throw new Error(
-          errorText ||
-          "Failed to delete order"
+          responseText ||
+          "Failed to delete order."
         );
 
       }
 
 
-      /*
-       * Remove the deleted order
-       * from the current admin screen
-       * immediately.
-       */
-
       setOrders(
         previousOrders =>
           previousOrders.filter(
             currentOrder =>
-              currentOrder.id !== id
+              currentOrder.id !==
+              id
           )
       );
 
@@ -344,7 +505,9 @@ function ManageOrders() {
 
     } finally {
 
-      setDeletingOrderId(null);
+      setDeletingOrderId(
+        null
+      );
 
     }
 
@@ -383,11 +546,6 @@ function ManageOrders() {
   return (
 
     <div className="admin-page">
-
-
-      {/* =====================================
-          BACK
-      ====================================== */}
 
       <BackButton
         to="/admin"
@@ -452,10 +610,6 @@ function ManageOrders() {
 
       ) : orders.length === 0 ? (
 
-        /* =====================================
-           EMPTY
-        ====================================== */
-
         <div className="empty-state">
 
           <div className="empty-state-icon">
@@ -478,24 +632,19 @@ function ManageOrders() {
 
       ) : (
 
-        /* =====================================
-           ORDERS
-        ====================================== */
-
         <div className="orders-container">
 
           {orders.map(
-            (order) => (
+            order => (
 
               <div
                 className="order-card"
-                key={order.id}
+                key={
+                  order.id
+                }
               >
 
-
-                {/* =================================
-                    ORDER HEADER
-                ================================= */}
+                {/* ORDER HEADER */}
 
                 <div
                   className="order-header"
@@ -548,9 +697,7 @@ function ManageOrders() {
                 </div>
 
 
-                {/* =================================
-                    CUSTOMER DETAILS
-                ================================= */}
+                {/* CUSTOMER DETAILS */}
 
                 <div
                   className="admin-order-section"
@@ -599,9 +746,7 @@ function ManageOrders() {
                 </div>
 
 
-                {/* =================================
-                    DELIVERY DETAILS
-                ================================= */}
+                {/* DELIVERY DETAILS */}
 
                 <div
                   className="admin-order-section"
@@ -662,9 +807,7 @@ function ManageOrders() {
                 </div>
 
 
-                {/* =================================
-                    ORDER ITEMS
-                ================================= */}
+                {/* ORDER ITEMS */}
 
                 <div
                   className="admin-order-section"
@@ -691,11 +834,13 @@ function ManageOrders() {
                     >
 
                       {order.items.map(
-                        (item) => (
+                        item => (
 
                           <div
                             className="admin-order-item"
-                            key={item.id}
+                            key={
+                              item.id
+                            }
                           >
 
                             <div>
@@ -708,9 +853,15 @@ function ManageOrders() {
 
                               <small>
 
+                                {item.size
+                                  ? `${item.size} • `
+                                  : ""}
+
                                 ₹
                                 {item.price}
+
                                 {" × "}
+
                                 {item.quantity}
 
                               </small>
@@ -735,9 +886,7 @@ function ManageOrders() {
                 </div>
 
 
-                {/* =================================
-                    PAYMENT DETAILS
-                ================================= */}
+                {/* PAYMENT DETAILS */}
 
                 <div
                   className="admin-order-section"
@@ -791,9 +940,67 @@ function ManageOrders() {
                 </div>
 
 
-                {/* =================================
-                    ORDER TOTAL
-                ================================= */}
+                {/* ORDER EXPERIENCE FEEDBACK */}
+
+                {order.experienceRating != null && (
+
+                  <div
+                    className="admin-order-section"
+                  >
+
+                    <h4>
+                      ⭐ Customer Experience Feedback
+                    </h4>
+
+
+                    <p>
+
+                      <strong>
+                        Rating:
+                      </strong>{" "}
+
+                      {order.experienceRating}/5
+
+                    </p>
+
+
+                    {order.experienceFeedback && (
+
+                      <p>
+
+                        <strong>
+                          Feedback:
+                        </strong>{" "}
+
+                        {order.experienceFeedback}
+
+                      </p>
+
+                    )}
+
+
+                    {order.experienceFeedbackAt && (
+
+                      <p>
+
+                        <strong>
+                          Submitted:
+                        </strong>{" "}
+
+                        {new Date(
+                          order.experienceFeedbackAt
+                        ).toLocaleString()}
+
+                      </p>
+
+                    )}
+
+                  </div>
+
+                )}
+
+
+                {/* ORDER TOTAL */}
 
                 <div
                   className="admin-order-total"
@@ -812,9 +1019,7 @@ function ManageOrders() {
                 </div>
 
 
-                {/* =================================
-                    ORDER DATE
-                ================================= */}
+                {/* ORDER DATE */}
 
                 <p
                   className="admin-order-date"
@@ -834,9 +1039,7 @@ function ManageOrders() {
                 </p>
 
 
-                {/* =================================
-                    UPDATE STATUS
-                ================================= */}
+                {/* UPDATE STATUS */}
 
                 <div
                   className="admin-order-status-control"
@@ -899,9 +1102,7 @@ function ManageOrders() {
                 </div>
 
 
-                {/* =================================
-                    DELETE ORDER
-                ================================= */}
+                {/* DELETE ORDER */}
 
                 <div
                   className="admin-order-delete-section"
