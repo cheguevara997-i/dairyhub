@@ -1,5 +1,12 @@
-import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import {
+  useEffect,
+  useState
+} from "react";
+
+import {
+  Link,
+  useSearchParams
+} from "react-router-dom";
 
 import BackButton from "../components/BackButton";
 
@@ -7,52 +14,25 @@ import BackButton from "../components/BackButton";
 // =========================================
 // API BASE URL
 // =========================================
-//
-// Both localhost and Vercel use the same
-// Render backend.
-//
 
 const API_BASE =
   "https://dairyhub-backend.onrender.com";
 
 
-function Products() {
+// =========================================
+// PRODUCTS PAGE
+// =========================================
 
-  // =========================================
-  // PRODUCTS
-  // =========================================
+function Products() {
 
   const [products, setProducts] =
     useState([]);
 
-
-  // =========================================
-  // LOADING
-  // =========================================
-
   const [loading, setLoading] =
     useState(true);
 
-
-  // =========================================
-  // RATINGS
-  // =========================================
-
   const [ratings, setRatings] =
     useState({});
-
-
-  // =========================================
-  // SELECTED VARIANTS
-  // =========================================
-
-  const [selectedVariants, setSelectedVariants] =
-    useState({});
-
-
-  // =========================================
-  // URL PARAMETERS
-  // =========================================
 
   const [searchParams] =
     useSearchParams();
@@ -68,7 +48,7 @@ function Products() {
 
 
   // =========================================
-  // SEARCH
+  // SEARCH TEXT
   // =========================================
 
   const searchText =
@@ -79,83 +59,7 @@ function Products() {
 
 
   // =========================================
-  // GROUP PRODUCTS
-  // =========================================
-
-  const groupProducts =
-    (productList) => {
-
-      const groups =
-        new Map();
-
-
-      productList.forEach(
-        product => {
-
-          const name =
-            String(
-              product.name || ""
-            )
-              .trim()
-              .toLowerCase();
-
-
-          const category =
-            String(
-              product.category || ""
-            )
-              .trim()
-              .toLowerCase();
-
-
-          const key =
-            `${name}__${category}`;
-
-
-          if (
-            !groups.has(key)
-          ) {
-
-            groups.set(
-              key,
-              {
-
-                key,
-
-                name:
-                  product.name,
-
-                category:
-                  product.category,
-
-                variants: []
-
-              }
-            );
-
-          }
-
-
-          groups
-            .get(key)
-            .variants
-            .push(
-              product
-            );
-
-        }
-      );
-
-
-      return Array.from(
-        groups.values()
-      );
-
-    };
-
-
-  // =========================================
-  // FETCH PRODUCTS
+  // FETCH ALL PRODUCTS
   // =========================================
 
   useEffect(() => {
@@ -164,6 +68,11 @@ function Products() {
       async () => {
 
         try {
+
+          setLoading(
+            true
+          );
+
 
           const response =
             await fetch(
@@ -192,10 +101,25 @@ function Products() {
               : [];
 
 
+          /*
+           * IMPORTANT:
+           *
+           * Every database product is kept
+           * as an individual product.
+           *
+           * No grouping is performed here.
+           *
+           * Therefore:
+           *
+           * Milk 500 ml
+           * Milk 1 L
+           * Milk 2 L
+           *
+           * appear as three separate cards.
+           */
+
           setProducts(
-            groupProducts(
-              productList
-            )
+            productList
           );
 
 
@@ -204,6 +128,11 @@ function Products() {
           console.error(
             "Error fetching products:",
             error
+          );
+
+
+          setProducts(
+            []
           );
 
 
@@ -244,17 +173,10 @@ function Products() {
 
         try {
 
-          const variants =
-            products.flatMap(
-              group =>
-                group.variants
-            );
-
-
-          const ratingResults =
+          const results =
             await Promise.all(
 
-              variants.map(
+              products.map(
                 async product => {
 
                   try {
@@ -297,7 +219,6 @@ function Products() {
 
                     };
 
-
                   } catch (error) {
 
                     console.error(
@@ -322,27 +243,27 @@ function Products() {
                   }
 
                 }
-
               )
 
             );
 
 
-          const ratingMap = {};
+          const ratingMap =
+            {};
 
 
-          ratingResults.forEach(
-            item => {
+          results.forEach(
+            result => {
 
               ratingMap[
-                item.productId
+                result.productId
               ] = {
 
                 average:
-                  item.average,
+                  result.average,
 
                 count:
-                  item.count
+                  result.count
 
               };
 
@@ -362,6 +283,7 @@ function Products() {
             error
           );
 
+
         }
 
       };
@@ -373,56 +295,11 @@ function Products() {
 
 
   // =========================================
-  // GET SELECTED VARIANT
-  // =========================================
-
-  const getSelectedVariant =
-    (group) => {
-
-      const selectedId =
-        selectedVariants[
-          group.key
-        ];
-
-
-      if (
-        selectedId
-      ) {
-
-        const selected =
-          group.variants.find(
-            variant =>
-              String(
-                variant.id
-              ) ===
-              String(
-                selectedId
-              )
-          );
-
-
-        if (
-          selected
-        ) {
-
-          return selected;
-
-        }
-
-      }
-
-
-      return group.variants[0];
-
-    };
-
-
-  // =========================================
   // CHECK PRODUCT AVAILABILITY
   // =========================================
 
   const isProductAvailable =
-    (product) => {
+    product => {
 
       if (
         !product
@@ -434,126 +311,14 @@ function Products() {
 
 
       return (
+
         Number(
           product.stock
-        ) > 0
-        &&
+        ) > 0 &&
+
         product.available !== false
+
       );
-
-    };
-
-
-  // =========================================
-  // CHANGE SIZE
-  // =========================================
-
-  const handleVariantChange =
-    (
-      groupKey,
-      variantId
-    ) => {
-
-      setSelectedVariants(
-        previous => ({
-
-          ...previous,
-
-          [groupKey]:
-            Number(
-              variantId
-            )
-
-        })
-      );
-
-    };
-
-
-  // =========================================
-  // GROUP RATING
-  // =========================================
-
-  const getGroupRating =
-    (group) => {
-
-      let totalReviews =
-        0;
-
-      let weightedTotal =
-        0;
-
-
-      group.variants.forEach(
-        variant => {
-
-          const rating =
-            ratings[
-              variant.id
-            ];
-
-
-          if (
-            !rating
-          ) {
-
-            return;
-
-          }
-
-
-          const count =
-            Number(
-              rating.count
-            ) || 0;
-
-
-          const average =
-            Number(
-              rating.average
-            ) || 0;
-
-
-          totalReviews +=
-            count;
-
-
-          weightedTotal +=
-            average *
-            count;
-
-        }
-      );
-
-
-      if (
-        totalReviews ===
-        0
-      ) {
-
-        return {
-
-          average:
-            0,
-
-          count:
-            0
-
-        };
-
-      }
-
-
-      return {
-
-        average:
-          weightedTotal /
-          totalReviews,
-
-        count:
-          totalReviews
-
-      };
 
     };
 
@@ -563,11 +328,60 @@ function Products() {
   // =========================================
 
   const addToCart =
-    (product) => {
+    product => {
 
-      // ---------------------------------------
-      // AVAILABILITY CHECK
-      // ---------------------------------------
+      if (
+        !product
+      ) {
+
+        return;
+
+      }
+
+
+      /*
+       * Keep your existing login requirement.
+       */
+
+      let user =
+        null;
+
+
+      try {
+
+        user =
+          JSON.parse(
+            localStorage.getItem(
+              "dairyhubUser"
+            )
+          );
+
+      } catch {
+
+        user =
+          null;
+
+      }
+
+
+      if (
+        !user
+      ) {
+
+        alert(
+          "Please login before adding products to cart."
+        );
+
+
+        return;
+
+      }
+
+
+      /*
+       * Do not allow unavailable products
+       * to be added.
+       */
 
       if (
         !isProductAvailable(
@@ -585,21 +399,39 @@ function Products() {
       }
 
 
-      // ---------------------------------------
-      // GET CART
-      // ---------------------------------------
-
       let cart =
-        JSON.parse(
-          localStorage.getItem(
-            "dairyhubCart"
+        [];
+
+
+      try {
+
+        const savedCart =
+          JSON.parse(
+            localStorage.getItem(
+              "dairyhubCart"
+            )
+          );
+
+
+        cart =
+          Array.isArray(
+            savedCart
           )
-        ) || [];
+            ? savedCart
+            : [];
+
+      } catch {
+
+        cart =
+          [];
+
+      }
 
 
-      // ---------------------------------------
-      // FIND EXISTING PRODUCT
-      // ---------------------------------------
+      /*
+       * Product ID is unique for each
+       * database product/variant.
+       */
 
       const existingProduct =
         cart.find(
@@ -609,17 +441,26 @@ function Products() {
         );
 
 
-      // ---------------------------------------
-      // EXISTING PRODUCT
-      // ---------------------------------------
-
       if (
         existingProduct
       ) {
 
+        const currentQuantity =
+          Number(
+            existingProduct.quantity ||
+            1
+          );
+
+
+        const availableStock =
+          Number(
+            product.stock
+          );
+
+
         if (
-          existingProduct.quantity >=
-          product.stock
+          currentQuantity >=
+          availableStock
         ) {
 
           alert(
@@ -632,14 +473,11 @@ function Products() {
         }
 
 
-        existingProduct.quantity +=
-          1;
+        existingProduct.quantity =
+          currentQuantity + 1;
+
 
       } else {
-
-        // -------------------------------------
-        // NEW PRODUCT
-        // -------------------------------------
 
         cart.push({
 
@@ -652,10 +490,6 @@ function Products() {
 
       }
 
-
-      // ---------------------------------------
-      // SAVE CART
-      // ---------------------------------------
 
       localStorage.setItem(
         "dairyhubCart",
@@ -681,12 +515,12 @@ function Products() {
 
 
   // =========================================
-  // FILTER GROUPS
+  // FILTER PRODUCTS
   // =========================================
 
   const filteredProducts =
     products.filter(
-      group => {
+      product => {
 
         if (
           !searchText
@@ -697,54 +531,56 @@ function Products() {
         }
 
 
-        return group.variants.some(
-          product => {
-
-            const name =
-              product.name
-                ?.toLowerCase() ||
-              "";
-
-
-            const category =
-              product.category
-                ?.toLowerCase() ||
-              "";
+        const name =
+          String(
+            product.name ||
+            ""
+          )
+            .toLowerCase();
 
 
-            const description =
-              product.description
-                ?.toLowerCase() ||
-              "";
+        const category =
+          String(
+            product.category ||
+            ""
+          )
+            .toLowerCase();
 
 
-            const size =
-              product.size
-                ?.toLowerCase() ||
-              "";
+        const description =
+          String(
+            product.description ||
+            ""
+          )
+            .toLowerCase();
 
 
-            return (
+        const size =
+          String(
+            product.size ||
+            ""
+          )
+            .toLowerCase();
 
-              name.includes(
-                searchText
-              ) ||
 
-              category.includes(
-                searchText
-              ) ||
+        return (
 
-              description.includes(
-                searchText
-              ) ||
+          name.includes(
+            searchText
+          ) ||
 
-              size.includes(
-                searchText
-              )
+          category.includes(
+            searchText
+          ) ||
 
-            );
+          description.includes(
+            searchText
+          ) ||
 
-          }
+          size.includes(
+            searchText
+          )
+
         );
 
       }
@@ -752,7 +588,7 @@ function Products() {
 
 
   // =========================================
-  // BACK
+  // BACK PATH
   // =========================================
 
   const backPath =
@@ -761,6 +597,10 @@ function Products() {
       : "/";
 
 
+  // =========================================
+  // BACK TEXT
+  // =========================================
+
   const backText =
     fromDashboard
       ? "← Back to Dashboard"
@@ -768,11 +608,11 @@ function Products() {
 
 
   // =========================================
-  // PRODUCT DETAILS URL
+  // PRODUCT DETAILS PATH
   // =========================================
 
   const getProductDetailsPath =
-    (productId) => {
+    productId => {
 
       const basePath =
         `/products/${productId}`;
@@ -858,6 +698,10 @@ function Products() {
       />
 
 
+      {/* =====================================
+          PAGE TITLE
+      ====================================== */}
+
       <h1>
 
         {searchText
@@ -923,10 +767,11 @@ function Products() {
 
         </div>
 
+
       ) : (
 
         /* ===================================
-           PRODUCT GRID
+           ALL PRODUCTS
         ==================================== */
 
         <div
@@ -934,31 +779,37 @@ function Products() {
         >
 
           {filteredProducts.map(
-            group => {
+            product => {
 
-              const selectedProduct =
-                getSelectedVariant(
-                  group
-                );
+              const rating =
+                ratings[
+                  product.id
+                ] || {
 
+                  average:
+                    0,
 
-              const groupRating =
-                getGroupRating(
-                  group
-                );
+                  count:
+                    0
+
+                };
 
 
               const averageRating =
-                groupRating.average;
+                Number(
+                  rating.average
+                ) || 0;
 
 
               const reviewCount =
-                groupRating.count;
+                Number(
+                  rating.count
+                ) || 0;
 
 
-              const selectedAvailable =
+              const available =
                 isProductAvailable(
-                  selectedProduct
+                  product
                 );
 
 
@@ -967,42 +818,62 @@ function Products() {
                 <div
                   className="product-card"
                   key={
-                    group.key
+                    product.id
                   }
                 >
 
-                  {/* =========================
-                      IMAGE
-                  ========================== */}
+                  {/* IMAGE */}
 
-                  <img
-                    src={
-                      selectedProduct.image
-                    }
-                    alt={
-                      group.name
-                    }
-                  />
+                  {product.image ? (
+
+                    <img
+                      src={
+                        product.image
+                      }
+                      alt={
+                        product.name
+                      }
+                    />
+
+                  ) : (
+
+                    <div
+                      className="product-image-placeholder"
+                    >
+                      🥛
+                    </div>
+
+                  )}
 
 
-                  {/* =========================
-                      NAME
-                  ========================== */}
+                  {/* NAME */}
 
                   <h3>
-                    {group.name}
+                    {product.name}
                   </h3>
 
 
-                  {/* =========================
+                  {/* CATEGORY */}
+
+                  {product.category && (
+
+                    <small>
+                      {product.category}
+                    </small>
+
+                  )}
+
+
+                  {/* =================================
                       RATING
-                  ========================== */}
+                  ================================== */}
 
                   <div
                     className="product-card-rating"
                   >
 
-                    {reviewCount > 0 ? (
+                    {reviewCount >
+                    0 ? (
 
                       <>
 
@@ -1025,15 +896,15 @@ function Products() {
                         <span
                           className="product-rating-count"
                         >
+
                           (
                           {reviewCount}{" "}
-                          {
-                            reviewCount ===
-                            1
-                              ? "review"
-                              : "reviews"
-                          }
+                          {reviewCount ===
+                          1
+                            ? "review"
+                            : "reviews"}
                           )
+
                         </span>
 
                       </>
@@ -1051,20 +922,16 @@ function Products() {
                   </div>
 
 
-                  {/* =========================
-                      DESCRIPTION
-                  ========================== */}
+                  {/* DESCRIPTION */}
 
                   <p>
-                    {
-                      selectedProduct.description
-                    }
+                    {product.description}
                   </p>
 
 
-                  {/* =========================
+                  {/* =================================
                       SIZE / QUANTITY
-                  ========================== */}
+                  ================================== */}
 
                   <div
                     className="product-size-selector"
@@ -1075,100 +942,59 @@ function Products() {
                     </label>
 
 
-                    <select
-                      value={
-                        selectedProduct.id
-                      }
-                      onChange={
-                        (e) =>
-                          handleVariantChange(
-                            group.key,
-                            e.target.value
-                          )
-                      }
+                    <div
+                      className="product-size-value"
                     >
 
-                      {group.variants.map(
-                        variant => (
+                      {product.size ||
+                        "Size not specified"}
 
-                          <option
-                            key={
-                              variant.id
-                            }
-                            value={
-                              variant.id
-                            }
-                          >
-
-                            {variant.size ||
-                              "Size not specified"}
-
-                          </option>
-
-                        )
-                      )}
-
-                    </select>
+                    </div>
 
                   </div>
 
 
-                  {/* =========================
+                  {/* =================================
                       PRICE
-                  ========================== */}
+                  ================================== */}
 
                   <h2>
-
                     ₹
-                    {
-                      selectedProduct.price
-                    }
-
+                    {product.price}
                   </h2>
 
 
-                  {/* =========================
-                      STOCK / AVAILABILITY
-                  ========================== */}
+                  {/* =================================
+                      STOCK
+                  ================================== */}
 
                   <p>
 
-                    {selectedAvailable ? (
+                    {available
 
-                      <>
-                        Stock:{" "}
-                        {
-                          selectedProduct.stock
-                        }
-                      </>
+                      ? `Stock: ${
+                          product.stock
+                        }`
 
-                    ) : (
+                      : "Out of Stock"
 
-                      <span
-                        className="product-out-of-stock"
-                      >
-                        Out of Stock
-                      </span>
-
-                    )}
+                    }
 
                   </p>
 
 
-                  {/* =========================
+                  {/* =================================
                       ACTIONS
-                  ========================== */}
+                  ================================== */}
 
                   <div
                     className="product-card-actions"
                   >
 
-                    {/* VIEW DETAILS */}
-
                     <Link
                       to={
                         getProductDetailsPath(
-                          selectedProduct.id
+                          product.id
                         )
                       }
                       className="product-view-btn"
@@ -1177,21 +1003,20 @@ function Products() {
                     </Link>
 
 
-                    {/* ADD TO CART */}
-
                     <button
+                      type="button"
                       className="product-add-cart-btn"
                       onClick={() =>
                         addToCart(
-                          selectedProduct
+                          product
                         )
                       }
                       disabled={
-                        !selectedAvailable
+                        !available
                       }
                     >
 
-                      {selectedAvailable
+                      {available
 
                         ? "Add to Cart"
 

@@ -1,5 +1,12 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  useEffect,
+  useRef,
+  useState
+} from "react";
+
+import {
+  useNavigate
+} from "react-router-dom";
 
 import BackButton from "../components/BackButton";
 
@@ -10,16 +17,19 @@ const API_BASE =
 
 function MyOrders() {
 
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
 
   // =========================================
   // ORDERS
   // =========================================
 
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] =
+    useState([]);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
 
   // =========================================
@@ -75,7 +85,7 @@ function MyOrders() {
 
 
   // =========================================
-  // POPUP
+  // REVIEW POPUP
   // =========================================
 
   const [reviewPopup, setReviewPopup] =
@@ -83,10 +93,21 @@ function MyOrders() {
 
 
   // =========================================
-  // AUTO REVIEW PROMPT TRACKER
+  // AUTO POPUP TRACKER
   // =========================================
+  /*
+   * This tracks only during the current page
+   * session.
+   *
+   * IMPORTANT:
+   *
+   * We are NOT using sessionStorage anymore.
+   *
+   * Therefore old testing data cannot prevent
+   * the delivered review popup from opening.
+   */
 
-  const autoPromptedItemsRef =
+  const autoOpenedItemsRef =
     useRef(new Set());
 
 
@@ -112,11 +133,23 @@ function MyOrders() {
 
     try {
 
-      return JSON.parse(
+      const savedUser =
         localStorage.getItem(
           "dairyhubUser"
-        )
+        );
+
+
+      if (!savedUser) {
+
+        return null;
+
+      }
+
+
+      return JSON.parse(
+        savedUser
       );
+
 
     } catch {
 
@@ -215,7 +248,9 @@ function MyOrders() {
           getCurrentUser();
 
 
-        if (!currentUser?.email) {
+        if (
+          !currentUser?.email
+        ) {
 
           setLoading(false);
 
@@ -227,7 +262,7 @@ function MyOrders() {
         try {
 
           const token =
-            currentUser?.token || null;
+            currentUser.token || null;
 
 
           if (!token) {
@@ -263,17 +298,55 @@ function MyOrders() {
             );
 
 
-          if (!response.ok) {
+          const responseText =
+            await response.text();
+
+
+          let data =
+            null;
+
+
+          try {
+
+            data =
+              responseText
+                ? JSON.parse(
+                    responseText
+                  )
+                : null;
+
+          } catch {
 
             throw new Error(
-              "Failed to fetch customer orders"
+              "The server returned invalid order data."
             );
 
           }
 
 
-          const data =
-            await response.json();
+          if (
+            !response.ok
+          ) {
+
+            if (
+              response.status === 401 ||
+              response.status === 403
+            ) {
+
+              throw new Error(
+                "Your login session is invalid or expired. Please login again."
+              );
+
+            }
+
+
+            throw new Error(
+              data?.message ||
+              responseText ||
+              "Failed to fetch customer orders."
+            );
+
+          }
 
 
           console.log(
@@ -299,6 +372,13 @@ function MyOrders() {
 
           setOrders([]);
 
+
+          alert(
+            error.message ||
+            "Unable to load your orders."
+          );
+
+
         } finally {
 
           setLoading(false);
@@ -314,7 +394,7 @@ function MyOrders() {
 
 
   // =========================================
-  // FETCH REVIEWS FOR A PRODUCT
+  // FETCH REVIEWS FOR PRODUCT
   // =========================================
 
   const fetchReviewsForProduct =
@@ -322,21 +402,32 @@ function MyOrders() {
       productId
     ) => {
 
-      if (!productId) {
+      if (
+        !productId
+      ) {
 
-        return;
+        return {
+          reviews: [],
+          ownReview: null
+        };
 
       }
 
 
       const key =
-        String(productId);
+        String(
+          productId
+        );
 
 
       setReviewLoading(
         previous => ({
+
           ...previous,
-          [key]: true
+
+          [key]:
+            true
+
         })
       );
 
@@ -349,10 +440,12 @@ function MyOrders() {
           );
 
 
-        if (!response.ok) {
+        if (
+          !response.ok
+        ) {
 
           throw new Error(
-            "Unable to fetch product reviews"
+            "Unable to fetch product reviews."
           );
 
         }
@@ -374,38 +467,25 @@ function MyOrders() {
 
         const ownReview =
           currentUser
+
             ? safeReviews.find(
                 review =>
+
                   review.userEmail
                     ?.trim()
                     .toLowerCase() ===
+
                   currentUser.email
                     ?.trim()
                     .toLowerCase()
+
               )
+
             : null;
 
 
-        setReviewsByProduct(
-          previous => ({
+        const result = {
 
-            ...previous,
-
-            [key]: {
-
-              reviews:
-                safeReviews,
-
-              ownReview:
-                ownReview || null
-
-            }
-
-          })
-        );
-
-
-        return {
           reviews:
             safeReviews,
 
@@ -413,6 +493,21 @@ function MyOrders() {
             ownReview || null
 
         };
+
+
+        setReviewsByProduct(
+          previous => ({
+
+            ...previous,
+
+            [key]:
+              result
+
+          })
+        );
+
+
+        return result;
 
 
       } catch (error) {
@@ -423,36 +518,40 @@ function MyOrders() {
         );
 
 
-        setReviewsByProduct(
-          previous => ({
+        const result = {
 
-            ...previous,
-
-            [key]: {
-
-              reviews: [],
-
-              ownReview: null
-
-            }
-
-          })
-        );
-
-
-        return {
           reviews: [],
 
           ownReview: null
 
         };
 
+
+        setReviewsByProduct(
+          previous => ({
+
+            ...previous,
+
+            [key]:
+              result
+
+          })
+        );
+
+
+        return result;
+
+
       } finally {
 
         setReviewLoading(
           previous => ({
+
             ...previous,
-            [key]: false
+
+            [key]:
+              false
+
           })
         );
 
@@ -467,14 +566,17 @@ function MyOrders() {
 
   useEffect(() => {
 
-    if (!orders.length) {
+    if (
+      !orders.length
+    ) {
 
       return;
 
     }
 
 
-    const deliveredProductIds = new Set();
+    const deliveredProductIds =
+      new Set();
 
 
     orders.forEach(
@@ -483,7 +585,8 @@ function MyOrders() {
         if (
           normalizeStatus(
             order.status
-          ) !== "DELIVERED"
+          ) !==
+          "DELIVERED"
         ) {
 
           return;
@@ -506,7 +609,7 @@ function MyOrders() {
           item => {
 
             if (
-              item.productId
+              item?.productId
             ) {
 
               deliveredProductIds.add(
@@ -526,7 +629,9 @@ function MyOrders() {
       productId => {
 
         const key =
-          String(productId);
+          String(
+            productId
+          );
 
 
         if (
@@ -545,21 +650,21 @@ function MyOrders() {
       }
     );
 
-  }, [orders]);
+  }, [
+    orders,
+    reviewsByProduct
+  ]);
 
 
   // =========================================
-  // AUTOMATIC REVIEW POPUP FOR DELIVERED
-  // PRODUCTS THAT ARE NOT YET REVIEWED
+  // AUTOMATIC POPUP AFTER DELIVERY
   // =========================================
 
   useEffect(() => {
 
     if (
       !orders.length ||
-      reviewPopup ||
-      reviewLoading &&
-        Object.values(reviewLoading).some(Boolean)
+      reviewPopup
     ) {
 
       return;
@@ -570,42 +675,14 @@ function MyOrders() {
     const deliveredItems = [];
 
 
-    orders.forEach(order => {
-
-      if (
-        normalizeStatus(order.status) !==
-        "DELIVERED"
-      ) {
-
-        return;
-
-      }
-
-
-      if (
-        !Array.isArray(order.items)
-      ) {
-
-        return;
-
-      }
-
-
-      order.items.forEach(item => {
-
-        if (!item?.productId) {
-
-          return;
-
-        }
-
-
-        const promptKey =
-          `${order.id}:${item.productId}`;
-
+    orders.forEach(
+      order => {
 
         if (
-          autoPromptedItemsRef.current.has(promptKey)
+          normalizeStatus(
+            order.status
+          ) !==
+          "DELIVERED"
         ) {
 
           return;
@@ -613,92 +690,167 @@ function MyOrders() {
         }
 
 
-        deliveredItems.push({
-          order,
-          item,
-          promptKey
-        });
+        if (
+          !Array.isArray(
+            order.items
+          )
+        ) {
 
-      });
+          return;
 
-    });
+        }
 
 
-    const nextItem =
-      deliveredItems.find(({ item }) => {
+        order.items.forEach(
+          item => {
 
-        const key =
-          String(item.productId);
+            if (
+              !item?.productId
+            ) {
 
-        const reviewData =
-          reviewsByProduct[key];
+              return;
 
-        return (
-          reviewData &&
-          !reviewData.ownReview
+            }
+
+
+            const promptKey =
+              `${order.id}:${item.productId}`;
+
+
+            if (
+              autoOpenedItemsRef.current.has(
+                promptKey
+              )
+            ) {
+
+              return;
+
+            }
+
+
+            deliveredItems.push({
+
+              order,
+
+              item,
+
+              promptKey
+
+            });
+
+          }
         );
 
-      });
-
-
-    if (!nextItem) {
-
-      return;
-
-    }
-
-
-    const sessionKey =
-      `dairyhubReviewPrompted:${nextItem.order.id}:${nextItem.item.productId}`;
+      }
+    );
 
 
     if (
-      sessionStorage.getItem(sessionKey) ===
-      "true"
+      deliveredItems.length === 0
     ) {
-
-      autoPromptedItemsRef.current.add(
-        nextItem.promptKey
-      );
 
       return;
 
     }
 
 
-    autoPromptedItemsRef.current.add(
-      nextItem.promptKey
-    );
+    const nextItem =
+      deliveredItems.find(
+        ({ item }) => {
 
-    sessionStorage.setItem(
-      sessionKey,
-      "true"
+          const key =
+            String(
+              item.productId
+            );
+
+
+          const reviewData =
+            reviewsByProduct[key];
+
+
+          /*
+           * Wait until the product's reviews
+           * have been loaded.
+           */
+
+          if (
+            !reviewData
+          ) {
+
+            return false;
+
+          }
+
+
+          /*
+           * If customer already reviewed it,
+           * there is no need to open the popup.
+           */
+
+          return (
+            !reviewData.ownReview
+          );
+
+        }
+      );
+
+
+    if (
+      !nextItem
+    ) {
+
+      return;
+
+    }
+
+
+    const productKey =
+      String(
+        nextItem.item.productId
+      );
+
+
+    /*
+     * Mark this delivered item as already
+     * automatically opened during this page
+     * session.
+     *
+     * This prevents an infinite popup loop
+     * after clicking "Not Now".
+     */
+
+    autoOpenedItemsRef.current.add(
+      nextItem.promptKey
     );
 
 
     const timer =
-      setTimeout(() => {
+      setTimeout(
+        () => {
 
-        openReviewPopup(
-          nextItem.item
-        );
+          openReviewPopup(
+            nextItem.item
+          );
 
-      }, 500);
+        },
+        400
+      );
 
 
     return () =>
-      clearTimeout(timer);
+      clearTimeout(
+        timer
+      );
 
   }, [
     orders,
     reviewsByProduct,
-    reviewLoading,
     reviewPopup
   ]);
 
 
   // =========================================
-  // GET CURRENT STEP
+  // GET CURRENT ORDER STEP
   // =========================================
 
   const getCurrentStep =
@@ -747,7 +899,7 @@ function MyOrders() {
           }
         >
 
-          {[1,2,3,4,5].map(
+          {[1, 2, 3, 4, 5].map(
             star => {
 
               if (
@@ -757,12 +909,16 @@ function MyOrders() {
                 return (
 
                   <button
-                    key={star}
+                    key={
+                      star
+                    }
                     type="button"
                     className={
                       star <=
                       selectedRating
+
                         ? "my-orders-rating-star selected"
+
                         : "my-orders-rating-star"
                     }
                     onClick={() =>
@@ -775,7 +931,9 @@ function MyOrders() {
                       `${star} star`
                     }
                   >
+
                     ★
+
                   </button>
 
                 );
@@ -786,11 +944,15 @@ function MyOrders() {
               return (
 
                 <span
-                  key={star}
+                  key={
+                    star
+                  }
                   className={
                     star <=
                     numericRating
+
                       ? "my-orders-star active"
+
                       : "my-orders-star"
                   }
                 >
@@ -810,13 +972,17 @@ function MyOrders() {
 
 
   // =========================================
-  // OPEN REVIEW POPUP
+  // OPEN PRODUCT REVIEW POPUP
   // =========================================
 
   const openReviewPopup =
-    async (item) => {
+    async (
+      item
+    ) => {
 
-      if (!item?.productId) {
+      if (
+        !item?.productId
+      ) {
 
         alert(
           "Product information is not available for this order."
@@ -837,7 +1003,9 @@ function MyOrders() {
         reviewsByProduct[key];
 
 
-      if (!reviewData) {
+      if (
+        !reviewData
+      ) {
 
         reviewData =
           await fetchReviewsForProduct(
@@ -849,19 +1017,21 @@ function MyOrders() {
 
       const ownReview =
         reviewData?.ownReview ||
-        reviewsByProduct[key]?.ownReview ||
         null;
 
 
-      // -------------------------------------
+      // =====================================
       // EXISTING REVIEW
-      // -------------------------------------
+      // =====================================
 
-      if (ownReview) {
+      if (
+        ownReview
+      ) {
 
         setEditingReview(
           null
         );
+
 
         setReviewPopup({
 
@@ -875,20 +1045,29 @@ function MyOrders() {
 
         });
 
+
         return;
 
       }
 
 
-      // -------------------------------------
+      // =====================================
       // NEW REVIEW
-      // -------------------------------------
+      // =====================================
 
-      setReviewRating(0);
+      setReviewRating(
+        0
+      );
 
-      setReviewComment("");
 
-      setEditingReview(null);
+      setReviewComment(
+        ""
+      );
+
+
+      setEditingReview(
+        null
+      );
 
 
       setReviewPopup({
@@ -907,109 +1086,145 @@ function MyOrders() {
 
 
   // =========================================
-  // OPEN ORDER EXPERIENCE POPUP
+  // OPEN CANCELLED EXPERIENCE POPUP
   // =========================================
 
-  const openExperiencePopup = (
-    order
-  ) => {
+  const openExperiencePopup =
+    (
+      order
+    ) => {
 
-    if (!order?.id) {
+      if (
+        !order?.id
+      ) {
 
-      return;
+        return;
 
-    }
-
-
-    const status =
-      normalizeStatus(
-        order.status
-      );
+      }
 
 
-    if (
-      status !== "CANCELLED"
-    ) {
-
-      return;
-
-    }
+      const status =
+        normalizeStatus(
+          order.status
+        );
 
 
-    if (
-      order.experienceRating != null
-    ) {
+      if (
+        status !==
+        "CANCELLED"
+      ) {
 
-      alert(
-        "You have already submitted feedback for this order."
-      );
+        return;
 
-      return;
-
-    }
+      }
 
 
-    setExperienceRating(0);
-
-    setExperienceFeedback("");
-
-    setEditingReview(null);
-
-
-    setReviewPopup({
-
-      order,
-
-      mode:
-        "CANCELLED_EXPERIENCE",
-
-      review:
+      if (
+        order.experienceRating !=
         null
+      ) {
 
-    });
+        alert(
+          "You have already submitted feedback for this order."
+        );
 
-  };
+        return;
+
+      }
+
+
+      setExperienceRating(
+        0
+      );
+
+
+      setExperienceFeedback(
+        ""
+      );
+
+
+      setEditingReview(
+        null
+      );
+
+
+      setReviewPopup({
+
+        order,
+
+        mode:
+          "CANCELLED_EXPERIENCE",
+
+        review:
+          null
+
+      });
+
+    };
 
 
   // =========================================
   // CLOSE POPUP
   // =========================================
 
-  const closeReviewPopup = () => {
+  const closeReviewPopup =
+    () => {
 
-    if (reviewSubmitting ||
+      if (
+        reviewSubmitting ||
         updatingReview ||
-        experienceSubmitting) {
+        experienceSubmitting
+      ) {
 
-      return;
+        return;
 
-    }
-
-
-    setReviewPopup(
-      null
-    );
+      }
 
 
-    setReviewRating(0);
+      setReviewPopup(
+        null
+      );
 
-    setReviewComment("");
 
-    setEditingReview(null);
+      setReviewRating(
+        0
+      );
 
-    setEditRating(0);
 
-    setEditComment("");
+      setReviewComment(
+        ""
+      );
 
-    setExperienceRating(0);
 
-    setExperienceFeedback("");
+      setEditingReview(
+        null
+      );
 
-  };
+
+      setEditRating(
+        0
+      );
+
+
+      setEditComment(
+        ""
+      );
+
+
+      setExperienceRating(
+        0
+      );
+
+
+      setExperienceFeedback(
+        ""
+      );
+
+    };
 
 
   // =========================================
-  // SUBMIT NEW REVIEW
+  // SUBMIT NEW PRODUCT REVIEW
   // =========================================
 
   const submitReview =
@@ -1019,22 +1234,28 @@ function MyOrders() {
         getCurrentUser();
 
 
-      if (!currentUser) {
+      if (
+        !currentUser
+      ) {
 
         alert(
           "Please login to write a review."
         );
 
+
         navigate(
           "/login"
         );
+
 
         return;
 
       }
 
 
-      if (!reviewPopup?.item) {
+      if (
+        !reviewPopup?.item
+      ) {
 
         return;
 
@@ -1053,18 +1274,21 @@ function MyOrders() {
           "Product information is not available."
         );
 
+
         return;
 
       }
 
 
       if (
-        reviewRating === 0
+        reviewRating ===
+        0
       ) {
 
         alert(
           "Please select a rating."
         );
+
 
         return;
 
@@ -1078,6 +1302,21 @@ function MyOrders() {
         alert(
           "Please write a review."
         );
+
+
+        return;
+
+      }
+
+
+      if (
+        !currentUser.token
+      ) {
+
+        alert(
+          "Your login session is missing. Please login again."
+        );
+
 
         return;
 
@@ -1102,7 +1341,10 @@ function MyOrders() {
               headers: {
 
                 "Content-Type":
-                  "application/json"
+                  "application/json",
+
+                Authorization:
+                  `Bearer ${currentUser.token}`
 
               },
 
@@ -1133,16 +1375,36 @@ function MyOrders() {
           );
 
 
-        if (!response.ok) {
+        const responseText =
+          await response.text();
 
-          const errorMessage =
-            await response.text();
 
+        if (
+          response.status ===
+            401 ||
+          response.status ===
+            403
+        ) {
 
           alert(
-            errorMessage ||
+            "Your login session is invalid or expired. Please login again."
+          );
+
+
+          return;
+
+        }
+
+
+        if (
+          !response.ok
+        ) {
+
+          alert(
+            responseText ||
             "Unable to submit your review."
           );
+
 
           return;
 
@@ -1150,7 +1412,11 @@ function MyOrders() {
 
 
         const newReview =
-          await response.json();
+          responseText
+            ? JSON.parse(
+                responseText
+              )
+            : null;
 
 
         const key =
@@ -1167,8 +1433,12 @@ function MyOrders() {
             [key]: {
 
               reviews: [
+
                 newReview,
-                ...(previous[key]?.reviews || [])
+
+                ...(previous[key]
+                  ?.reviews || [])
+
               ],
 
               ownReview:
@@ -1180,16 +1450,15 @@ function MyOrders() {
         );
 
 
-        setReviewRating(0);
+        setReviewRating(
+          0
+        );
 
-        setReviewComment("");
 
+        setReviewComment(
+          ""
+        );
 
-        /*
-         * Keep popup open.
-         * Now it displays the customer's
-         * own review with Edit/Delete.
-         */
 
         setReviewPopup({
 
@@ -1218,8 +1487,10 @@ function MyOrders() {
 
 
         alert(
+          error.message ||
           "Something went wrong while submitting your review."
         );
+
 
       } finally {
 
@@ -1233,7 +1504,7 @@ function MyOrders() {
 
 
   // =========================================
-  // SUBMIT ORDER EXPERIENCE FEEDBACK
+  // SUBMIT CANCELLED ORDER FEEDBACK
   // =========================================
 
   const submitExperienceFeedback =
@@ -1243,18 +1514,14 @@ function MyOrders() {
         getCurrentUser();
 
 
-      if (!currentUser) {
+      if (
+        !currentUser
+      ) {
 
         alert(
           "Please login."
         );
 
-        return;
-
-      }
-
-
-      if (!reviewPopup?.order?.id) {
 
         return;
 
@@ -1262,12 +1529,23 @@ function MyOrders() {
 
 
       if (
-        experienceRating === 0
+        !reviewPopup?.order?.id
+      ) {
+
+        return;
+
+      }
+
+
+      if (
+        experienceRating ===
+        0
       ) {
 
         alert(
           "Please select a rating."
         );
+
 
         return;
 
@@ -1281,6 +1559,21 @@ function MyOrders() {
         alert(
           "Please write your feedback."
         );
+
+
+        return;
+
+      }
+
+
+      if (
+        !currentUser.token
+      ) {
+
+        alert(
+          "Your login session is missing. Please login again."
+        );
+
 
         return;
 
@@ -1305,7 +1598,10 @@ function MyOrders() {
               headers: {
 
                 "Content-Type":
-                  "application/json"
+                  "application/json",
+
+                Authorization:
+                  `Bearer ${currentUser.token}`
 
               },
 
@@ -1332,6 +1628,23 @@ function MyOrders() {
 
 
         if (
+          response.status ===
+            401 ||
+          response.status ===
+            403
+        ) {
+
+          alert(
+            "Your login session is invalid or expired. Please login again."
+          );
+
+
+          return;
+
+        }
+
+
+        if (
           !response.ok
         ) {
 
@@ -1347,23 +1660,19 @@ function MyOrders() {
           null;
 
 
-        if (
-          responseText
-        ) {
+        try {
 
-          try {
+          updatedOrder =
+            responseText
+              ? JSON.parse(
+                  responseText
+                )
+              : null;
 
-            updatedOrder =
-              JSON.parse(
-                responseText
-              );
+        } catch {
 
-          } catch {
-
-            updatedOrder =
-              null;
-
-          }
+          updatedOrder =
+            null;
 
         }
 
@@ -1372,8 +1681,10 @@ function MyOrders() {
           previousOrders =>
             previousOrders.map(
               order =>
+
                 order.id ===
                 reviewPopup.order.id
+
                   ? updatedOrder || {
 
                       ...order,
@@ -1382,7 +1693,10 @@ function MyOrders() {
                         experienceRating,
 
                       experienceFeedback:
-                        experienceFeedback.trim()
+                        experienceFeedback.trim(),
+
+                      experienceFeedbackAt:
+                        new Date().toISOString()
 
                     }
 
@@ -1437,11 +1751,13 @@ function MyOrders() {
 
 
   // =========================================
-  // START EDIT
+  // START EDIT REVIEW
   // =========================================
 
   const startEditReview =
-    (review) => {
+    (
+      review
+    ) => {
 
       setEditingReview(
         review
@@ -1473,15 +1789,21 @@ function MyOrders() {
         null
       );
 
-      setEditRating(0);
 
-      setEditComment("");
+      setEditRating(
+        0
+      );
+
+
+      setEditComment(
+        ""
+      );
 
     };
 
 
   // =========================================
-  // UPDATE REVIEW
+  // UPDATE PRODUCT REVIEW
   // =========================================
 
   const updateReview =
@@ -1491,18 +1813,14 @@ function MyOrders() {
         getCurrentUser();
 
 
-      if (!currentUser) {
+      if (
+        !currentUser
+      ) {
 
         alert(
           "Please login."
         );
 
-        return;
-
-      }
-
-
-      if (!editingReview) {
 
         return;
 
@@ -1510,12 +1828,23 @@ function MyOrders() {
 
 
       if (
-        editRating === 0
+        !editingReview
+      ) {
+
+        return;
+
+      }
+
+
+      if (
+        editRating ===
+        0
       ) {
 
         alert(
           "Please select a rating."
         );
+
 
         return;
 
@@ -1529,6 +1858,21 @@ function MyOrders() {
         alert(
           "Please write a review."
         );
+
+
+        return;
+
+      }
+
+
+      if (
+        !currentUser.token
+      ) {
+
+        alert(
+          "Your login session is missing. Please login again."
+        );
+
 
         return;
 
@@ -1553,7 +1897,10 @@ function MyOrders() {
               headers: {
 
                 "Content-Type":
-                  "application/json"
+                  "application/json",
+
+                Authorization:
+                  `Bearer ${currentUser.token}`
 
               },
 
@@ -1575,16 +1922,36 @@ function MyOrders() {
           );
 
 
-        if (!response.ok) {
+        const responseText =
+          await response.text();
 
-          const errorMessage =
-            await response.text();
 
+        if (
+          response.status ===
+            401 ||
+          response.status ===
+            403
+        ) {
 
           alert(
-            errorMessage ||
+            "Your login session is invalid or expired. Please login again."
+          );
+
+
+          return;
+
+        }
+
+
+        if (
+          !response.ok
+        ) {
+
+          alert(
+            responseText ||
             "Unable to update your review."
           );
+
 
           return;
 
@@ -1592,7 +1959,9 @@ function MyOrders() {
 
 
         const updatedReview =
-          await response.json();
+          JSON.parse(
+            responseText
+          );
 
 
         const key =
@@ -1607,7 +1976,12 @@ function MyOrders() {
 
             const current =
               previous[key] || {
-                reviews: []
+
+                reviews: [],
+
+                ownReview:
+                  null
+
               };
 
 
@@ -1620,10 +1994,14 @@ function MyOrders() {
                 reviews:
                   current.reviews.map(
                     review =>
+
                       review.id ===
                       updatedReview.id
+
                         ? updatedReview
+
                         : review
+
                   ),
 
                 ownReview:
@@ -1639,7 +2017,9 @@ function MyOrders() {
 
         setReviewPopup(
           previous =>
+
             previous
+
               ? {
 
                   ...previous,
@@ -1651,6 +2031,7 @@ function MyOrders() {
                     updatedReview
 
                 }
+
               : previous
         );
 
@@ -1659,9 +2040,15 @@ function MyOrders() {
           null
         );
 
-        setEditRating(0);
 
-        setEditComment("");
+        setEditRating(
+          0
+        );
+
+
+        setEditComment(
+          ""
+        );
 
 
         alert(
@@ -1678,8 +2065,10 @@ function MyOrders() {
 
 
         alert(
+          error.message ||
           "Something went wrong while updating your review."
         );
+
 
       } finally {
 
@@ -1705,7 +2094,23 @@ function MyOrders() {
         getCurrentUser();
 
 
-      if (!currentUser) {
+      if (
+        !currentUser
+      ) {
+
+        return;
+
+      }
+
+
+      if (
+        !currentUser.token
+      ) {
+
+        alert(
+          "Your login session is missing. Please login again."
+        );
+
 
         return;
 
@@ -1718,7 +2123,9 @@ function MyOrders() {
         );
 
 
-      if (!confirmed) {
+      if (
+        !confirmed
+      ) {
 
         return;
 
@@ -1735,22 +2142,52 @@ function MyOrders() {
             {
 
               method:
-                "DELETE"
+                "DELETE",
+
+              headers: {
+
+                "Content-Type":
+                  "application/json",
+
+                Authorization:
+                  `Bearer ${currentUser.token}`
+
+              }
 
             }
           );
 
 
-        if (!response.ok) {
+        const responseText =
+          await response.text();
 
-          const errorMessage =
-            await response.text();
 
+        if (
+          response.status ===
+            401 ||
+          response.status ===
+            403
+        ) {
 
           alert(
-            errorMessage ||
+            "Your login session is invalid or expired. Please login again."
+          );
+
+
+          return;
+
+        }
+
+
+        if (
+          !response.ok
+        ) {
+
+          alert(
+            responseText ||
             "Unable to delete your review."
           );
+
 
           return;
 
@@ -1769,7 +2206,12 @@ function MyOrders() {
 
             const current =
               previous[key] || {
-                reviews: []
+
+                reviews: [],
+
+                ownReview:
+                  null
+
               };
 
 
@@ -1797,25 +2239,36 @@ function MyOrders() {
         );
 
 
-        /*
-         * After deleting, immediately show
-         * the NEW review form again.
-         */
+        setReviewRating(
+          0
+        );
 
-        setReviewRating(0);
 
-        setReviewComment("");
+        setReviewComment(
+          ""
+        );
 
-        setEditingReview(null);
 
-        setEditRating(0);
+        setEditingReview(
+          null
+        );
 
-        setEditComment("");
+
+        setEditRating(
+          0
+        );
+
+
+        setEditComment(
+          ""
+        );
 
 
         setReviewPopup(
           previous =>
+
             previous
+
               ? {
 
                   ...previous,
@@ -1827,6 +2280,7 @@ function MyOrders() {
                     null
 
                 }
+
               : previous
         );
 
@@ -1845,6 +2299,7 @@ function MyOrders() {
 
 
         alert(
+          error.message ||
           "Something went wrong while deleting your review."
         );
 
@@ -1857,7 +2312,9 @@ function MyOrders() {
   // LOADING
   // =========================================
 
-  if (loading) {
+  if (
+    loading
+  ) {
 
     return (
 
@@ -1874,7 +2331,9 @@ function MyOrders() {
         </h1>
 
 
-        <div className="empty-state">
+        <div
+          className="empty-state"
+        >
 
           <h3>
             Loading your orders...
@@ -1898,7 +2357,6 @@ function MyOrders() {
     <div
       className="page my-orders-page"
     >
-
 
       <BackButton
         to="/dashboard"
@@ -1990,11 +2448,8 @@ function MyOrders() {
         </div>
 
 
-      ) : orders.length === 0 ? (
-
-        /* =====================================
-           NO ORDERS
-        ====================================== */
+      ) : orders.length ===
+        0 ? (
 
         <div
           className="empty-state my-orders-empty"
@@ -2034,10 +2489,6 @@ function MyOrders() {
 
       ) : (
 
-        /* =====================================
-           ORDERS
-        ====================================== */
-
         <div
           className="orders-list"
         >
@@ -2071,9 +2522,10 @@ function MyOrders() {
 
                 <article
                   className="customer-order-card"
-                  key={order.id}
+                  key={
+                    order.id
+                  }
                 >
-
 
                   {/* ORDER HEADER */}
 
@@ -2098,10 +2550,13 @@ function MyOrders() {
                       <p>
 
                         {order.orderDate
+
                           ? `Placed on ${new Date(
                               order.orderDate
                             ).toLocaleDateString()}`
+
                           : "Order date unavailable"
+
                         }
 
                       </p>
@@ -2123,11 +2578,14 @@ function MyOrders() {
                     >
 
                       {normalizedStatus
+
                         ? normalizedStatus.replaceAll(
                             "_",
                             " "
                           )
+
                         : "UNKNOWN"
+
                       }
 
                     </span>
@@ -2211,7 +2669,8 @@ function MyOrders() {
 
 
                     {!order.items ||
-                    order.items.length === 0 ? (
+                    order.items.length ===
+                      0 ? (
 
                       <div
                         className="order-products-empty"
@@ -2299,10 +2758,18 @@ function MyOrders() {
 
 
                                       <span>
+
+                                        {item.size
+                                          ? `${item.size} • `
+                                          : ""}
+
                                         ₹
                                         {item.price}
+
                                         {" × "}
+
                                         {item.quantity}
+
                                       </span>
 
                                     </div>
@@ -2317,8 +2784,10 @@ function MyOrders() {
                                     <strong
                                       className="customer-product-subtotal"
                                     >
+
                                       ₹
                                       {item.subtotal}
+
                                     </strong>
 
                                   </div>
@@ -2327,7 +2796,7 @@ function MyOrders() {
 
 
                                 {/* =================================
-                                    DELIVERED PRODUCT REVIEW AREA
+                                    DELIVERED PRODUCT REVIEW
                                 ================================== */}
 
                                 {isDelivered &&
@@ -2497,8 +2966,10 @@ function MyOrders() {
                             }`
                           }
                         >
+
                           {order.paymentStatus ||
                             "PENDING"}
+
                         </span>
 
                       </div>
@@ -2636,10 +3107,16 @@ function MyOrders() {
                                   <p>
 
                                     {current
+
                                       ? step.description
+
                                       : completed
+
                                         ? "Completed"
-                                        : "Pending"}
+
+                                        : "Pending"
+
+                                    }
 
                                   </p>
 
@@ -2660,7 +3137,7 @@ function MyOrders() {
 
 
                   {/* =================================
-                      CANCELLED ORDER EXPERIENCE FEEDBACK
+                      CANCELLED EXPERIENCE FEEDBACK
                   ================================== */}
 
                   {isCancelled && (
@@ -2696,7 +3173,9 @@ function MyOrders() {
                             {order.experienceFeedback && (
 
                               <p>
-                                {order.experienceFeedback}
+                                {
+                                  order.experienceFeedback
+                                }
                               </p>
 
                             )}
@@ -2725,8 +3204,11 @@ function MyOrders() {
 
                   )}
 
+                  {/* NO DELIVERED BANNER ANYMORE */}
 
-                  {/* DELIVERY DETAILS */}
+                  {/* =================================
+                      DELIVERY DETAILS
+                  ================================== */}
 
                   <div
                     className={
@@ -2828,43 +3310,6 @@ function MyOrders() {
 
                   </div>
 
-
-                  {/* DELIVERED BANNER */}
-
-                  {isDelivered && (
-
-                    <div
-                      className="delivered-review-banner"
-                    >
-
-                      <div
-                        className="delivered-review-icon"
-                      >
-                        ⭐
-                      </div>
-
-
-                      <div
-                        className="delivered-review-content"
-                      >
-
-                        <strong>
-                          Your order has been delivered!
-                        </strong>
-
-
-                        <p>
-                          You can rate and review
-                          each delivered product
-                          above.
-                        </p>
-
-                      </div>
-
-                    </div>
-
-                  )}
-
                 </article>
 
               );
@@ -2885,24 +3330,25 @@ function MyOrders() {
 
         <div
           className="my-orders-review-overlay"
-          onMouseDown={event => {
+          onMouseDown={
+            event => {
 
-            if (
-              event.target ===
-              event.currentTarget
-            ) {
+              if (
+                event.target ===
+                event.currentTarget
+              ) {
 
-              closeReviewPopup();
+                closeReviewPopup();
+
+              }
 
             }
-
-          }}
+          }
         >
 
           <div
             className="my-orders-review-modal"
           >
-
 
             {/* MODAL HEADER */}
 
@@ -2918,13 +3364,21 @@ function MyOrders() {
 
 
                 <h2>
+
                   {reviewPopup.mode ===
                   "EXISTING"
+
                     ? "Your Review"
+
                     : reviewPopup.mode ===
                       "CANCELLED_EXPERIENCE"
+
                       ? "Rate Order Experience"
-                      : "Rate & Review"}
+
+                      : "Rate & Review"
+
+                  }
+
                 </h2>
 
               </div>
@@ -2938,9 +3392,9 @@ function MyOrders() {
                 }
                 disabled={
                   reviewSubmitting ||
-                  updatingReview
+                  updatingReview ||
+                  experienceSubmitting
                 }
-                aria-label="Close"
               >
                 ×
               </button>
@@ -2948,7 +3402,7 @@ function MyOrders() {
             </div>
 
 
-            {/* PRODUCT */}
+            {/* PRODUCT / ORDER */}
 
             <div
               className="my-orders-review-product"
@@ -2957,30 +3411,49 @@ function MyOrders() {
               <div
                 className="my-orders-review-product-icon"
               >
+
                 {reviewPopup.mode ===
                 "CANCELLED_EXPERIENCE"
+
                   ? "⚠️"
+
                   : "🥛"}
+
               </div>
 
 
               <div>
 
                 <strong>
+
                   {reviewPopup.mode ===
                   "CANCELLED_EXPERIENCE"
-                    ? `Order #${reviewPopup.order?.id || ""}`
+
+                    ? `Order #${
+                        reviewPopup.order?.id ||
+                        ""
+                      }`
+
                     : reviewPopup.item
                         ?.productName ||
-                      "Product"}
+                      "Product"
+
+                  }
+
                 </strong>
 
 
                 <span>
+
                   {reviewPopup.mode ===
                   "CANCELLED_EXPERIENCE"
+
                     ? "Order Cancelled"
-                    : "Delivered"}
+
+                    : "Delivered"
+
+                  }
+
                 </span>
 
               </div>
@@ -2989,11 +3462,11 @@ function MyOrders() {
 
 
             {/* =================================
-                EXISTING REVIEW
+                EXISTING PRODUCT REVIEW
             ================================== */}
 
             {reviewPopup.mode ===
-            "EXISTING" &&
+              "EXISTING" &&
             reviewPopup.review &&
             !editingReview ? (
 
@@ -3112,12 +3585,15 @@ function MyOrders() {
                   value={
                     experienceFeedback
                   }
-                  onChange={event =>
-                    setExperienceFeedback(
-                      event.target.value
-                    )
+                  onChange={
+                    event =>
+                      setExperienceFeedback(
+                        event.target.value
+                      )
                   }
-                  maxLength={1000}
+                  maxLength={
+                    1000
+                  }
                   disabled={
                     experienceSubmitting
                   }
@@ -3170,10 +3646,11 @@ function MyOrders() {
 
               </div>
 
+
             ) : (
 
               /* =================================
-                 NEW REVIEW / EDIT FORM
+                 NEW / EDIT PRODUCT REVIEW
               ================================== */
 
               <div
@@ -3181,9 +3658,13 @@ function MyOrders() {
               >
 
                 <h3>
+
                   {editingReview
+
                     ? "Edit Your Review"
+
                     : "How was your experience?"}
+
                 </h3>
 
 
@@ -3210,6 +3691,7 @@ function MyOrders() {
 
 
                   {renderStars(
+
                     editingReview
                       ? editRating
                       : reviewRating,
@@ -3239,26 +3721,30 @@ function MyOrders() {
                       ? editComment
                       : reviewComment
                   }
-                  onChange={event => {
+                  onChange={
+                    event => {
 
-                    if (
-                      editingReview
-                    ) {
+                      if (
+                        editingReview
+                      ) {
 
-                      setEditComment(
-                        event.target.value
-                      );
+                        setEditComment(
+                          event.target.value
+                        );
 
-                    } else {
+                      } else {
 
-                      setReviewComment(
-                        event.target.value
-                      );
+                        setReviewComment(
+                          event.target.value
+                        );
+
+                      }
 
                     }
-
-                  }}
-                  maxLength={1000}
+                  }
+                  maxLength={
+                    1000
+                  }
                   disabled={
                     reviewSubmitting ||
                     updatingReview
@@ -3299,12 +3785,19 @@ function MyOrders() {
                   >
 
                     {reviewSubmitting
+
                       ? "Submitting..."
+
                       : updatingReview
+
                         ? "Saving..."
+
                         : editingReview
+
                           ? "Save Changes"
+
                           : "Submit Review"
+
                     }
 
                   </button>

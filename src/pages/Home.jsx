@@ -2,7 +2,7 @@ import React from "react";
 import Hero from "../components/Hero";
 import FeaturedProducts from "../components/FeaturedProducts";
 import { Link } from "react-router-dom";
-
+import TopRatedProducts from "../components/TopRatedProducts";
 
 function Reveal({ children, className = "", delay = 0 }) {
 
@@ -360,6 +360,8 @@ function Home() {
       >
 
         <FeaturedProducts />
+
+        <TopRatedProducts />
 
       </Reveal>
 

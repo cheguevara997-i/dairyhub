@@ -11117,3 +11117,243 @@ body {
   }
 
 }
+
+/* =========================================
+   CUSTOMER RATINGS & REVIEWS
+   ========================================= */
+
+.customer-ratings-section {
+  width: 100%;
+  max-width: 1000px;
+  margin: 70px auto;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+
+
+.customer-ratings-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+
+.customer-ratings-header > span {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+
+.customer-ratings-header h2 {
+  margin: 0;
+  font-size: 30px;
+}
+
+
+.customer-ratings-header p {
+  margin: 8px 0 0;
+  font-size: 15px;
+}
+
+
+.customer-ratings-carousel {
+  width: 100%;
+}
+
+
+.customer-ratings-viewport {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+
+.customer-ratings-track {
+  display: flex;
+  transition:
+    transform 0.7s ease;
+}
+
+
+.customer-rating-card {
+  flex: 0 0 100%;
+  box-sizing: border-box;
+  min-height: 280px;
+  padding: 38px 60px;
+  text-align: center;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+
+/* =========================================
+   STARS
+   ========================================= */
+
+.customer-rating-stars {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+}
+
+
+.customer-rating-star {
+  font-size: 28px;
+  opacity: 0.2;
+}
+
+
+.customer-rating-star.active {
+  opacity: 1;
+}
+
+
+/* =========================================
+   RATING NUMBER
+   ========================================= */
+
+.customer-rating-value {
+  margin-top: 10px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+
+.customer-rating-value span {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+
+/* =========================================
+   COMMENT
+   ========================================= */
+
+.customer-rating-comment {
+  max-width: 700px;
+  margin: 22px auto;
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+
+/* =========================================
+   CUSTOMER
+   ========================================= */
+
+.customer-rating-customer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+
+.customer-rating-customer strong {
+  font-size: 15px;
+}
+
+
+.customer-rating-customer span {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+
+.customer-rating-date {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+
+/* =========================================
+   CONTROLS
+   ========================================= */
+
+.customer-ratings-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+
+.customer-ratings-controls > button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #d7d7d7;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+
+.customer-ratings-dots {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+
+.customer-ratings-dots button {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: #d0d0d0;
+  cursor: pointer;
+}
+
+
+.customer-ratings-dots button.active {
+  width: 22px;
+  border-radius: 10px;
+}
+
+
+/* =========================================
+   LOADING
+   ========================================= */
+
+.customer-ratings-loading {
+  padding: 40px;
+  text-align: center;
+}
+
+
+/* =========================================
+   MOBILE
+   ========================================= */
+
+@media (max-width: 600px) {
+
+  .customer-ratings-section {
+    margin: 50px auto;
+    padding: 0 16px;
+  }
+
+
+  .customer-ratings-header h2 {
+    font-size: 24px;
+  }
+
+
+  .customer-rating-card {
+    padding: 32px 22px;
+    min-height: 270px;
+  }
+
+
+  .customer-rating-comment {
+    font-size: 16px;
+  }
+
+}

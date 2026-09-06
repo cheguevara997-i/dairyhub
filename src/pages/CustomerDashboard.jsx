@@ -13,7 +13,9 @@ function CustomerDashboard() {
     <div className="dashboard">
 
 
-      {/* DASHBOARD HEADER */}
+      {/* =====================================
+          DASHBOARD HEADER
+      ====================================== */}
 
       <div className="dashboard-header">
 
@@ -40,30 +42,46 @@ function CustomerDashboard() {
       </div>
 
 
-      {/* WELCOME MESSAGE */}
+      {/* =====================================
+          WELCOME MESSAGE
+      ====================================== */}
 
       <p className="dashboard-welcome">
-        Hello, {user?.name || "Customer"}! Manage your
-        orders, subscriptions and dairy products from here.
+
+        Hello, {user?.name || "Customer"}!
+
+        {" "}
+
+        Manage your orders, subscriptions,
+        profile and dairy products from here.
+
       </p>
 
 
-      {/* DASHBOARD CARDS */}
+      {/* =====================================
+          DASHBOARD CARDS
+      ====================================== */}
 
       <div className="dashboard-grid">
 
+
+        {/* SHOP PRODUCTS */}
 
         <Link
           to="/products?from=dashboard"
           className="dashboard-card"
         >
+
           🛒
 
           <h3>
             Shop Products
           </h3>
+
         </Link>
 
+
+        {/* MY ORDERS */}
 
         <Link
           to="/orders"
@@ -79,6 +97,8 @@ function CustomerDashboard() {
         </Link>
 
 
+        {/* MILK SUBSCRIPTION */}
+
         <Link
           to="/subscription"
           className="dashboard-card"
@@ -92,6 +112,8 @@ function CustomerDashboard() {
 
         </Link>
 
+
+        {/* MY SUBSCRIPTIONS */}
 
         <Link
           to="/my-subscriptions"
@@ -107,6 +129,24 @@ function CustomerDashboard() {
         </Link>
 
 
+        {/* =================================
+            MY PROFILE
+        ================================== */}
+
+        <Link
+          to="/profile"
+          className="dashboard-card"
+        >
+
+          👤
+
+          <h3>
+            My Profile
+          </h3>
+
+        </Link>
+
+
       </div>
 
     </div>
@@ -114,5 +154,6 @@ function CustomerDashboard() {
   );
 
 }
+
 
 export default CustomerDashboard;

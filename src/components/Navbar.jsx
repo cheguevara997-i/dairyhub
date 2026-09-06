@@ -5,39 +5,54 @@ function Navbar() {
 
   const navigate = useNavigate();
 
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] =
+    useState(false);
 
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] =
+    useState("");
 
-  const menuRef = useRef(null);
+  const menuRef =
+    useRef(null);
 
-  const user = JSON.parse(
-    localStorage.getItem("dairyhubUser")
-  );
+  const user =
+    JSON.parse(
+      localStorage.getItem("dairyhubUser")
+    );
 
 
   const closeMenu = () => {
+
     setMenuOpen(false);
+
   };
 
 
-  /* CLOSE MENU WHEN CLICKING OUTSIDE */
+  // =========================================
+  // CLOSE MENU OUTSIDE CLICK
+  // =========================================
 
   useEffect(() => {
 
-    const handleClickOutside = (event) => {
+    const handleClickOutside =
+      (event) => {
 
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(event.target)
-      ) {
-        setMenuOpen(false);
-      }
+        if (
+          menuRef.current &&
+          !menuRef.current.contains(
+            event.target
+          )
+        ) {
 
-    };
+          setMenuOpen(false);
+
+        }
+
+      };
 
 
-    if (menuOpen) {
+    if (
+      menuOpen
+    ) {
 
       document.addEventListener(
         "mousedown",
@@ -59,6 +74,10 @@ function Navbar() {
   }, [menuOpen]);
 
 
+  // =========================================
+  // LOGOUT
+  // =========================================
+
   const logout = () => {
 
     localStorage.removeItem(
@@ -67,57 +86,79 @@ function Navbar() {
 
     setMenuOpen(false);
 
-    window.location.href = "/";
+    window.location.href =
+      "/";
 
   };
 
 
-  const handleSearch = (e) => {
+  // =========================================
+  // SEARCH
+  // =========================================
 
-    e.preventDefault();
+  const handleSearch =
+    (e) => {
 
-    const search =
-      searchText.trim();
+      e.preventDefault();
 
-    if (!search) {
+      const search =
+        searchText.trim();
 
-      return;
 
-    }
+      if (
+        !search
+      ) {
 
-    navigate(
-      `/products?search=${encodeURIComponent(search)}`
-    );
+        return;
 
-    setMenuOpen(false);
+      }
 
-  };
+
+      navigate(
+        `/products?search=${encodeURIComponent(search)}`
+      );
+
+
+      setMenuOpen(false);
+
+    };
 
 
   return (
 
     <nav className="dairy-navbar">
 
-      {/* LOGO */}
+
+      {/* =====================================
+          LOGO
+      ====================================== */}
 
       <Link
         to="/"
         className="dairy-logo"
-        onClick={closeMenu}
+        onClick={
+          closeMenu
+        }
       >
+
         <img
           src="/images/dairy.jpg"
           alt="DairyHub Logo"
           className="dairy-logo-image"
         />
+
       </Link>
 
 
-      {/* SEARCH */}
+      {/* =====================================
+          SEARCH
+      ====================================== */}
 
       <form
         className="dairy-search"
-        onSubmit={handleSearch}
+        onSubmit={
+          handleSearch
+        }
       >
 
         <span className="dairy-search-icon">
@@ -128,9 +169,13 @@ function Navbar() {
         <input
           type="text"
           placeholder="Search milk, paneer, ghee..."
-          value={searchText}
+          value={
+            searchText
+          }
           onChange={(e) =>
-            setSearchText(e.target.value)
+            setSearchText(
+              e.target.value
+            )
           }
         />
 
@@ -160,12 +205,15 @@ function Navbar() {
       </form>
 
 
-      {/* MENU AREA */}
+      {/* =====================================
+          MENU AREA
+      ====================================== */}
 
       <div
         className="navbar-menu-wrapper"
         ref={menuRef}
       >
+
 
         {/* MENU BUTTON */}
 
@@ -173,7 +221,8 @@ function Navbar() {
           className="dairy-menu-button"
           onClick={() =>
             setMenuOpen(
-              (previous) => !previous
+              previous =>
+                !previous
             )
           }
           aria-label="Open menu"
@@ -182,17 +231,22 @@ function Navbar() {
         </button>
 
 
-        {/* DROPDOWN */}
+        {/* ===================================
+            DROPDOWN
+        ==================================== */}
 
         {menuOpen && (
 
           <div className="dairy-menu">
 
+
             {/* COMMON */}
 
             <Link
               to="/"
-              onClick={closeMenu}
+              onClick={
+                closeMenu
+              }
             >
               Home
             </Link>
@@ -200,13 +254,17 @@ function Navbar() {
 
             <Link
               to="/products"
-              onClick={closeMenu}
+              onClick={
+                closeMenu
+              }
             >
               Products
             </Link>
 
 
-            {/* CUSTOMER */}
+            {/* =================================
+                CUSTOMER
+            ================================== */}
 
             {user?.role === "CUSTOMER" && (
 
@@ -214,7 +272,9 @@ function Navbar() {
 
                 <Link
                   to="/cart"
-                  onClick={closeMenu}
+                  onClick={
+                    closeMenu
+                  }
                 >
                   🛒 Cart
                 </Link>
@@ -222,9 +282,21 @@ function Navbar() {
 
                 <Link
                   to="/dashboard"
-                  onClick={closeMenu}
+                  onClick={
+                    closeMenu
+                  }
                 >
                   Dashboard
+                </Link>
+
+
+                <Link
+                  to="/profile"
+                  onClick={
+                    closeMenu
+                  }
+                >
+                  👤 My Profile
                 </Link>
 
               </>
@@ -232,7 +304,9 @@ function Navbar() {
             )}
 
 
-            {/* ADMIN */}
+            {/* =================================
+                ADMIN
+            ================================== */}
 
             {user?.role === "ADMIN" && (
 
@@ -240,23 +314,39 @@ function Navbar() {
 
                 <Link
                   to="/admin"
-                  onClick={closeMenu}
+                  onClick={
+                    closeMenu
+                  }
                 >
                   🛠️ Admin Dashboard
-                </Link>              
+                </Link>
+
+
+                <Link
+                  to="/admin/profile"
+                  onClick={
+                    closeMenu
+                  }
+                >
+                  👤 My Profile
+                </Link>
 
               </>
 
             )}
 
 
-            {/* LOGIN */}
+            {/* =================================
+                LOGIN
+            ================================== */}
 
             {!user && (
 
               <Link
                 to="/login"
-                onClick={closeMenu}
+                onClick={
+                  closeMenu
+                }
               >
                 Login
               </Link>
@@ -264,13 +354,17 @@ function Navbar() {
             )}
 
 
-            {/* LOGOUT */}
+            {/* =================================
+                LOGOUT
+            ================================== */}
 
             {user && (
 
               <button
                 className="dairy-logout"
-                onClick={logout}
+                onClick={
+                  logout
+                }
               >
                 Logout
               </button>
@@ -288,5 +382,6 @@ function Navbar() {
   );
 
 }
+
 
 export default Navbar;
