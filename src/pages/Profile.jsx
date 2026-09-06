@@ -211,9 +211,20 @@ function Profile() {
           }
 
 
+          // ===================================
+          // OTHER ERROR
+          // ===================================
+
           if (
             !response.ok
           ) {
+
+            console.error(
+              "Profile API error:",
+              response.status,
+              data
+            );
+
 
             alert(
               data?.message ||
@@ -245,21 +256,23 @@ function Profile() {
           );
 
 
-          /*
-           * Update localStorage too.
-           *
-           * IMPORTANT:
-           * Keep the existing JWT token because
-           * /api/users/me does not return a new one.
-           */
+          // ===================================
+          // UPDATE LOCAL STORAGE
+          // ===================================
+          // Keep existing JWT token because
+          // /api/users/me does not return a token.
 
           localStorage.setItem(
             "dairyhubUser",
             JSON.stringify({
+
               ...savedUser,
+
               ...data,
+
               token:
                 savedUser.token
+
             })
           );
 
@@ -450,6 +463,13 @@ function Profile() {
         if (
           !response.ok
         ) {
+
+          console.error(
+            "Profile update API error:",
+            response.status,
+            data
+          );
+
 
           alert(
             data?.message ||
