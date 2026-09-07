@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-
 // =========================================
 // API BASE URL
 // =========================================
@@ -9,6 +8,9 @@ import { useNavigate } from "react-router-dom";
 const API_BASE =
   "https://dairyhub-backend.onrender.com";
 
+// =========================================
+// PROFILE COMPONENT
+// =========================================
 
 function Profile() {
 
@@ -30,8 +32,10 @@ function Profile() {
   const [name, setName] =
     useState("");
 
-
   const [phone, setPhone] =
+    useState("");
+
+  const [gender, setGender] =
     useState("");
 
 
@@ -41,7 +45,6 @@ function Profile() {
 
   const [loading, setLoading] =
     useState(true);
-
 
   const [saving, setSaving] =
     useState(false);
@@ -134,9 +137,10 @@ function Profile() {
           );
 
 
-          // ===================================
-          // GET PROFILE
-          // ===================================
+          console.log(
+            "Loading DairyHub profile..."
+          );
+
 
           const response =
             await fetch(
@@ -148,6 +152,9 @@ function Profile() {
 
                 headers: {
 
+                  Accept:
+                    "application/json",
+
                   Authorization:
                     `Bearer ${savedUser.token}`
 
@@ -157,8 +164,20 @@ function Profile() {
             );
 
 
+          console.log(
+            "Profile response status:",
+            response.status
+          );
+
+
           const responseText =
             await response.text();
+
+
+          console.log(
+            "Profile response:",
+            responseText
+          );
 
 
           let data =
@@ -174,10 +193,12 @@ function Profile() {
                   )
                 : null;
 
-          } catch {
+          } catch (error) {
 
-            data =
-              null;
+            console.error(
+              "Invalid JSON response:",
+              error
+            );
 
           }
 
@@ -212,7 +233,7 @@ function Profile() {
 
 
           // ===================================
-          // OTHER ERROR
+          // API FAILURE
           // ===================================
 
           if (
@@ -228,7 +249,7 @@ function Profile() {
 
             alert(
               data?.message ||
-              "Unable to load your profile."
+              `Unable to load profile. Server returned ${response.status}.`
             );
 
 
@@ -238,7 +259,30 @@ function Profile() {
 
 
           // ===================================
-          // SAVE PROFILE
+          // EMPTY RESPONSE
+          // ===================================
+
+          if (
+            !data
+          ) {
+
+            console.error(
+              "Empty profile response."
+            );
+
+
+            alert(
+              "The server returned an empty profile response."
+            );
+
+
+            return;
+
+          }
+
+
+          // ===================================
+          // STORE PROFILE
           // ===================================
 
           setProfile(
@@ -246,21 +290,32 @@ function Profile() {
           );
 
 
+          // ===================================
+          // FORM VALUES
+          // ===================================
+
           setName(
-            data?.name || ""
+            data.name || ""
           );
 
 
           setPhone(
-            data?.phone || ""
+            data.phone || ""
+          );
+
+
+          setGender(
+            data.gender || ""
           );
 
 
           // ===================================
           // UPDATE LOCAL STORAGE
           // ===================================
-          // Keep existing JWT token because
-          // /api/users/me does not return a token.
+
+          /*
+           * Keep the current JWT token.
+           */
 
           localStorage.setItem(
             "dairyhubUser",
@@ -277,16 +332,21 @@ function Profile() {
           );
 
 
+          console.log(
+            "Profile loaded successfully."
+          );
+
+
         } catch (error) {
 
           console.error(
-            "Profile loading error:",
+            "PROFILE LOADING ERROR:",
             error
           );
 
 
           alert(
-            "Unable to load your profile. Please try again."
+            `Unable to load your profile.\n\nError: ${error.message}`
           );
 
 
@@ -319,6 +379,10 @@ function Profile() {
       const savedUser =
         getSavedUser();
 
+
+      // =====================================
+      // CHECK LOGIN
+      // =====================================
 
       if (
         !savedUser ||
@@ -358,10 +422,33 @@ function Profile() {
       }
 
 
+      // =====================================
+      // VALIDATE GENDER
+      // =====================================
+
+      if (
+        !gender
+      ) {
+
+        alert(
+          "Please select your gender."
+        );
+
+
+        return;
+
+      }
+
+
       try {
 
         setSaving(
           true
+        );
+
+
+        console.log(
+          "Updating DairyHub profile..."
         );
 
 
@@ -379,6 +466,9 @@ function Profile() {
 
               headers: {
 
+                Accept:
+                  "application/json",
+
                 "Content-Type":
                   "application/json",
 
@@ -394,7 +484,10 @@ function Profile() {
                     name.trim(),
 
                   phone:
-                    phone.trim()
+                    phone.trim(),
+
+                  gender:
+                    gender
 
                 })
 
@@ -402,8 +495,20 @@ function Profile() {
           );
 
 
+        console.log(
+          "Profile update status:",
+          response.status
+        );
+
+
         const responseText =
           await response.text();
+
+
+        console.log(
+          "Profile update response:",
+          responseText
+        );
 
 
         let data =
@@ -419,10 +524,12 @@ function Profile() {
                 )
               : null;
 
-        } catch {
+        } catch (error) {
 
-          data =
-            null;
+          console.error(
+            "Invalid update JSON:",
+            error
+          );
 
         }
 
@@ -457,7 +564,7 @@ function Profile() {
 
 
         // ===================================
-        // UPDATE FAILED
+        // UPDATE FAILURE
         // ===================================
 
         if (
@@ -473,7 +580,25 @@ function Profile() {
 
           alert(
             data?.message ||
-            "Unable to update your profile."
+            `Unable to update profile. Server returned ${response.status}.`
+          );
+
+
+          return;
+
+        }
+
+
+        // ===================================
+        // EMPTY RESPONSE
+        // ===================================
+
+        if (
+          !data
+        ) {
+
+          alert(
+            "Profile was updated, but the server returned no profile data."
           );
 
 
@@ -492,12 +617,17 @@ function Profile() {
 
 
         setName(
-          data?.name || ""
+          data.name || ""
         );
 
 
         setPhone(
-          data?.phone || ""
+          data.phone || ""
+        );
+
+
+        setGender(
+          data.gender || ""
         );
 
 
@@ -513,13 +643,16 @@ function Profile() {
 
             ...data,
 
-            // Never lose JWT
             token:
               savedUser.token
 
           })
         );
 
+
+        // ===================================
+        // EXIT EDIT MODE
+        // ===================================
 
         setEditing(
           false
@@ -531,16 +664,21 @@ function Profile() {
         );
 
 
+        console.log(
+          "Profile updated successfully."
+        );
+
+
       } catch (error) {
 
         console.error(
-          "Profile update error:",
+          "PROFILE UPDATE ERROR:",
           error
         );
 
 
         alert(
-          "Unable to update your profile. Please try again."
+          `Unable to update your profile.\n\nError: ${error.message}`
         );
 
 
@@ -572,9 +710,46 @@ function Profile() {
       );
 
 
+      setGender(
+        profile?.gender || ""
+      );
+
+
       setEditing(
         false
       );
+
+    };
+
+
+  // =========================================
+  // BACK BUTTON
+  // =========================================
+
+  const handleBack =
+    () => {
+
+      const role =
+        String(
+          profile?.role || ""
+        ).toUpperCase();
+
+
+      if (
+        role === "ADMIN"
+      ) {
+
+        navigate(
+          "/admin"
+        );
+
+      } else {
+
+        navigate(
+          "/dashboard"
+        );
+
+      }
 
     };
 
@@ -598,6 +773,7 @@ function Profile() {
             <h1>
               My Profile
             </h1>
+
 
             <p>
               Loading your profile...
@@ -641,6 +817,7 @@ function Profile() {
             Profile unavailable
           </h3>
 
+
           <button
             onClick={() =>
               navigate("/")
@@ -656,6 +833,17 @@ function Profile() {
     );
 
   }
+
+
+  // =========================================
+  // CHECK ADMIN
+  // =========================================
+
+  const isAdmin =
+    String(
+      profile.role || ""
+    ).toUpperCase() ===
+    "ADMIN";
 
 
   // =========================================
@@ -679,6 +867,7 @@ function Profile() {
             My Profile
           </h1>
 
+
           <p>
             Manage your DairyHub account information.
           </p>
@@ -688,27 +877,9 @@ function Profile() {
 
         <button
           className="dashboard-home-btn"
-          onClick={() => {
-
-            if (
-              String(
-                profile.role || ""
-              ).toUpperCase() === "ADMIN"
-            ) {
-
-              navigate(
-                "/admin"
-              );
-
-            } else {
-
-              navigate(
-                "/dashboard"
-              );
-
-            }
-
-          }}
+          onClick={
+            handleBack
+          }
         >
           ← Back
         </button>
@@ -727,13 +898,14 @@ function Profile() {
           background: "#ffffff",
           borderRadius: "16px",
           padding: "30px",
-          boxShadow: "0 8px 30px rgba(0,0,0,0.08)"
+          boxShadow:
+            "0 8px 30px rgba(0,0,0,0.08)"
         }}
       >
 
 
         {/* ===================================
-            PROFILE ICON
+            PROFILE AVATAR
         ==================================== */}
 
         <div
@@ -765,7 +937,8 @@ function Profile() {
               margin: "0"
             }}
           >
-            {profile.name || "DairyHub User"}
+            {profile.name ||
+              "DairyHub User"}
           </h2>
 
 
@@ -792,7 +965,9 @@ function Profile() {
         >
 
 
-          {/* NAME */}
+          {/* =================================
+              FULL NAME
+          ================================== */}
 
           <div
             style={{
@@ -829,14 +1004,109 @@ function Profile() {
                 boxSizing: "border-box",
                 padding: "12px",
                 borderRadius: "8px",
-                border: "1px solid #ddd"
+                border: "1px solid #ddd",
+                background:
+                  editing
+                    ? "#ffffff"
+                    : "#f5f5f5"
               }}
             />
 
           </div>
 
 
-          {/* EMAIL */}
+          {/* =================================
+              GENDER
+          ================================== */}
+
+          <div
+            style={{
+              marginBottom: "20px"
+            }}
+          >
+
+            <label
+              style={{
+                display: "block",
+                marginBottom: "8px",
+                fontWeight: "600"
+              }}
+            >
+              Gender
+            </label>
+
+
+            <select
+              value={
+                gender
+              }
+              disabled={
+                !editing
+              }
+              onChange={(e) =>
+                setGender(
+                  e.target.value
+                )
+              }
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "12px",
+                borderRadius: "8px",
+                border: "1px solid #ddd",
+                background:
+                  editing
+                    ? "#ffffff"
+                    : "#f5f5f5",
+                cursor:
+                  editing
+                    ? "pointer"
+                    : "not-allowed"
+              }}
+            >
+
+              <option
+                value=""
+              >
+                Select Gender
+              </option>
+
+
+              <option
+                value="Male"
+              >
+                Male
+              </option>
+
+
+              <option
+                value="Female"
+              >
+                Female
+              </option>
+
+
+              <option
+                value="Other"
+              >
+                Other
+              </option>
+
+
+              <option
+                value="Prefer not to say"
+              >
+                Prefer not to say
+              </option>
+
+            </select>
+
+          </div>
+
+
+          {/* =================================
+              EMAIL
+          ================================== */}
 
           <div
             style={{
@@ -884,7 +1154,9 @@ function Profile() {
           </div>
 
 
-          {/* PHONE */}
+          {/* =================================
+              PHONE
+          ================================== */}
 
           <div
             style={{
@@ -922,14 +1194,20 @@ function Profile() {
                 boxSizing: "border-box",
                 padding: "12px",
                 borderRadius: "8px",
-                border: "1px solid #ddd"
+                border: "1px solid #ddd",
+                background:
+                  editing
+                    ? "#ffffff"
+                    : "#f5f5f5"
               }}
             />
 
           </div>
 
 
-          {/* ROLE */}
+          {/* =================================
+              ROLE
+          ================================== */}
 
           <div
             style={{
@@ -971,7 +1249,8 @@ function Profile() {
                 color: "#777"
               }}
             >
-              Account role can only be managed by DairyHub administration.
+              Account role can only be managed by
+              DairyHub administration.
             </small>
 
           </div>
@@ -1021,17 +1300,17 @@ function Profile() {
                   padding: "13px",
                   border: "none",
                   borderRadius: "8px",
-                  cursor: saving
-                    ? "not-allowed"
-                    : "pointer",
+                  cursor:
+                    saving
+                      ? "not-allowed"
+                      : "pointer",
                   fontSize: "16px"
                 }}
               >
 
                 {saving
                   ? "Saving..."
-                  : "Save Changes"
-                }
+                  : "Save Changes"}
 
               </button>
 
@@ -1049,9 +1328,10 @@ function Profile() {
                   padding: "13px",
                   border: "1px solid #ddd",
                   borderRadius: "8px",
-                  cursor: saving
-                    ? "not-allowed"
-                    : "pointer",
+                  cursor:
+                    saving
+                      ? "not-allowed"
+                      : "pointer",
                   fontSize: "16px",
                   background: "#ffffff"
                 }}
@@ -1072,6 +1352,5 @@ function Profile() {
   );
 
 }
-
 
 export default Profile;
