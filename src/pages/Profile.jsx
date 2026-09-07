@@ -1396,11 +1396,12 @@ function Profile() {
   // BACK
   // =========================================
 
-  const handleBack = () => {
+  const handleBack =
+    () => {
 
-    navigate("/");
+      navigate("/");
 
-  };
+    };
 
 
   // =========================================
@@ -1518,11 +1519,6 @@ function Profile() {
       }}
     >
 
-
-      {/* =====================================
-          PAGE CONTAINER
-      ====================================== */}
-
       <div
         style={{
           maxWidth: "1050px",
@@ -1530,10 +1526,9 @@ function Profile() {
         }}
       >
 
-
-        {/* ===================================
+        {/* =====================================
             TOP HEADER
-        ==================================== */}
+        ====================================== */}
 
         <div
           style={{
@@ -1557,9 +1552,8 @@ function Profile() {
                 letterSpacing: "0.5px"
               }}
             >
-              ACCOUNT
+              {isAdmin ? "ADMIN ACCOUNT" : "CUSTOMER ACCOUNT"}
             </p>
-
 
             <h1
               style={{
@@ -1568,9 +1562,8 @@ function Profile() {
                 fontSize: "34px"
               }}
             >
-              My Profile
+              {isAdmin ? "Admin Profile" : "My Profile"}
             </h1>
-
 
             <p
               style={{
@@ -1578,17 +1571,16 @@ function Profile() {
                 color: "#6b7280"
               }}
             >
-              Manage your DairyHub account and preferences.
+              {isAdmin
+                ? "Manage your DairyHub administrator account."
+                : "Manage your DairyHub account and preferences."}
             </p>
 
           </div>
 
-
           <button
             type="button"
-            onClick={
-              handleBack
-            }
+            onClick={handleBack}
             style={{
               border: "1px solid #d7ded0",
               background: "#ffffff",
@@ -1598,15 +1590,15 @@ function Profile() {
               fontWeight: "600"
             }}
           >
-            ← Back
+            ← Home
           </button>
 
         </div>
 
 
-        {/* ===================================
+        {/* =====================================
             PROFILE HERO
-        ==================================== */}
+        ====================================== */}
 
         <div
           style={{
@@ -1614,17 +1606,13 @@ function Profile() {
             borderRadius: "20px",
             padding: "28px",
             marginBottom: "22px",
-            boxShadow:
-              "0 8px 30px rgba(0,0,0,0.06)",
+            boxShadow: "0 8px 30px rgba(0,0,0,0.06)",
             display: "flex",
             alignItems: "center",
             gap: "25px",
             flexWrap: "wrap"
           }}
         >
-
-
-          {/* PROFILE PHOTO */}
 
           <div
             style={{
@@ -1641,8 +1629,7 @@ function Profile() {
                 overflow: "hidden",
                 background: "#edf6e5",
                 border: "4px solid #ffffff",
-                boxShadow:
-                  "0 4px 15px rgba(0,0,0,0.12)",
+                boxShadow: "0 4px 15px rgba(0,0,0,0.12)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center"
@@ -1668,7 +1655,7 @@ function Profile() {
                     fontSize: "52px"
                   }}
                 >
-                  👤
+                  {isAdmin ? "🛡️" : "👤"}
                 </span>
 
               )}
@@ -1676,9 +1663,6 @@ function Profile() {
             </div>
 
           </div>
-
-
-          {/* PROFILE SUMMARY */}
 
           <div
             style={{
@@ -1694,10 +1678,8 @@ function Profile() {
                 fontSize: "28px"
               }}
             >
-              {profile.name ||
-                "DairyHub User"}
+              {profile.name || "DairyHub User"}
             </h2>
-
 
             <p
               style={{
@@ -1708,14 +1690,13 @@ function Profile() {
               {profile.email}
             </p>
 
-
             <span
               style={{
                 display: "inline-block",
                 padding: "7px 13px",
                 borderRadius: "20px",
-                background: "#edf6e5",
-                color: "#55751d",
+                background: isAdmin ? "#eef2ff" : "#edf6e5",
+                color: isAdmin ? "#3949ab" : "#55751d",
                 fontWeight: "700",
                 fontSize: "13px"
               }}
@@ -1724,9 +1705,6 @@ function Profile() {
             </span>
 
           </div>
-
-
-          {/* PHOTO BUTTON */}
 
           <div
             style={{
@@ -1744,33 +1722,20 @@ function Profile() {
                 borderRadius: "9px",
                 background: "#f3f7ef",
                 border: "1px solid #d8e2cf",
-                cursor: editing
-                  ? "pointer"
-                  : "not-allowed",
+                cursor: editing ? "pointer" : "not-allowed",
                 fontWeight: "600",
-                color: editing
-                  ? "#55751d"
-                  : "#999",
-                opacity: photoLoading
-                  ? 0.6
-                  : 1
+                color: editing ? "#55751d" : "#999",
+                opacity: photoLoading ? 0.6 : 1
               }}
             >
 
-              {photoLoading
-                ? "Reading..."
-                : "📷 Change Photo"}
+              {photoLoading ? "Reading..." : "📷 Change Photo"}
 
               <input
                 type="file"
                 accept="image/*"
-                disabled={
-                  !editing ||
-                  photoLoading
-                }
-                onChange={
-                  handlePhotoChange
-                }
+                disabled={!editing || photoLoading}
+                onChange={handlePhotoChange}
                 style={{
                   display: "none"
                 }}
@@ -1778,14 +1743,11 @@ function Profile() {
 
             </label>
 
-
             {profilePhoto && editing && (
 
               <button
                 type="button"
-                onClick={
-                  removePhoto
-                }
+                onClick={removePhoto}
                 style={{
                   padding: "10px 15px",
                   borderRadius: "9px",
@@ -1806,9 +1768,9 @@ function Profile() {
         </div>
 
 
-        {/* ===================================
+        {/* =====================================
             PERSONAL INFORMATION
-        ==================================== */}
+        ====================================== */}
 
         <section
           style={{
@@ -1816,63 +1778,49 @@ function Profile() {
             borderRadius: "18px",
             padding: "28px",
             marginBottom: "22px",
-            boxShadow:
-              "0 8px 30px rgba(0,0,0,0.05)"
+            boxShadow: "0 8px 30px rgba(0,0,0,0.05)"
           }}
         >
 
           <div
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
               marginBottom: "22px"
             }}
           >
 
-            <div>
+            <h2
+              style={{
+                margin: "0 0 5px",
+                fontSize: "22px",
+                color: "#263238"
+              }}
+            >
+              👤 Personal Information
+            </h2>
 
-              <h2
-                style={{
-                  margin: "0 0 5px",
-                  fontSize: "22px",
-                  color: "#263238"
-                }}
-              >
-                Personal Information
-              </h2>
-
-
-              <p
-                style={{
-                  margin: "0",
-                  color: "#7a7a7a",
-                  fontSize: "14px"
-                }}
-              >
-                Your basic DairyHub account information.
-              </p>
-
-            </div>
+            <p
+              style={{
+                margin: "0",
+                color: "#7a7a7a",
+                fontSize: "14px"
+              }}
+            >
+              {isAdmin
+                ? "Your administrator account details."
+                : "Your basic DairyHub account information."}
+            </p>
 
           </div>
 
-
-          <form
-            onSubmit={
-              handleSave
-            }
-          >
+          <form onSubmit={handleSave}>
 
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns:
-                  "repeat(auto-fit, minmax(260px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
                 gap: "20px"
               }}
             >
-
 
               {/* FULL NAME */}
 
@@ -1889,31 +1837,18 @@ function Profile() {
                   Full Name
                 </label>
 
-
                 <input
                   type="text"
-                  value={
-                    name
-                  }
-                  disabled={
-                    !editing
-                  }
-                  onChange={(e) =>
-                    setName(
-                      e.target.value
-                    )
-                  }
+                  value={name}
+                  disabled={!editing}
+                  onChange={(e) => setName(e.target.value)}
                   style={{
                     width: "100%",
                     boxSizing: "border-box",
                     padding: "13px 14px",
                     borderRadius: "10px",
                     border: "1px solid #d8ded5",
-                    background:
-                      editing
-                        ? "#ffffff"
-                        : "#f7f8f6",
-                    outline: "none"
+                    background: editing ? "#ffffff" : "#f7f8f6"
                   }}
                 />
 
@@ -1935,60 +1870,27 @@ function Profile() {
                   Gender
                 </label>
 
-
                 <select
-                  value={
-                    gender
-                  }
-                  disabled={
-                    !editing
-                  }
-                  onChange={(e) =>
-                    setGender(
-                      e.target.value
-                    )
-                  }
+                  value={gender}
+                  disabled={!editing}
+                  onChange={(e) => setGender(e.target.value)}
                   style={{
                     width: "100%",
                     boxSizing: "border-box",
                     padding: "13px 14px",
                     borderRadius: "10px",
                     border: "1px solid #d8ded5",
-                    background:
-                      editing
-                        ? "#ffffff"
-                        : "#f7f8f6",
-                    cursor:
-                      editing
-                        ? "pointer"
-                        : "not-allowed"
+                    background: editing ? "#ffffff" : "#f7f8f6",
+                    cursor: editing ? "pointer" : "not-allowed"
                   }}
                 >
-
-                  <option value="">
-                    Select Gender
-                  </option>
-
-
-                  <option value="Male">
-                    Male
-                  </option>
-
-
-                  <option value="Female">
-                    Female
-                  </option>
-
-
-                  <option value="Other">
-                    Other
-                  </option>
-
-
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
                   <option value="Prefer not to say">
                     Prefer not to say
                   </option>
-
                 </select>
 
               </div>
@@ -2009,12 +1911,9 @@ function Profile() {
                   Email Address
                 </label>
 
-
                 <input
                   type="email"
-                  value={
-                    profile.email || ""
-                  }
+                  value={profile.email || ""}
                   disabled
                   style={{
                     width: "100%",
@@ -2026,7 +1925,6 @@ function Profile() {
                     color: "#737b75"
                   }}
                 />
-
 
                 <small
                   style={{
@@ -2056,31 +1954,19 @@ function Profile() {
                   Phone Number
                 </label>
 
-
                 <input
                   type="tel"
                   placeholder="+91 XXXXXXXXXX"
-                  value={
-                    phone
-                  }
-                  disabled={
-                    !editing
-                  }
-                  onChange={(e) =>
-                    setPhone(
-                      e.target.value
-                    )
-                  }
+                  value={phone}
+                  disabled={!editing}
+                  onChange={(e) => setPhone(e.target.value)}
                   style={{
                     width: "100%",
                     boxSizing: "border-box",
                     padding: "13px 14px",
                     borderRadius: "10px",
                     border: "1px solid #d8ded5",
-                    background:
-                      editing
-                        ? "#ffffff"
-                        : "#f7f8f6"
+                    background: editing ? "#ffffff" : "#f7f8f6"
                   }}
                 />
 
@@ -2091,8 +1977,7 @@ function Profile() {
 
               <div
                 style={{
-                  gridColumn:
-                    "1 / -1"
+                  gridColumn: "1 / -1"
                 }}
               >
 
@@ -2107,12 +1992,9 @@ function Profile() {
                   Account Role
                 </label>
 
-
                 <input
                   type="text"
-                  value={
-                    profile.role || ""
-                  }
+                  value={profile.role || ""}
                   disabled
                   style={{
                     width: "100%",
@@ -2125,7 +2007,6 @@ function Profile() {
                   }}
                 />
 
-
                 <small
                   style={{
                     display: "block",
@@ -2133,7 +2014,7 @@ function Profile() {
                     color: "#8a8f8a"
                   }}
                 >
-                  🔒 Your account role is controlled by DairyHub.
+                  🔒 Account role is controlled by DairyHub administration.
                 </small>
 
               </div>
@@ -2141,7 +2022,7 @@ function Profile() {
             </div>
 
 
-            {/* PERSONAL SAVE BUTTONS */}
+            {/* SAVE / CANCEL */}
 
             {editing && (
 
@@ -2157,51 +2038,35 @@ function Profile() {
 
                 <button
                   type="button"
-                  disabled={
-                    saving
-                  }
-                  onClick={
-                    handleCancel
-                  }
+                  disabled={saving}
+                  onClick={handleCancel}
                   style={{
                     padding: "12px 20px",
                     borderRadius: "10px",
                     background: "#ffffff",
                     border: "1px solid #d2d8cf",
-                    cursor:
-                      saving
-                        ? "not-allowed"
-                        : "pointer",
+                    cursor: saving ? "not-allowed" : "pointer",
                     fontWeight: "700"
                   }}
                 >
                   Cancel
                 </button>
 
-
                 <button
                   type="submit"
-                  disabled={
-                    saving ||
-                    photoLoading
-                  }
+                  disabled={saving || photoLoading}
                   style={{
                     padding: "12px 20px",
                     borderRadius: "10px",
                     border: "none",
                     cursor:
-                      saving ||
-                      photoLoading
+                      saving || photoLoading
                         ? "not-allowed"
                         : "pointer",
                     fontWeight: "700"
                   }}
                 >
-
-                  {saving
-                    ? "Saving..."
-                    : "Save Profile"}
-
+                  {saving ? "Saving..." : "Save Profile"}
                 </button>
 
               </div>
@@ -2213,9 +2078,7 @@ function Profile() {
         </section>
 
 
-        {/* ===================================
-            EDIT PROFILE BUTTON
-        ==================================== */}
+        {/* EDIT BUTTON */}
 
         {!editing && (
 
@@ -2229,11 +2092,7 @@ function Profile() {
 
             <button
               type="button"
-              onClick={() =>
-                setEditing(
-                  true
-                )
-              }
+              onClick={() => setEditing(true)}
               style={{
                 padding: "12px 22px",
                 borderRadius: "10px",
@@ -2251,24 +2110,225 @@ function Profile() {
         )}
 
 
-        {/* ===================================
-            DELIVERY ADDRESS
-        ==================================== */}
+        {/* =====================================
+            CUSTOMER-ONLY DELIVERY ADDRESS
+        ====================================== */}
 
-        <section
-          style={{
-            background: "#ffffff",
-            borderRadius: "18px",
-            padding: "28px",
-            marginBottom: "22px",
-            boxShadow:
-              "0 8px 30px rgba(0,0,0,0.05)"
-          }}
-        >
+        {!isAdmin && (
 
-          <div
+          <section
             style={{
-              marginBottom: "22px"
+              background: "#ffffff",
+              borderRadius: "18px",
+              padding: "28px",
+              marginBottom: "22px",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.05)"
+            }}
+          >
+
+            <div
+              style={{
+                marginBottom: "22px"
+              }}
+            >
+
+              <h2
+                style={{
+                  margin: "0 0 5px",
+                  fontSize: "22px",
+                  color: "#263238"
+                }}
+              >
+                📍 Delivery Address
+              </h2>
+
+              <p
+                style={{
+                  margin: "0",
+                  color: "#7a7a7a",
+                  fontSize: "14px"
+                }}
+              >
+                Keep your delivery details ready for DairyHub orders.
+              </p>
+
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns:
+                  "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: "20px"
+              }}
+            >
+
+              {/* ADDRESS */}
+
+              <div
+                style={{
+                  gridColumn: "1 / -1"
+                }}
+              >
+
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "8px",
+                    fontWeight: "700",
+                    color: "#374151"
+                  }}
+                >
+                  Address
+                </label>
+
+                <textarea
+                  rows="3"
+                  value={address}
+                  disabled={!editing}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="House number, street, area..."
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    padding: "13px 14px",
+                    borderRadius: "10px",
+                    border: "1px solid #d8ded5",
+                    resize: "vertical",
+                    background: editing ? "#ffffff" : "#f7f8f6"
+                  }}
+                />
+
+              </div>
+
+
+              {/* CITY */}
+
+              <div>
+
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "8px",
+                    fontWeight: "700",
+                    color: "#374151"
+                  }}
+                >
+                  City
+                </label>
+
+                <input
+                  type="text"
+                  value={city}
+                  disabled={!editing}
+                  onChange={(e) => setCity(e.target.value)}
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    padding: "13px 14px",
+                    borderRadius: "10px",
+                    border: "1px solid #d8ded5",
+                    background: editing ? "#ffffff" : "#f7f8f6"
+                  }}
+                />
+
+              </div>
+
+
+              {/* STATE */}
+
+              <div>
+
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "8px",
+                    fontWeight: "700",
+                    color: "#374151"
+                  }}
+                >
+                  State
+                </label>
+
+                <input
+                  type="text"
+                  value={state}
+                  disabled={!editing}
+                  onChange={(e) => setState(e.target.value)}
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    padding: "13px 14px",
+                    borderRadius: "10px",
+                    border: "1px solid #d8ded5",
+                    background: editing ? "#ffffff" : "#f7f8f6"
+                  }}
+                />
+
+              </div>
+
+
+              {/* PINCODE */}
+
+              <div>
+
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "8px",
+                    fontWeight: "700",
+                    color: "#374151"
+                  }}
+                >
+                  Pincode
+                </label>
+
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength="6"
+                  placeholder="6-digit pincode"
+                  value={pincode}
+                  disabled={!editing}
+                  onChange={(e) =>
+                    setPincode(
+                      e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 6)
+                    )
+                  }
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    padding: "13px 14px",
+                    borderRadius: "10px",
+                    border: "1px solid #d8ded5",
+                    background: editing ? "#ffffff" : "#f7f8f6"
+                  }}
+                />
+
+              </div>
+
+            </div>
+
+          </section>
+
+        )}
+
+
+        {/* =====================================
+            ADMIN-ONLY QUICK ACCESS
+        ====================================== */}
+
+        {isAdmin && (
+
+          <section
+            style={{
+              background: "#ffffff",
+              borderRadius: "18px",
+              padding: "28px",
+              marginBottom: "22px",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.05)"
             }}
           >
 
@@ -2279,237 +2339,118 @@ function Profile() {
                 color: "#263238"
               }}
             >
-              📍 Delivery Address
+              🛠️ Admin Access
             </h2>
-
 
             <p
               style={{
-                margin: "0",
+                margin: "0 0 20px",
                 color: "#7a7a7a",
                 fontSize: "14px"
               }}
             >
-              Keep your delivery details ready for DairyHub orders.
+              Quickly access your DairyHub administration tools.
             </p>
-
-          </div>
-
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: "20px"
-            }}
-          >
-
-            {/* ADDRESS */}
 
             <div
               style={{
-                gridColumn:
-                  "1 / -1"
+                display: "grid",
+                gridTemplateColumns:
+                  "repeat(auto-fit, minmax(210px, 1fr))",
+                gap: "15px"
               }}
             >
 
-              <label
+              <button
+                type="button"
+                onClick={() => navigate("/admin")}
                 style={{
-                  display: "block",
-                  marginBottom: "8px",
-                  fontWeight: "700",
-                  color: "#374151"
+                  padding: "18px",
+                  borderRadius: "14px",
+                  border: "1px solid #e0e5dd",
+                  background: "#fafcf8",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  fontWeight: "700"
                 }}
               >
-                Address
-              </label>
+                🛠️ Admin Dashboard
+              </button>
 
-
-              <textarea
-                rows="3"
-                value={
-                  address
-                }
-                disabled={
-                  !editing
-                }
-                onChange={(e) =>
-                  setAddress(
-                    e.target.value
-                  )
-                }
-                placeholder="House number, street, area..."
+              <button
+                type="button"
+                onClick={() => navigate("/admin/users")}
                 style={{
-                  width: "100%",
-                  boxSizing: "border-box",
-                  padding: "13px 14px",
-                  borderRadius: "10px",
-                  border: "1px solid #d8ded5",
-                  resize: "vertical",
-                  background:
-                    editing
-                      ? "#ffffff"
-                      : "#f7f8f6"
+                  padding: "18px",
+                  borderRadius: "14px",
+                  border: "1px solid #e0e5dd",
+                  background: "#fafcf8",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  fontWeight: "700"
                 }}
-              />
+              >
+                👥 Manage Users
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate("/admin/products")}
+                style={{
+                  padding: "18px",
+                  borderRadius: "14px",
+                  border: "1px solid #e0e5dd",
+                  background: "#fafcf8",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  fontWeight: "700"
+                }}
+              >
+                🥛 Manage Products
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate("/admin/orders")}
+                style={{
+                  padding: "18px",
+                  borderRadius: "14px",
+                  border: "1px solid #e0e5dd",
+                  background: "#fafcf8",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  fontWeight: "700"
+                }}
+              >
+                📦 Manage Orders
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate("/admin/subscriptions")}
+                style={{
+                  padding: "18px",
+                  borderRadius: "14px",
+                  border: "1px solid #e0e5dd",
+                  background: "#fafcf8",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  fontWeight: "700"
+                }}
+              >
+                🔄 Manage Subscriptions
+              </button>
 
             </div>
 
+          </section>
 
-            {/* CITY */}
-
-            <div>
-
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "8px",
-                  fontWeight: "700",
-                  color: "#374151"
-                }}
-              >
-                City
-              </label>
+        )}
 
 
-              <input
-                type="text"
-                value={
-                  city
-                }
-                disabled={
-                  !editing
-                }
-                onChange={(e) =>
-                  setCity(
-                    e.target.value
-                  )
-                }
-                style={{
-                  width: "100%",
-                  boxSizing: "border-box",
-                  padding: "13px 14px",
-                  borderRadius: "10px",
-                  border: "1px solid #d8ded5",
-                  background:
-                    editing
-                      ? "#ffffff"
-                      : "#f7f8f6"
-                }}
-              />
-
-            </div>
-
-
-            {/* STATE */}
-
-            <div>
-
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "8px",
-                  fontWeight: "700",
-                  color: "#374151"
-                }}
-              >
-                State
-              </label>
-
-
-              <input
-                type="text"
-                value={
-                  state
-                }
-                disabled={
-                  !editing
-                }
-                onChange={(e) =>
-                  setState(
-                    e.target.value
-                  )
-                }
-                style={{
-                  width: "100%",
-                  boxSizing: "border-box",
-                  padding: "13px 14px",
-                  borderRadius: "10px",
-                  border: "1px solid #d8ded5",
-                  background:
-                    editing
-                      ? "#ffffff"
-                      : "#f7f8f6"
-                }}
-              />
-
-            </div>
-
-
-            {/* PINCODE */}
-
-            <div>
-
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "8px",
-                  fontWeight: "700",
-                  color: "#374151"
-                }}
-              >
-                Pincode
-              </label>
-
-
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength="6"
-                placeholder="6-digit pincode"
-                value={
-                  pincode
-                }
-                disabled={
-                  !editing
-                }
-                onChange={(e) =>
-                  setPincode(
-                    e.target.value
-                      .replace(
-                        /\D/g,
-                        ""
-                      )
-                      .slice(
-                        0,
-                        6
-                      )
-                  )
-                }
-                style={{
-                  width: "100%",
-                  boxSizing: "border-box",
-                  padding: "13px 14px",
-                  borderRadius: "10px",
-                  border: "1px solid #d8ded5",
-                  background:
-                    editing
-                      ? "#ffffff"
-                      : "#f7f8f6"
-                }}
-              />
-
-            </div>
-
-          </div>
-
-        </section>
-
-
-        {/* ===================================
+        {/* =====================================
             ACCOUNT & SECURITY
-        ==================================== */}
+        ====================================== */}
 
         <section
           style={{
@@ -2517,8 +2458,7 @@ function Profile() {
             borderRadius: "18px",
             padding: "28px",
             marginBottom: "22px",
-            boxShadow:
-              "0 8px 30px rgba(0,0,0,0.05)"
+            boxShadow: "0 8px 30px rgba(0,0,0,0.05)"
           }}
         >
 
@@ -2532,7 +2472,6 @@ function Profile() {
             🔐 Account & Security
           </h2>
 
-
           <p
             style={{
               margin: "0 0 20px",
@@ -2540,18 +2479,14 @@ function Profile() {
               fontSize: "14px"
             }}
           >
-            Manage your account security.
+            Manage your DairyHub account security.
           </p>
-
-
-          {/* CHANGE PASSWORD BUTTON */}
 
           <button
             type="button"
             onClick={() =>
               setPasswordOpen(
-                previous =>
-                  !previous
+                previous => !previous
               )
             }
             style={{
@@ -2569,29 +2504,14 @@ function Profile() {
               fontWeight: "700"
             }}
           >
-
-            <span>
-              🔑 Change Password
-            </span>
-
-
-            <span>
-              {passwordOpen
-                ? "▲"
-                : "→"}
-            </span>
-
+            <span>🔑 Change Password</span>
+            <span>{passwordOpen ? "▲" : "→"}</span>
           </button>
-
-
-          {/* PASSWORD FORM */}
 
           {passwordOpen && (
 
             <form
-              onSubmit={
-                handleChangePassword
-              }
+              onSubmit={handleChangePassword}
               style={{
                 marginTop: "18px",
                 padding: "20px",
@@ -2608,18 +2528,12 @@ function Profile() {
                 }}
               >
 
-                {/* CURRENT PASSWORD */}
-
                 <input
                   type="password"
                   placeholder="Current password"
-                  value={
-                    currentPassword
-                  }
+                  value={currentPassword}
                   onChange={(e) =>
-                    setCurrentPassword(
-                      e.target.value
-                    )
+                    setCurrentPassword(e.target.value)
                   }
                   autoComplete="current-password"
                   style={{
@@ -2632,19 +2546,12 @@ function Profile() {
                   }}
                 />
 
-
-                {/* NEW PASSWORD */}
-
                 <input
                   type="password"
                   placeholder="New password (minimum 8 characters)"
-                  value={
-                    newPassword
-                  }
+                  value={newPassword}
                   onChange={(e) =>
-                    setNewPassword(
-                      e.target.value
-                    )
+                    setNewPassword(e.target.value)
                   }
                   autoComplete="new-password"
                   style={{
@@ -2656,20 +2563,13 @@ function Profile() {
                     background: "#ffffff"
                   }}
                 />
-
-
-                {/* CONFIRM PASSWORD */}
 
                 <input
                   type="password"
                   placeholder="Confirm new password"
-                  value={
-                    confirmPassword
-                  }
+                  value={confirmPassword}
                   onChange={(e) =>
-                    setConfirmPassword(
-                      e.target.value
-                    )
+                    setConfirmPassword(e.target.value)
                   }
                   autoComplete="new-password"
                   style={{
@@ -2682,20 +2582,16 @@ function Profile() {
                   }}
                 />
 
-
                 <button
                   type="submit"
-                  disabled={
-                    changingPassword
-                  }
+                  disabled={changingPassword}
                   style={{
                     padding: "12px",
                     border: "none",
                     borderRadius: "10px",
-                    cursor:
-                      changingPassword
-                        ? "not-allowed"
-                        : "pointer",
+                    cursor: changingPassword
+                      ? "not-allowed"
+                      : "pointer",
                     fontWeight: "700"
                   }}
                 >
@@ -2713,171 +2609,155 @@ function Profile() {
         </section>
 
 
-        {/* ===================================
-            MY DAIRYHUB
-        ==================================== */}
+        {/* =====================================
+            CUSTOMER-ONLY DAIRYHUB
+        ====================================== */
 
-        <section
-          style={{
-            background: "#ffffff",
-            borderRadius: "18px",
-            padding: "28px",
-            marginBottom: "22px",
-            boxShadow:
-              "0 8px 30px rgba(0,0,0,0.05)"
-          }}
-        >
+        {!isAdmin && (
 
-          <h2
+          <section
             style={{
-              margin: "0 0 5px",
-              fontSize: "22px",
-              color: "#263238"
-            }}
-          >
-            🥛 My DairyHub
-          </h2>
-
-
-          <p
-            style={{
-              margin: "0 0 20px",
-              color: "#7a7a7a",
-              fontSize: "14px"
-            }}
-          >
-            Quickly access your DairyHub activity.
-          </p>
-
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: "15px"
+              background: "#ffffff",
+              borderRadius: "18px",
+              padding: "28px",
+              marginBottom: "22px",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.05)"
             }}
           >
 
-            {/* ORDERS */}
-
-            <button
-              type="button"
-              onClick={() =>
-                navigate(
-                  "/orders"
-                )
-              }
+            <h2
               style={{
-                padding: "20px",
-                borderRadius: "14px",
-                border: "1px solid #e0e5dd",
-                background: "#fafcf8",
-                cursor: "pointer",
-                textAlign: "left"
+                margin: "0 0 5px",
+                fontSize: "22px",
+                color: "#263238"
+              }}
+            >
+              🥛 My DairyHub
+            </h2>
+
+            <p
+              style={{
+                margin: "0 0 20px",
+                color: "#7a7a7a",
+                fontSize: "14px"
+              }}
+            >
+              Quickly access your DairyHub activity.
+            </p>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns:
+                  "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: "15px"
               }}
             >
 
-              <div
+              <button
+                type="button"
+                onClick={() => navigate("/orders")}
                 style={{
-                  fontSize: "28px",
-                  marginBottom: "10px"
+                  padding: "20px",
+                  borderRadius: "14px",
+                  border: "1px solid #e0e5dd",
+                  background: "#fafcf8",
+                  cursor: "pointer",
+                  textAlign: "left"
                 }}
               >
-                📦
-              </div>
+
+                <div
+                  style={{
+                    fontSize: "28px",
+                    marginBottom: "10px"
+                  }}
+                >
+                  📦
+                </div>
+
+                <strong
+                  style={{
+                    display: "block",
+                    marginBottom: "5px",
+                    fontSize: "16px"
+                  }}
+                >
+                  My Orders
+                </strong>
+
+                <span
+                  style={{
+                    color: "#7a7a7a",
+                    fontSize: "13px"
+                  }}
+                >
+                  View your previous and current orders.
+                </span>
+
+              </button>
 
 
-              <strong
+              <button
+                type="button"
+                onClick={() => navigate("/my-subscriptions")}
                 style={{
-                  display: "block",
-                  marginBottom: "5px",
-                  fontSize: "16px"
+                  padding: "20px",
+                  borderRadius: "14px",
+                  border: "1px solid #e0e5dd",
+                  background: "#fafcf8",
+                  cursor: "pointer",
+                  textAlign: "left"
                 }}
               >
-                My Orders
-              </strong>
+
+                <div
+                  style={{
+                    fontSize: "28px",
+                    marginBottom: "10px"
+                  }}
+                >
+                  🔄
+                </div>
+
+                <strong
+                  style={{
+                    display: "block",
+                    marginBottom: "5px",
+                    fontSize: "16px"
+                  }}
+                >
+                  My Subscriptions
+                </strong>
+
+                <span
+                  style={{
+                    color: "#7a7a7a",
+                    fontSize: "13px"
+                  }}
+                >
+                  Manage your milk subscriptions.
+                </span>
+
+              </button>
+
+            </div>
+
+          </section>
+
+        )}
 
 
-              <span
-                style={{
-                  color: "#7a7a7a",
-                  fontSize: "13px"
-                }}
-              >
-                View your previous and current orders.
-              </span>
-
-            </button>
-
-
-            {/* SUBSCRIPTIONS */}
-
-            <button
-              type="button"
-              onClick={() =>
-                navigate(
-                  "/my-subscriptions"
-                )
-              }
-              style={{
-                padding: "20px",
-                borderRadius: "14px",
-                border: "1px solid #e0e5dd",
-                background: "#fafcf8",
-                cursor: "pointer",
-                textAlign: "left"
-              }}
-            >
-
-              <div
-                style={{
-                  fontSize: "28px",
-                  marginBottom: "10px"
-                }}
-              >
-                🔄
-              </div>
-
-
-              <strong
-                style={{
-                  display: "block",
-                  marginBottom: "5px",
-                  fontSize: "16px"
-                }}
-              >
-                My Subscriptions
-              </strong>
-
-
-              <span
-                style={{
-                  color: "#7a7a7a",
-                  fontSize: "13px"
-                }}
-              >
-                Manage your milk subscriptions.
-              </span>
-
-            </button>
-
-          </div>
-
-        </section>
-
-
-        {/* ===================================
+        {/* =====================================
             ACCOUNT ACTIONS
-        ==================================== */}
+        ====================================== */
 
         <section
           style={{
             background: "#ffffff",
             borderRadius: "18px",
             padding: "28px",
-            boxShadow:
-              "0 8px 30px rgba(0,0,0,0.05)"
+            boxShadow: "0 8px 30px rgba(0,0,0,0.05)"
           }}
         >
 
@@ -2891,7 +2771,6 @@ function Profile() {
             ⚙️ Account
           </h2>
 
-
           <p
             style={{
               margin: "0 0 20px",
@@ -2902,7 +2781,6 @@ function Profile() {
             Manage your DairyHub account.
           </p>
 
-
           <div
             style={{
               display: "flex",
@@ -2911,13 +2789,9 @@ function Profile() {
             }}
           >
 
-            {/* LOGOUT */}
-
             <button
               type="button"
-              onClick={
-                handleLogout
-              }
+              onClick={handleLogout}
               style={{
                 flex: 1,
                 minWidth: "180px",
@@ -2933,29 +2807,27 @@ function Profile() {
             </button>
 
 
-            {/* DELETE */}
+            {!isAdmin && (
 
-            <button
-              type="button"
-              onClick={() =>
-                setDeleteOpen(
-                  true
-                )
-              }
-              style={{
-                flex: 1,
-                minWidth: "180px",
-                padding: "13px",
-                borderRadius: "10px",
-                border: "1px solid #efcaca",
-                background: "#fff7f7",
-                color: "#b42318",
-                cursor: "pointer",
-                fontWeight: "700"
-              }}
-            >
-              ⚠️ Delete My Account
-            </button>
+              <button
+                type="button"
+                onClick={() => setDeleteOpen(true)}
+                style={{
+                  flex: 1,
+                  minWidth: "180px",
+                  padding: "13px",
+                  borderRadius: "10px",
+                  border: "1px solid #efcaca",
+                  background: "#fff7f7",
+                  color: "#b42318",
+                  cursor: "pointer",
+                  fontWeight: "700"
+                }}
+              >
+                ⚠️ Delete My Account
+              </button>
+
+            )}
 
           </div>
 
@@ -2968,14 +2840,13 @@ function Profile() {
           DELETE CONFIRMATION MODAL
       ====================================== */}
 
-      {deleteOpen && (
+      {deleteOpen && !isAdmin && (
 
         <div
           style={{
             position: "fixed",
             inset: 0,
-            background:
-              "rgba(0,0,0,0.45)",
+            background: "rgba(0,0,0,0.45)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -2991,8 +2862,7 @@ function Profile() {
               background: "#ffffff",
               borderRadius: "18px",
               padding: "28px",
-              boxShadow:
-                "0 20px 60px rgba(0,0,0,0.2)"
+              boxShadow: "0 20px 60px rgba(0,0,0,0.2)"
             }}
           >
 
@@ -3005,7 +2875,6 @@ function Profile() {
               ⚠️
             </div>
 
-
             <h2
               style={{
                 margin: "0 0 10px",
@@ -3015,7 +2884,6 @@ function Profile() {
               Delete your account?
             </h2>
 
-
             <p
               style={{
                 margin: "0 0 15px",
@@ -3023,11 +2891,9 @@ function Profile() {
                 lineHeight: "1.6"
               }}
             >
-              Your account will be moved to the DairyHub
-              Delete Bin and locked. It will remain there
-              according to DairyHub's existing retention policy.
+              Your account will be moved to the DairyHub Delete Bin and locked.
+              It will remain there according to DairyHub's existing retention policy.
             </p>
-
 
             <p
               style={{
@@ -3039,7 +2905,6 @@ function Profile() {
               You will be logged out immediately.
             </p>
 
-
             <div
               style={{
                 display: "flex",
@@ -3049,39 +2914,27 @@ function Profile() {
 
               <button
                 type="button"
-                disabled={
-                  deletingAccount
-                }
-                onClick={() =>
-                  setDeleteOpen(
-                    false
-                  )
-                }
+                disabled={deletingAccount}
+                onClick={() => setDeleteOpen(false)}
                 style={{
                   flex: 1,
                   padding: "13px",
                   borderRadius: "10px",
                   border: "1px solid #d8ded5",
                   background: "#ffffff",
-                  cursor:
-                    deletingAccount
-                      ? "not-allowed"
-                      : "pointer",
+                  cursor: deletingAccount
+                    ? "not-allowed"
+                    : "pointer",
                   fontWeight: "700"
                 }}
               >
                 Cancel
               </button>
 
-
               <button
                 type="button"
-                disabled={
-                  deletingAccount
-                }
-                onClick={
-                  handleDeleteAccount
-                }
+                disabled={deletingAccount}
+                onClick={handleDeleteAccount}
                 style={{
                   flex: 1,
                   padding: "13px",
@@ -3089,10 +2942,9 @@ function Profile() {
                   border: "none",
                   background: "#b42318",
                   color: "#ffffff",
-                  cursor:
-                    deletingAccount
-                      ? "not-allowed"
-                      : "pointer",
+                  cursor: deletingAccount
+                    ? "not-allowed"
+                    : "pointer",
                   fontWeight: "700"
                 }}
               >
