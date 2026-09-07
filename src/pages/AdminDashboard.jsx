@@ -592,6 +592,21 @@ function AdminDashboard() {
 
         </div>
 
+        <div
+          style={{
+            display: "flex",
+            gap: "10px",
+            flexWrap: "wrap"
+          }}
+        >
+
+        <Link
+          to="/"
+          className="dashboard-home-btn"
+        >
+          🏠 Home
+        </Link>
+
 
         <Link
           to="/admin/users"
