@@ -321,7 +321,7 @@ function AdminDashboard() {
 
 
           // =================================
-          // FETCH ALL DASHBOARD DATA
+          // FETCH DASHBOARD DATA
           // =================================
 
           const [
@@ -573,6 +573,13 @@ function AdminDashboard() {
 
       <div
         className="dashboard-header"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "20px",
+          flexWrap: "wrap"
+        }}
       >
 
         <div>
@@ -590,43 +597,32 @@ function AdminDashboard() {
 
 
         {/* ===================================
-            HEADER BUTTONS
+            HOME BUTTON
         ==================================== */}
 
-        <div
+        <Link
+          to="/"
+          className="dashboard-home-btn"
           style={{
-            display: "flex",
-            gap: "10px",
-            flexWrap: "wrap"
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "6px",
+            textDecoration: "none",
+            padding: "10px 18px",
+            borderRadius: "9px",
+            fontWeight: "700",
+            whiteSpace: "nowrap"
           }}
         >
-
-          {/* HOME */}
-
-          <Link
-            to="/"
-            className="dashboard-home-btn"
-          >
-            🏠 Home
-          </Link>
-
-
-          {/* MANAGE USERS */}
-
-          <Link
-            to="/admin/users"
-            className="dashboard-primary-btn"
-          >
-            Manage Users
-          </Link>
-
-        </div>
+          🏠 Home
+        </Link>
 
       </div>
 
 
       {/* =====================================
-          STATS
+          DASHBOARD STATS
       ====================================== */}
 
       <div
@@ -717,7 +713,9 @@ function AdminDashboard() {
       >
 
 
-        {/* PRODUCTS */}
+        {/* ===================================
+            MANAGE PRODUCTS
+        ==================================== */}
 
         <Link
           to="/admin/products"
@@ -736,7 +734,9 @@ function AdminDashboard() {
         </Link>
 
 
-        {/* ORDERS */}
+        {/* ===================================
+            MANAGE ORDERS
+        ==================================== */}
 
         <Link
           to="/admin/orders"
@@ -755,7 +755,9 @@ function AdminDashboard() {
         </Link>
 
 
-        {/* USERS */}
+        {/* ===================================
+            MANAGE USERS
+        ==================================== */}
 
         <Link
           to="/admin/users"
@@ -774,7 +776,9 @@ function AdminDashboard() {
         </Link>
 
 
-        {/* SUBSCRIPTIONS */}
+        {/* ===================================
+            MANAGE SUBSCRIPTIONS
+        ==================================== */}
 
         <Link
           to="/admin/subscriptions"
