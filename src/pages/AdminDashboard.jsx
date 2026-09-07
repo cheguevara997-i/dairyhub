@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import BackButton from "../components/BackButton";
-
-
 // =========================================
 // API BASE URL
 // =========================================
@@ -31,6 +28,10 @@ import BackButton from "../components/BackButton";
 const API_BASE =
   "https://dairyhub-backend.onrender.com";
 
+
+// =========================================
+// ADMIN DASHBOARD
+// =========================================
 
 function AdminDashboard() {
 
@@ -278,8 +279,7 @@ function AdminDashboard() {
 
 
           if (
-            role !==
-            "ADMIN"
+            role !== "ADMIN"
           ) {
 
             alert(
@@ -358,7 +358,6 @@ function AdminDashboard() {
 
                 headers:
                   headers
-
               }
             ),
 
@@ -437,8 +436,7 @@ function AdminDashboard() {
 
                 return (
 
-                  userRole ===
-                  "CUSTOMER"
+                  userRole === "CUSTOMER"
 
                   &&
 
@@ -487,11 +485,9 @@ function AdminDashboard() {
 
           if (
 
-            error.status ===
-            401 ||
+            error.status === 401 ||
 
-            error.status ===
-            403
+            error.status === 403
 
           ) {
 
@@ -592,6 +588,11 @@ function AdminDashboard() {
 
         </div>
 
+
+        {/* ===================================
+            HEADER BUTTONS
+        ==================================== */}
+
         <div
           style={{
             display: "flex",
@@ -600,20 +601,26 @@ function AdminDashboard() {
           }}
         >
 
-        <Link
-          to="/"
-          className="dashboard-home-btn"
-        >
-          🏠 Home
-        </Link>
+          {/* HOME */}
+
+          <Link
+            to="/"
+            className="dashboard-home-btn"
+          >
+            🏠 Home
+          </Link>
 
 
-        <Link
-          to="/admin/users"
-          className="dashboard-primary-btn"
-        >
-          Manage Users
-        </Link>
+          {/* MANAGE USERS */}
+
+          <Link
+            to="/admin/users"
+            className="dashboard-primary-btn"
+          >
+            Manage Users
+          </Link>
+
+        </div>
 
       </div>
 
