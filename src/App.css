@@ -1447,18 +1447,6 @@ body {
 
 /* DELIVERY DETAILS */
 
-.delivery-details {
-  margin-top: 20px;
-
-  padding: 18px;
-
-  background: #f8f9fa;
-
-  border-radius: 10px;
-
-  border-left: 4px solid #2e7d32;
-}
-
 
 .delivery-details h4 {
   margin: 0 0 15px;
@@ -3735,13 +3723,6 @@ body {
 
 /* DELIVERY FORM */
 
-.checkout-form {
-  display: grid;
-
-  grid-template-columns: 1fr 1fr;
-
-  gap: 18px;
-}
 
 .checkout-form input,
 .checkout-form textarea {
@@ -3837,10 +3818,6 @@ body {
   margin-top: 25px;
 }
 
-.checkout-actions .btn {
-  flex: 1;
-}
-
 
 /* =========================================
    MOBILE
@@ -3860,13 +3837,6 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .checkout-form {
-    grid-template-columns: 1fr;
-  }
-
-  .checkout-form textarea {
-    grid-column: 1;
-  }
 
   .payment-method-box {
     flex-direction: column;
@@ -7031,10 +7001,6 @@ body {
   overflow-wrap: anywhere;
 }
 
-.order-customer-info strong {
-  color: #333;
-}
-
 
 /* =========================================================
    COMMON SECTION
@@ -7093,11 +7059,6 @@ body {
   border-bottom: 1px solid #eeeeee;
 }
 
-.order-item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
 
 .order-item-info {
   flex: 1 1 auto;
@@ -7117,12 +7078,6 @@ body {
   font-size: 14px;
 
   overflow-wrap: anywhere;
-}
-
-.order-item-info span {
-  color: #777;
-
-  font-size: 12px;
 }
 
 
@@ -7189,14 +7144,6 @@ body {
     background 0.25s ease,
     color 0.25s ease,
     transform 0.2s ease;
-}
-
-.rate-review-btn:hover {
-  background: #2e8b35;
-
-  color: #ffffff;
-
-  transform: translateY(-1px);
 }
 
 
@@ -9169,9 +9116,6 @@ body {
 
 @media (max-width: 700px) {
 
-  .subscription-form {
-    grid-template-columns: 1fr;
-  }
 
   .subscription-section-title,
   .subscription-full-width,
@@ -9414,12 +9358,6 @@ body {
   font-size: 19px;
 }
 
-.admin-address-header strong {
-  color: #333;
-
-  font-size: 14px;
-}
-
 
 /* =========================================
    MAIN ADDRESS
@@ -9492,15 +9430,6 @@ body {
    PAYMENT
 ========================================= */
 
-.admin-payment-box {
-  margin-bottom: 18px;
-
-  padding: 14px;
-
-  background: #f8f9fa;
-
-  border-radius: 9px;
-}
 
 .admin-payment-box div {
   display: flex;
@@ -9514,117 +9443,25 @@ body {
   font-size: 11px;
 }
 
-.admin-payment-box strong {
-  margin-top: 4px;
-
-  color: #2e7d32;
-
-  font-size: 13px;
-}
-
 
 /* =========================================
    ADMIN ACTIONS
 ========================================= */
-
-.admin-subscription-actions {
-  display: flex;
-
-  gap: 10px;
-
-  margin-bottom: 10px;
-}
-
-.admin-subscription-actions button {
-  flex: 1;
-}
 
 
 /* =========================================
    PAUSE
 ========================================= */
 
-.admin-pause-subscription-btn {
-  width: 100%;
-
-  padding: 11px;
-
-  border: none;
-
-  border-radius: 7px;
-
-  background: #fff3cd;
-
-  color: #856404;
-
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition: 0.2s;
-}
-
-.admin-pause-subscription-btn:hover {
-  background: #ffe69c;
-}
-
 
 /* =========================================
    RESUME
 ========================================= */
 
-.admin-resume-subscription-btn {
-  width: 100%;
-
-  padding: 11px;
-
-  border: none;
-
-  border-radius: 7px;
-
-  background: #e8f5e9;
-
-  color: #2e7d32;
-
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition: 0.2s;
-}
-
-.admin-resume-subscription-btn:hover {
-  background: #d7f0da;
-}
-
 
 /* =========================================
    CANCEL
 ========================================= */
-
-.admin-cancel-subscription-btn {
-  width: 100%;
-
-  padding: 11px;
-
-  border: none;
-
-  border-radius: 7px;
-
-  background: #fdeaea;
-
-  color: #c62828;
-
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition: 0.2s;
-}
-
-.admin-cancel-subscription-btn:hover {
-  background: #f8d7d7;
-}
 
 
 /* =========================================
@@ -9672,9 +9509,6 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .admin-subscription-actions {
-    flex-direction: column;
-  }
 
 }
 
@@ -10676,82 +10510,15 @@ body {
    MAKE ADMIN
 ========================================= */
 
-.make-admin-button {
-  padding: 8px 11px;
-
-  border: 1px solid #c58b00;
-
-  border-radius: 6px;
-
-  background: #fffaf0;
-
-  color: #9a6900;
-
-  font-size: 12px;
-
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease;
-}
-
-.make-admin-button:hover {
-  background: #f5b942;
-
-  color: #ffffff;
-
-  transform: translateY(-1px);
-}
-
-.make-admin-button:disabled {
-  opacity: 0.6;
-
-  cursor: not-allowed;
-
-  transform: none;
-}
-
 
 /* =========================================
    USER ACTIONS
 ========================================= */
 
-.user-actions {
-  display: flex;
-
-  align-items: center;
-
-  flex-wrap: wrap;
-
-  gap: 7px;
-}
-
 
 /* =========================================
    ADMIN WARNING
 ========================================= */
-
-.admin-role-warning {
-  margin-top: 5px;
-
-  padding: 12px;
-
-  border: 1px solid #ead9a5;
-
-  border-radius: 8px;
-
-  background: #fffaf0;
-
-  color: #795f14;
-
-  font-size: 13px;
-
-  line-height: 1.5;
-}
 
 
 /* =========================================
@@ -10760,28 +10527,12 @@ body {
 
 @media (max-width: 900px) {
 
-  .users-table-wrapper {
-    overflow-x: auto;
-  }
-
-  .users-table {
-    min-width: 900px;
-  }
 
 }
 
 
 @media (max-width: 600px) {
 
-  .user-actions {
-    flex-direction: column;
-
-    align-items: stretch;
-  }
-
-  .user-actions button {
-    width: 100%;
-  }
 
 }
 
@@ -11354,6 +11105,881 @@ body {
 
   .customer-rating-comment {
     font-size: 16px;
+  }
+
+}
+
+/* =========================================
+   ABOUT DAIRYHUB PAGE
+   ========================================= */
+
+.about-page {
+  width: 100%;
+  min-height: 100vh;
+  background: #f7fbf7;
+  color: #243126;
+}
+
+
+/* =========================================
+   HERO
+   ========================================= */
+
+.about-hero {
+  position: relative;
+  padding: 80px 25px 75px;
+  background:
+    linear-gradient(
+      135deg,
+      #e8f5e9 0%,
+      #f8fcf8 50%,
+      #eef8ef 100%
+    );
+  overflow: hidden;
+}
+
+.about-hero::before {
+  content: "🌿";
+  position: absolute;
+  top: 30px;
+  left: 7%;
+  font-size: 55px;
+  opacity: 0.15;
+}
+
+.about-hero::after {
+  content: "🌿";
+  position: absolute;
+  right: 8%;
+  bottom: 25px;
+  font-size: 65px;
+  opacity: 0.12;
+}
+
+.about-hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 850px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.about-logo-mark {
+  width: 82px;
+  height: 82px;
+  margin: 0 auto 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 8px 25px rgba(46, 125, 50, 0.15);
+
+  font-size: 42px;
+}
+
+.about-tagline,
+.about-final-tagline {
+  margin: 0 0 10px;
+
+  color: #2e7d32;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  letter-spacing: 3px;
+}
+
+.about-hero h1 {
+  margin: 0 0 20px;
+
+  color: #1f3d25;
+
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 800;
+}
+
+.about-intro {
+  max-width: 760px;
+  margin: 0 auto;
+
+  color: #5f6f63;
+
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+
+/* =========================================
+   COMMON SECTION
+   ========================================= */
+
+.about-section {
+  max-width: 1180px;
+  margin: 0 auto;
+
+  padding: 75px 25px;
+}
+
+.about-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 15px;
+
+  margin-bottom: 35px;
+}
+
+.about-section-heading > span {
+  font-size: 35px;
+}
+
+.about-section-heading.centered {
+  text-align: center;
+}
+
+.about-small-title {
+  margin: 0 0 6px;
+
+  color: #2e7d32;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  letter-spacing: 2px;
+}
+
+.about-section-heading h2 {
+  margin: 0;
+
+  color: #243126;
+
+  font-size: 32px;
+  font-weight: 750;
+}
+
+.about-section-description {
+  max-width: 700px;
+  margin: -10px auto 35px;
+
+  color: #718076;
+
+  text-align: center;
+
+  line-height: 1.7;
+}
+
+
+/* =========================================
+   STORY
+   ========================================= */
+
+.about-story-card {
+  display: flex;
+  align-items: center;
+
+  gap: 30px;
+
+  max-width: 900px;
+  margin: 0 auto;
+
+  padding: 35px;
+
+  background: #ffffff;
+
+  border: 1px solid #e3eee4;
+  border-radius: 18px;
+
+  box-shadow:
+    0 8px 25px rgba(34, 75, 40, 0.07);
+}
+
+.about-story-icon {
+  flex-shrink: 0;
+
+  width: 85px;
+  height: 85px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #e8f5e9;
+
+  font-size: 40px;
+}
+
+.about-story-card p {
+  margin: 0 0 14px;
+
+  color: #617065;
+
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.about-story-card p:last-child {
+  margin-bottom: 0;
+}
+
+
+/* =========================================
+   PRODUCTS
+   ========================================= */
+
+.about-products-section {
+  background: #f2f8f3;
+  max-width: none;
+  padding-left: max(25px, calc((100% - 1180px) / 2));
+  padding-right: max(25px, calc((100% - 1180px) / 2));
+}
+
+.about-products-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(5, minmax(0, 1fr));
+
+  gap: 18px;
+}
+
+.about-product-card {
+  padding: 28px 20px;
+
+  background: #ffffff;
+
+  border: 1px solid #e2eee3;
+  border-radius: 16px;
+
+  text-align: center;
+
+  box-shadow:
+    0 5px 18px rgba(38, 78, 43, 0.06);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.about-product-card:hover {
+  transform: translateY(-5px);
+
+  box-shadow:
+    0 10px 25px rgba(38, 78, 43, 0.11);
+}
+
+.about-product-icon {
+  margin-bottom: 12px;
+
+  font-size: 42px;
+}
+
+.about-product-card h3 {
+  margin: 0 0 8px;
+
+  color: #2e7d32;
+
+  font-size: 18px;
+}
+
+.about-product-card p {
+  margin: 0;
+
+  color: #718076;
+
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+
+/* =========================================
+   WHY CHOOSE US
+   ========================================= */
+
+.about-benefits-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 20px;
+}
+
+.about-benefit-card {
+  padding: 30px 22px;
+
+  background: #ffffff;
+
+  border: 1px solid #e5eee6;
+  border-radius: 16px;
+
+  text-align: center;
+
+  box-shadow:
+    0 5px 18px rgba(35, 72, 40, 0.06);
+}
+
+.about-benefit-icon {
+  margin-bottom: 12px;
+
+  font-size: 38px;
+}
+
+.about-benefit-card h3 {
+  margin: 0 0 10px;
+
+  color: #2d5734;
+
+  font-size: 18px;
+}
+
+.about-benefit-card p {
+  margin: 0;
+
+  color: #718076;
+
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+
+/* =========================================
+   ONLINE EXPERIENCE
+   ========================================= */
+
+.about-online-section {
+  padding: 70px 25px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #174d26,
+      #2e7d32
+    );
+
+  color: #ffffff;
+}
+
+.about-online-content {
+  max-width: 1050px;
+  margin: 0 auto;
+
+  display: flex;
+  align-items: center;
+
+  gap: 35px;
+}
+
+.about-online-icon {
+  width: 95px;
+  height: 95px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 22px;
+
+  background: rgba(255, 255, 255, 0.13);
+
+  font-size: 48px;
+}
+
+.about-online-content .about-small-title {
+  color: #c8eecf;
+}
+
+.about-online-content h2 {
+  margin: 0 0 14px;
+
+  font-size: 32px;
+}
+
+.about-online-content > div:last-child > p {
+  margin: 0 0 22px;
+
+  color: #e1f0e3;
+
+  line-height: 1.7;
+}
+
+.about-online-features {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 10px;
+}
+
+.about-online-features span {
+  padding: 9px 13px;
+
+  background: rgba(255, 255, 255, 0.11);
+
+  border: 1px solid rgba(255, 255, 255, 0.16);
+
+  border-radius: 20px;
+
+  color: #ffffff;
+
+  font-size: 13px;
+}
+
+
+/* =========================================
+   REVIEWS
+   ========================================= */
+
+.about-reviews-section {
+  text-align: center;
+}
+
+.about-secondary-button,
+.about-primary-button {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  text-decoration: none;
+
+  font-weight: 700;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.about-secondary-button {
+  padding: 12px 22px;
+
+  border: 1px solid #2e7d32;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #2e7d32;
+}
+
+.about-secondary-button:hover {
+  background: #e8f5e9;
+
+  transform: translateY(-2px);
+}
+
+
+/* =========================================
+   HOW IT WORKS
+   ========================================= */
+
+.about-how-section {
+  background: #f3f8f4;
+
+  max-width: none;
+
+  padding-left: max(25px, calc((100% - 1250px) / 2));
+  padding-right: max(25px, calc((100% - 1250px) / 2));
+}
+
+.about-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 15px;
+}
+
+.about-step {
+  width: 180px;
+  min-height: 170px;
+
+  padding: 20px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #e1ebe2;
+  border-radius: 15px;
+
+  text-align: center;
+
+  box-shadow:
+    0 5px 16px rgba(35, 72, 40, 0.06);
+}
+
+.about-step-number {
+  margin-bottom: 8px;
+
+  color: #2e7d32;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  letter-spacing: 1px;
+}
+
+.about-step-icon {
+  margin-bottom: 10px;
+
+  font-size: 30px;
+}
+
+.about-step h3 {
+  margin: 0;
+
+  color: #334638;
+
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.about-step-arrow {
+  color: #62a56c;
+
+  font-size: 25px;
+  font-weight: 700;
+}
+
+
+/* =========================================
+   MISSION
+   ========================================= */
+
+.about-mission-section {
+  padding: 80px 25px;
+
+  background: #ffffff;
+}
+
+.about-mission-card {
+  max-width: 800px;
+  margin: 0 auto;
+
+  padding: 45px 35px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #eef8ef,
+      #ffffff
+    );
+
+  border: 1px solid #dcebdd;
+  border-radius: 20px;
+
+  text-align: center;
+
+  box-shadow:
+    0 8px 30px rgba(38, 78, 43, 0.07);
+}
+
+.about-mission-icon {
+  margin-bottom: 15px;
+
+  font-size: 38px;
+}
+
+.about-mission-card h2 {
+  margin: 0 0 18px;
+
+  color: #264b2d;
+
+  font-size: 32px;
+}
+
+.about-mission-card > p:last-child {
+  max-width: 680px;
+  margin: 0 auto;
+
+  color: #68776c;
+
+  line-height: 1.8;
+}
+
+
+/* =========================================
+   LOCATION + CONTACT
+   ========================================= */
+
+.about-contact-grid {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 25px;
+}
+
+.about-location-card,
+.about-contact-card {
+  padding: 35px;
+
+  background: #ffffff;
+
+  border: 1px solid #e2ebe3;
+  border-radius: 18px;
+
+  box-shadow:
+    0 6px 20px rgba(36, 73, 41, 0.06);
+}
+
+.about-contact-icon {
+  margin-bottom: 12px;
+
+  font-size: 35px;
+}
+
+.about-location-card h2,
+.about-contact-card h2 {
+  margin: 0 0 22px;
+
+  color: #294831;
+
+  font-size: 27px;
+}
+
+.about-address p {
+  margin: 6px 0;
+
+  color: #68766b;
+
+  line-height: 1.5;
+}
+
+.about-contact-details {
+  display: flex;
+  flex-direction: column;
+
+  gap: 20px;
+}
+
+.about-contact-details > div {
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+}
+
+.about-contact-details > div > span {
+  width: 42px;
+  height: 42px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: #e8f5e9;
+
+  font-size: 20px;
+}
+
+.about-contact-details small {
+  display: block;
+
+  margin-bottom: 3px;
+
+  color: #89948b;
+
+  font-size: 11px;
+}
+
+.about-contact-details strong {
+  display: block;
+
+  color: #334638;
+
+  font-size: 14px;
+
+  word-break: break-word;
+}
+
+
+/* =========================================
+   FINAL CTA
+   ========================================= */
+
+.about-final-cta {
+  padding: 75px 25px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #0d5420,
+      #2e8b3c
+    );
+
+  text-align: center;
+}
+
+.about-final-content {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.about-final-tagline {
+  color: #c9eacb;
+}
+
+.about-final-content h2 {
+  margin: 0 0 12px;
+
+  color: #ffffff;
+
+  font-size: 42px;
+}
+
+.about-final-content > p:not(.about-final-tagline) {
+  margin: 0 0 28px;
+
+  color: #dceede;
+
+  font-size: 16px;
+}
+
+.about-primary-button {
+  padding: 14px 25px;
+
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #247132;
+}
+
+.about-primary-button:hover {
+  transform: translateY(-2px);
+
+  background: #f1f8f2;
+}
+
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+
+@media (max-width: 1000px) {
+
+  .about-products-grid {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+  }
+
+  .about-benefits-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .about-steps {
+    flex-wrap: wrap;
+  }
+
+  .about-step-arrow {
+    display: none;
+  }
+
+}
+
+
+@media (max-width: 700px) {
+
+  .about-hero {
+    padding: 60px 20px;
+  }
+
+  .about-section {
+    padding: 55px 20px;
+  }
+
+  .about-section-heading h2 {
+    font-size: 27px;
+  }
+
+  .about-intro {
+    font-size: 15px;
+  }
+
+  .about-story-card {
+    flex-direction: column;
+
+    text-align: center;
+
+    padding: 28px 22px;
+  }
+
+  .about-products-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap: 14px;
+  }
+
+  .about-product-card {
+    padding: 22px 14px;
+  }
+
+  .about-benefits-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .about-online-content {
+    flex-direction: column;
+
+    text-align: center;
+  }
+
+  .about-online-features {
+    justify-content: center;
+  }
+
+  .about-steps {
+    display: grid;
+
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap: 15px;
+  }
+
+  .about-step {
+    width: 100%;
+  }
+
+  .about-contact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .about-final-content h2 {
+    font-size: 34px;
+  }
+
+}
+
+
+@media (max-width: 450px) {
+
+  .about-products-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .about-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .about-contact-details strong {
+    font-size: 13px;
   }
 
 }

@@ -20,6 +20,10 @@ function Navbar() {
     );
 
 
+  // =========================================
+  // CLOSE MENU
+  // =========================================
+
   const closeMenu = () => {
 
     setMenuOpen(false);
@@ -50,9 +54,7 @@ function Navbar() {
       };
 
 
-    if (
-      menuOpen
-    ) {
+    if (menuOpen) {
 
       document.addEventListener(
         "mousedown",
@@ -86,8 +88,7 @@ function Navbar() {
 
     setMenuOpen(false);
 
-    window.location.href =
-      "/";
+    window.location.href = "/";
 
   };
 
@@ -105,9 +106,7 @@ function Navbar() {
         searchText.trim();
 
 
-      if (
-        !search
-      ) {
+      if (!search) {
 
         return;
 
@@ -136,9 +135,7 @@ function Navbar() {
       <Link
         to="/"
         className="dairy-logo"
-        onClick={
-          closeMenu
-        }
+        onClick={closeMenu}
       >
 
         <img
@@ -156,9 +153,7 @@ function Navbar() {
 
       <form
         className="dairy-search"
-        onSubmit={
-          handleSearch
-        }
+        onSubmit={handleSearch}
       >
 
         <span className="dairy-search-icon">
@@ -169,9 +164,7 @@ function Navbar() {
         <input
           type="text"
           placeholder="Search milk, paneer, ghee..."
-          value={
-            searchText
-          }
+          value={searchText}
           onChange={(e) =>
             setSearchText(
               e.target.value
@@ -215,7 +208,9 @@ function Navbar() {
       >
 
 
-        {/* MENU BUTTON */}
+        {/* ===================================
+            MENU BUTTON
+        ==================================== */}
 
         <button
           className="dairy-menu-button"
@@ -232,7 +227,7 @@ function Navbar() {
 
 
         {/* ===================================
-            DROPDOWN
+            DROPDOWN MENU
         ==================================== */}
 
         {menuOpen && (
@@ -240,25 +235,39 @@ function Navbar() {
           <div className="dairy-menu">
 
 
-            {/* COMMON */}
+            {/* =================================
+                HOME
+            ================================== */}
 
             <Link
               to="/"
-              onClick={
-                closeMenu
-              }
+              onClick={closeMenu}
             >
               Home
             </Link>
 
 
+            {/* =================================
+                PRODUCTS
+            ================================== */}
+
             <Link
               to="/products"
-              onClick={
-                closeMenu
-              }
+              onClick={closeMenu}
             >
               Products
+            </Link>
+
+
+            {/* =================================
+                ABOUT
+            ================================== */}
+
+            <Link
+              to="/about"
+              onClick={closeMenu}
+            >
+              About
             </Link>
 
 
@@ -270,31 +279,31 @@ function Navbar() {
 
               <>
 
+                {/* CART */}
+
                 <Link
                   to="/cart"
-                  onClick={
-                    closeMenu
-                  }
+                  onClick={closeMenu}
                 >
                   🛒 Cart
                 </Link>
 
 
+                {/* DASHBOARD */}
+
                 <Link
                   to="/dashboard"
-                  onClick={
-                    closeMenu
-                  }
+                  onClick={closeMenu}
                 >
                   Dashboard
                 </Link>
 
 
+                {/* PROFILE */}
+
                 <Link
                   to="/profile"
-                  onClick={
-                    closeMenu
-                  }
+                  onClick={closeMenu}
                 >
                   👤 My Profile
                 </Link>
@@ -312,21 +321,21 @@ function Navbar() {
 
               <>
 
+                {/* ADMIN DASHBOARD */}
+
                 <Link
                   to="/admin"
-                  onClick={
-                    closeMenu
-                  }
+                  onClick={closeMenu}
                 >
                   🛠️ Admin Dashboard
                 </Link>
 
 
+                {/* ADMIN PROFILE */}
+
                 <Link
                   to="/admin/profile"
-                  onClick={
-                    closeMenu
-                  }
+                  onClick={closeMenu}
                 >
                   👤 My Profile
                 </Link>
@@ -344,9 +353,7 @@ function Navbar() {
 
               <Link
                 to="/login"
-                onClick={
-                  closeMenu
-                }
+                onClick={closeMenu}
               >
                 Login
               </Link>
@@ -362,9 +369,7 @@ function Navbar() {
 
               <button
                 className="dairy-logout"
-                onClick={
-                  logout
-                }
+                onClick={logout}
               >
                 Logout
               </button>

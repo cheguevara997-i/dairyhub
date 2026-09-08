@@ -177,7 +177,7 @@ function Footer() {
 
 
         {/* ===================================
-            ABOUT
+            ABOUT DAIRYHUB
         ==================================== */}
 
         <div
@@ -192,6 +192,11 @@ function Footer() {
           <p>
             Fresh dairy products delivered
             directly to your doorstep.
+          </p>
+
+
+          <p>
+            Pure From Farm to Home 🌿
           </p>
 
         </div>
@@ -217,6 +222,11 @@ function Footer() {
 
           <Link to="/products">
             Products
+          </Link>
+
+
+          <Link to="/about">
+            About
           </Link>
 
 
@@ -290,6 +300,8 @@ function Footer() {
           </h3>
 
 
+          {/* LOCATION */}
+
           <p>
 
             📍{" "}
@@ -306,6 +318,8 @@ function Footer() {
           </p>
 
 
+          {/* PHONE / WHATSAPP */}
+
           <p>
 
             📞{" "}
@@ -314,11 +328,13 @@ function Footer() {
               href="tel:+91901435033"
               className="footer-contact-link"
             >
-              901435033
+              9014352033
             </a>
 
           </p>
 
+
+          {/* EMAIL */}
 
           <p>
 
@@ -329,6 +345,24 @@ function Footer() {
               className="footer-contact-link"
             >
               thalaribhargav214@gmail.com
+            </a>
+
+          </p>
+
+
+          {/* WEBSITE */}
+
+          <p>
+
+            🌐{" "}
+
+            <a
+              href="https://dairyhub-five.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-contact-link"
+            >
+              dairyhub-five.vercel.app
             </a>
 
           </p>

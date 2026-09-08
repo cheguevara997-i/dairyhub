@@ -20,6 +20,8 @@ import Products from "./pages/Products";
 
 import ProductDetails from "./pages/ProductDetails";
 
+import About from "./pages/About";
+
 import Cart from "./pages/Cart";
 
 import Login from "./pages/Login";
@@ -96,6 +98,9 @@ function App() {
             PUBLIC ROUTES
         ==================================== */}
 
+
+        {/* HOME */}
+
         <Route
           path="/"
           element={
@@ -103,6 +108,8 @@ function App() {
           }
         />
 
+
+        {/* DAIRY INFORMATION */}
 
         <Route
           path="/dairy/:type"
@@ -112,6 +119,8 @@ function App() {
         />
 
 
+        {/* PRODUCTS */}
+
         <Route
           path="/products"
           element={
@@ -119,6 +128,8 @@ function App() {
           }
         />
 
+
+        {/* PRODUCT DETAILS */}
 
         <Route
           path="/products/:id"
@@ -128,6 +139,20 @@ function App() {
         />
 
 
+        {/* ===================================
+            ABOUT DAIRYHUB
+        ==================================== */}
+
+        <Route
+          path="/about"
+          element={
+            <About />
+          }
+        />
+
+
+        {/* LOGIN */}
+
         <Route
           path="/login"
           element={
@@ -136,6 +161,8 @@ function App() {
         />
 
 
+        {/* REGISTER */}
+
         <Route
           path="/register"
           element={
@@ -143,6 +170,8 @@ function App() {
           }
         />
 
+
+        {/* FORGOT PASSWORD */}
 
         <Route
           path="/forgot-password"
@@ -312,6 +341,7 @@ function App() {
       ====================================== */}
 
       <Footer />
+
 
     </BrowserRouter>
 
